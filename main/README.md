@@ -176,6 +176,7 @@ npm run dev          # Start development server with Turbopack
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
+npm run typecheck    # Run TypeScript type check
 
 # Database
 npm run db:generate  # Generate migration files
