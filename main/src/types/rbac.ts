@@ -52,6 +52,7 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
     'org:driver:view_assigned_loads',
     'org:driver:update_load_status',
     'org:driver:upload_documents',
+    'org:compliance:upload_documents',
     'org:driver:log_hos',
     'org:compliance:upload_review_compliance',
     'org:compliance:generate_compliance_req',
@@ -74,6 +75,7 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
   ],
   [SystemRoles.COMPLIANCE]: [
     'org:sys_profile:manage',
+    'org:compliance:upload_documents',
     'org:compliance:upload_review_compliance',
     'org:compliance:generate_compliance_req',
     'org:compliance:access_audit_logs',
