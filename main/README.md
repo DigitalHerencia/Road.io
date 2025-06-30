@@ -176,6 +176,7 @@ npm run dev          # Start development server with Turbopack
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
+npm run test         # Run unit tests
 
 # Database
 npm run db:generate  # Generate migration files
@@ -255,6 +256,14 @@ The application includes a built-in database testing interface:
    - View existing users
    - Create new users
    - Validate the full stack integration
+
+## 🧪 Running Tests
+
+Run unit tests with Vitest:
+
+```bash
+npm run test
+```
 
 ## 📖 Next Steps
 
