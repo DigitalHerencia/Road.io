@@ -182,6 +182,8 @@ npm run db:generate  # Generate migration files
 npm run db:migrate   # Run migrations
 npm run db:push      # Push schema changes
 npm run db:studio    # Open Drizzle Studio
+npm run typecheck   # Type-check the codebase
+npm run test        # Run unit and integration tests
 ```
 
 ## 🔧 Configuration
