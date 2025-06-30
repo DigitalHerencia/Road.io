@@ -20,6 +20,18 @@ Thank you for your interest in contributing! This project is optimized for both 
   - Checklist ([ ] Passes CI, [ ] Updates docs, [ ] Notifies milestone)
 - **Automation:** PRs that do not follow conventions will be rejected.
 
+## Commit Messages
+- Write clear, descriptive commit messages that explain *why* the change was made.
+- Use the [Conventional Commits](https://www.conventionalcommits.org/) format:
+  `type(scope?): subject`
+- Keep the summary around 50 characters.
+
+**Examples**
+- `feat: add driver dashboard`
+- `fix(auth): correct token refresh`
+- `docs: update setup instructions`
+- `refactor: simplify vehicle service`
+
 ## Code Standards
 - Follow the rules in `INSTRUCTIONS.md`.
 - Use TypeScript 5+, React 19, Next.js 15, Tailwind 4, Drizzle ORM, and Clerk Auth as per project stack.
