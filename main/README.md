@@ -48,6 +48,14 @@ A modern web application built with the latest technologies including Next.js 15
    # Next.js
    NEXTAUTH_SECRET="your-secret-key"
    NEXTAUTH_URL="http://localhost:3000"
+
+   # Email (SMTP)
+   SMTP_HOST="smtp.example.com"
+   SMTP_PORT="587"
+   SMTP_USER="username"
+   SMTP_PASS="password"
+   EMAIL_FROM="Road.io <noreply@road.io>"
+   NEXT_PUBLIC_APP_URL="http://localhost:3000"
    ```
 
 4. **Database Setup:**

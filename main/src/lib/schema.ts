@@ -97,6 +97,18 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// User invitations table
+export const userInvitations = pgTable('user_invitations', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  role: systemRoleEnum('role').default('MEMBER').notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  acceptedAt: timestamp('accepted_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Documents table
 export const documents = pgTable('documents', {
   id: serial('id').primaryKey(),
@@ -200,6 +212,13 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   }),
 }));
 
+export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [userInvitations.orgId],
+    references: [organizations.id],
+  }),
+}));
+
 // Export types
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
@@ -215,3 +234,5 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
+export type UserInvitation = typeof userInvitations.$inferSelect;
+export type NewUserInvitation = typeof userInvitations.$inferInsert;
