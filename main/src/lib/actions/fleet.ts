@@ -259,23 +259,20 @@ export async function createDriverAction(driverData: {
 }
 
 // Vehicle Management Actions
-export async function createVehicleAction(vehicleData: {
-  vin: string;
-  licensePlate: string;
-  make: string;
-  model: string;
-  year: number;
-}) {
+import { vehicleSchema, type VehicleInput } from '@/lib/validation/vehicle'
+
+export async function createVehicleAction(vehicleData: VehicleInput) {
   const currentUser = await requirePermission('org:admin:manage_users_and_roles');
-  
+
   try {
+    const data = vehicleSchema.parse(vehicleData)
     const [newVehicle] = await db.insert(vehicles).values({
       orgId: currentUser.orgId,
-      vin: vehicleData.vin,
-      licensePlate: vehicleData.licensePlate,
-      make: vehicleData.make,
-      model: vehicleData.model,
-      year: vehicleData.year,
+      vin: data.vin,
+      licensePlate: data.licensePlate,
+      make: data.make,
+      model: data.model,
+      year: data.year,
     }).returning();
 
     await createAuditLog({
