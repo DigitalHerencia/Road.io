@@ -6,21 +6,21 @@ The Settings module provides comprehensive configuration management for company 
 ## 🚀 Core Features (MVP)
 
 ### Company Profile Management
-- [ ] **Basic Company Information**
+- [x] **Basic Company Information**
   - Company name and legal entity
   - Business address and contact info
   - Phone, email, and website
   - Logo upload and branding
   - Business hours configuration
 
-- [ ] **Transportation Authority**
+- [x] **Transportation Authority**
   - DOT number management
   - MC number tracking
   - Operating authority details
   - Interstate/intrastate classification
   - USDOT registration status
 
-- [ ] **Tax and Financial Information**
+- [x] **Tax and Financial Information**
   - Federal tax ID (EIN)
   - State tax registrations
   - IFTA registration details
