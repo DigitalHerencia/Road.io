@@ -53,6 +53,7 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
     'org:driver:update_load_status',
     'org:driver:upload_documents',
     'org:driver:log_hos',
+    'org:driver:record_trip',
     'org:compliance:upload_review_compliance',
     'org:compliance:generate_compliance_req',
     'org:compliance:access_audit_logs'
@@ -63,14 +64,16 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
     'org:dispatcher:assign_drivers',
     'org:dispatcher:create_edit_loads',
     'org:driver:view_assigned_loads',
-    'org:driver:update_load_status'
+    'org:driver:update_load_status',
+    'org:driver:record_trip'
   ],
   [SystemRoles.DRIVER]: [
     'org:sys_profile:manage',
     'org:driver:view_assigned_loads',
     'org:driver:update_load_status',
     'org:driver:upload_documents',
-    'org:driver:log_hos'
+    'org:driver:log_hos',
+    'org:driver:record_trip'
   ],
   [SystemRoles.COMPLIANCE]: [
     'org:sys_profile:manage',

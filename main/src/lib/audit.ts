@@ -108,6 +108,9 @@ export const AUDIT_ACTIONS = {
   VEHICLE_CREATE: 'vehicle.create',
   VEHICLE_UPDATE: 'vehicle.update',
   VEHICLE_ASSIGN: 'vehicle.assign',
+
+  // Trip actions
+  TRIP_CREATE: 'trip.create',
   
   // Document actions
   DOCUMENT_UPLOAD: 'document.upload',
@@ -134,4 +137,5 @@ export const AUDIT_RESOURCES = {
   DOCUMENT: 'document',
   ORGANIZATION: 'organization',
   COMPLIANCE: 'compliance',
+  TRIP: 'trip',
 } as const;
