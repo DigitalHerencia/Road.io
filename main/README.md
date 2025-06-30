@@ -35,7 +35,11 @@ A modern web application built with the latest technologies including Next.js 15
    ```
 
 3. **Environment Setup:**
-   Create `.env.local` file with your database and authentication credentials:
+   Copy `.env.example` to `.env.local` and update the values:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Then edit `.env.local` with your database and authentication credentials:
    ```env
    # Database
    DATABASE_URL="your-neon-database-url"
