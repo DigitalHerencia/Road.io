@@ -1,0 +1,102 @@
+{  
+  "servers": {
+    "time": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "time-mcp@latest"],
+      "env": { "TIMEZONE": "${input:TIMEZONE}" }
+    },
+    "github-repos-manager": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "github-repos-manager-mcp@latest"],
+      "env": {
+        "GH_TOKEN": "${input:GH_TOKEN}",
+        "GH_DEFAULT_OWNER": "${input:GH_DEFAULT_OWNER}",
+        "GH_DEFAULT_REPO": "${input:GH_DEFAULT_REPO}"
+      }
+    },
+    "neon": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@neondatabase/mcp-server-neon", "start", "${input:NEON_API_KEY}"],
+      "env": { "DATABASE_URL": "${input:DATABASE_URL}" }
+    },
+    "clerk": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@clerk/agent-toolkit", "-p", "local-mcp", "--secret-key", "${input:CLERK_SECRET_KEY}"],
+      "env": {
+        "CLERK_API_KEY": "${input:CLERK_SECRET_KEY}",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "${input:CLERK_PUBLISHABLE}"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking@latest"]
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory@latest"]
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@cyanheads/git-mcp-server"],
+      "env": { "GIT_WORKING_DIRECTORY": "./" }
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:/FleetFusion-MT_RBAC_TMS_SaaS/Road.io"],
+      "env": { "ALLOWED_DIRECTORIES": "${input:ALLOWED_DIRECTORIES}" }
+    },
+    "vitest-runner": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@madrus/vitest-mcp-server@latest"],
+      "env": { "VITEST_PROJECT_DIR": "${input:VITEST_PROJECT_DIR}" }
+    },
+    "eslint": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@eslint/mcp@latest"]
+    },
+    "magic-ui": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "magicui-mcp@latest"]
+    },
+    "prisma": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "prisma", "mcp"],
+      "env": { "DATABASE_URL": "${input:DATABASE_URL}" }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    }
+  },
+  "inputs": [
+    { "id": "TIMEZONE", "type": "promptString", "description": "IANA timezone (e.g., America/Denver)", "password": false },
+    { "id": "GH_TOKEN", "type": "promptString", "description": "GitHub PAT for repo manager", "password": true },
+    { "id": "GH_DEFAULT_OWNER", "type": "promptString", "description": "Default GitHub owner/org", "password": false },
+    { "id": "GH_DEFAULT_REPO", "type": "promptString", "description": "Default GitHub repository", "password": false },
+    { "id": "GITHUB_PAT", "type": "promptString", "description": "GitHub PAT for Actions & main server", "password": true },
+    { "id": "GITHUB_REPOSITORY", "type": "promptString", "description": "owner/repo for GitHub MCP", "password": false },
+    { "id": "NEON_API_KEY", "type": "promptString", "description": "Neon API key", "password": true },
+    { "id": "DATABASE_URL", "type": "promptString", "description": "Neon Database URL", "password": true },
+    { "id": "CLERK_SECRET_KEY", "type": "promptString", "description": "Clerk secret key", "password": true },
+    { "id": "CLERK_PUBLISHABLE", "type": "promptString", "description": "Clerk publishable key", "password": false },
+    { "id": "ALLOWED_DIRECTORIES", "type": "promptString", "description": "Comma-separated list of FS paths", "password": false },
+    { "id": "VITEST_PROJECT_DIR", "type": "promptString", "description": "Absolute path to vitest project root", "password": false }
+  ]
+}

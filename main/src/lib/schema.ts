@@ -1,0 +1,217 @@
+import { pgTable, serial, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+// Enums
+export const systemRoleEnum = pgEnum('system_role', ['ADMIN', 'DISPATCHER', 'DRIVER', 'COMPLIANCE', 'MEMBER']);
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'cancelled', 'past_due', 'trialing']);
+export const loadStatusEnum = pgEnum('load_status', ['pending', 'assigned', 'in_transit', 'delivered', 'cancelled']);
+
+// Organizations table (multi-tenant)
+export const organizations = pgTable('organizations', {
+  id: serial('id').primaryKey(),
+  clerkOrgId: varchar('clerk_org_id', { length: 255 }).unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
+  domain: varchar('domain', { length: 255 }),
+  isActive: boolean('is_active').default(true).notNull(),
+  subscriptionStatus: subscriptionStatusEnum('subscription_status').default('trialing').notNull(),
+  subscriptionPlan: varchar('subscription_plan', { length: 50 }).default('basic'),
+  maxUsers: serial('max_users').default(10),
+  settings: jsonb('settings').default('{}'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Users table with multi-tenant support
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  role: systemRoleEnum('role').default('MEMBER').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Drivers table (extends users)
+export const drivers = pgTable('drivers', {
+  id: serial('id').primaryKey(),
+  userId: serial('user_id').references(() => users.id).notNull(),
+  licenseNumber: varchar('license_number', { length: 50 }),
+  licenseExpiry: timestamp('license_expiry'),
+  dotNumber: varchar('dot_number', { length: 50 }),
+  isAvailable: boolean('is_available').default(true).notNull(),
+  currentLocation: jsonb('current_location'), // { lat, lng, address }
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Vehicles table
+export const vehicles = pgTable('vehicles', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  vin: varchar('vin', { length: 17 }).notNull(),
+  licensePlate: varchar('license_plate', { length: 20 }),
+  make: varchar('make', { length: 50 }),
+  model: varchar('model', { length: 50 }),
+  year: serial('year'),
+  isActive: boolean('is_active').default(true).notNull(),
+  currentDriverId: serial('current_driver_id').references(() => drivers.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Loads table
+export const loads = pgTable('loads', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  loadNumber: varchar('load_number', { length: 50 }).notNull(),
+  status: loadStatusEnum('status').default('pending').notNull(),
+  assignedDriverId: serial('assigned_driver_id').references(() => drivers.id),
+  assignedVehicleId: serial('assigned_vehicle_id').references(() => vehicles.id),
+  pickupLocation: jsonb('pickup_location').notNull(), // { address, lat, lng, datetime }
+  deliveryLocation: jsonb('delivery_location').notNull(), // { address, lat, lng, datetime }
+  weight: serial('weight'), // in pounds
+  distance: serial('distance'), // in miles
+  rate: serial('rate'), // in cents
+  notes: text('notes'),
+  createdById: serial('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Audit logs table
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  userId: serial('user_id').references(() => users.id),
+  action: varchar('action', { length: 100 }).notNull(),
+  resource: varchar('resource', { length: 100 }).notNull(),
+  resourceId: varchar('resource_id', { length: 50 }),
+  details: jsonb('details'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Documents table
+export const documents = pgTable('documents', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  uploadedById: serial('uploaded_by_id').references(() => users.id).notNull(),
+  loadId: serial('load_id').references(() => loads.id),
+  driverId: serial('driver_id').references(() => drivers.id),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileType: varchar('file_type', { length: 50 }).notNull(),
+  fileSize: serial('file_size'), // in bytes
+  documentType: varchar('document_type', { length: 50 }), // 'pod', 'invoice', 'license', etc.
+  isCompliant: boolean('is_compliant').default(false),
+  reviewedById: serial('reviewed_by_id').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Relations
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+  users: many(users),
+  vehicles: many(vehicles),
+  loads: many(loads),
+  auditLogs: many(auditLogs),
+  documents: many(documents),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [users.orgId],
+    references: [organizations.id],
+  }),
+  driver: one(drivers),
+  createdLoads: many(loads),
+  auditLogs: many(auditLogs),
+  uploadedDocuments: many(documents),
+}));
+
+export const driversRelations = relations(drivers, ({ one, many }) => ({
+  user: one(users, {
+    fields: [drivers.userId],
+    references: [users.id],
+  }),
+  currentVehicle: one(vehicles),
+  assignedLoads: many(loads),
+  documents: many(documents),
+}));
+
+export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [vehicles.orgId],
+    references: [organizations.id],
+  }),
+  currentDriver: one(drivers, {
+    fields: [vehicles.currentDriverId],
+    references: [drivers.id],
+  }),
+  assignedLoads: many(loads),
+}));
+
+export const loadsRelations = relations(loads, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [loads.orgId],
+    references: [organizations.id],
+  }),
+  assignedDriver: one(drivers, {
+    fields: [loads.assignedDriverId],
+    references: [drivers.id],
+  }),
+  assignedVehicle: one(vehicles, {
+    fields: [loads.assignedVehicleId],
+    references: [vehicles.id],
+  }),
+  createdBy: one(users, {
+    fields: [loads.createdById],
+    references: [users.id],
+  }),
+  documents: many(documents),
+}));
+
+export const documentsRelations = relations(documents, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documents.orgId],
+    references: [organizations.id],
+  }),
+  uploadedBy: one(users, {
+    fields: [documents.uploadedById],
+    references: [users.id],
+  }),
+  load: one(loads, {
+    fields: [documents.loadId],
+    references: [loads.id],
+  }),
+  driver: one(drivers, {
+    fields: [documents.driverId],
+    references: [drivers.id],
+  }),
+  reviewedBy: one(users, {
+    fields: [documents.reviewedById],
+    references: [users.id],
+  }),
+}));
+
+// Export types
+export type Organization = typeof organizations.$inferSelect;
+export type NewOrganization = typeof organizations.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Driver = typeof drivers.$inferSelect;
+export type NewDriver = typeof drivers.$inferInsert;
+export type Vehicle = typeof vehicles.$inferSelect;
+export type NewVehicle = typeof vehicles.$inferInsert;
+export type Load = typeof loads.$inferSelect;
+export type NewLoad = typeof loads.$inferInsert;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type Document = typeof documents.$inferSelect;
+export type NewDocument = typeof documents.$inferInsert;
