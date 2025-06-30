@@ -6,7 +6,7 @@ The Compliance Management module ensures regulatory compliance by managing docum
 ## 🚀 Core Features (MVP)
 
 ### Document Management
-- [ ] **Document Upload System**
+- [x] **Document Upload System**
   - Multi-file upload capability
   - Document type classification
   - Automatic file validation

@@ -1,0 +1,20 @@
+import { uploadDocumentsAction } from '@/lib/actions/compliance';
+
+export default function UploadDocuments() {
+  return (
+    <form action={uploadDocumentsAction} className="space-y-4" encType="multipart/form-data">
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium">Category</label>
+        <select id="category" name="category" className="border rounded p-2">
+          <option value="driver">Driver</option>
+          <option value="safety">Safety</option>
+        </select>
+      </div>
+      <div>
+        <label htmlFor="documents" className="block text-sm font-medium">Documents</label>
+        <input id="documents" name="documents" type="file" multiple className="block" />
+      </div>
+      <button type="submit" className="px-4 py-2 bg-primary text-white rounded">Upload</button>
+    </form>
+  );
+}

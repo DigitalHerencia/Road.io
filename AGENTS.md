@@ -17,6 +17,8 @@
 - Organize code by feature/domain, not by technical type.
 - Use TypeScript 5+ strict mode, no `any` or unsafe assertions.
 - Place all mutations in `lib/actions/*.ts` with `'use server'`.
+- For Compliance document uploads, use server actions in `lib/actions/compliance.ts`.
+- Save uploaded files under `main/public/uploads` and store metadata in the `documents` table.
 - Validate all inputs with Zod or equivalent schemas.
 - Use Tailwind CSS 4 with design tokens and utility classes.
 - Write production-ready, complete code—no stubs or mock data.
@@ -50,3 +52,4 @@
 - Use the async params pattern for Next.js 15 pages.
 - Always clarify ambiguous requirements before generating code.
 - When in doubt, check `FEATURE_ARCHITECTURE.md`, `CONTRIBUTING.md`, and this file.
+- Ensure compliance upload actions are covered by unit tests using Vitest.
