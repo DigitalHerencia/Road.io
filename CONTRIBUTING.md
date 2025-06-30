@@ -25,6 +25,7 @@ Thank you for your interest in contributing! This project is optimized for both 
 - Use TypeScript 5+, React 19, Next.js 15, Tailwind 4, Drizzle ORM, and Clerk Auth as per project stack.
 - Place all business logic in `lib/`, UI in `components/`, and feature modules in `features/`.
 - Write tests for all critical logic.
+- CI runs `npm run lint`, `npm run typecheck`, and `npm run test` via `.github/workflows/ci.yml`. Ensure these commands pass locally before pushing.
 - Document all significant changes.
 
 ## Review & Merging
