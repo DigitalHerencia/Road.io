@@ -84,7 +84,7 @@ async function detectHosViolations(driverId: number) {
       .values({
         orgId: logs[0]?.orgId ?? 0,
         driverId,
-        logId: logs.at(-1)?.id,
+        logId: logs.at(-1)?.id, // logs are now sorted, so this reliably gets the latest log
         type: "MAX_DRIVE",
         message: "Exceeded 11 hour driving limit in 24h",
       })
