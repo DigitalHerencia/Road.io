@@ -44,6 +44,12 @@ export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "CAR",
   "OTHER",
 ]);
+export const fuelPaymentMethodEnum = pgEnum("fuel_payment_method", [
+  "CARD",
+  "CASH",
+  "OTHER",
+]);
+export const fuelTaxStatusEnum = pgEnum("fuel_tax_status", ["PAID", "FREE"]);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable("organizations", {
@@ -206,6 +212,36 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Fuel purchases table
+export const fuelPurchases = pgTable("fuel_purchases", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: serial("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  vehicleId: serial("vehicle_id")
+    .references(() => vehicles.id)
+    .notNull(),
+  purchaseDate: timestamp("purchase_date").notNull(),
+  quantity: integer("quantity"), // gallons
+  pricePerUnit: integer("price_per_unit"), // cents
+  totalCost: integer("total_cost"), // cents
+  vendor: varchar("vendor", { length: 255 }),
+  state: varchar("state", { length: 2 }),
+  taxStatus: fuelTaxStatusEnum("tax_status").default("PAID").notNull(),
+  paymentMethod: fuelPaymentMethodEnum("payment_method")
+    .default("CARD")
+    .notNull(),
+  receiptUrl: text("receipt_url"),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Trips table
 export const trips = pgTable("trips", {
   id: serial("id").primaryKey(),
@@ -286,6 +322,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   auditLogs: many(auditLogs),
   documents: many(documents),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
   hosLogs: many(hosLogs),
   hosViolations: many(hosViolations),
 }));
@@ -310,6 +347,7 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   assignedLoads: many(loads),
   documents: many(documents),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
   hosLogs: many(hosLogs),
   hosViolations: many(hosViolations),
 }));
@@ -325,6 +363,7 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
   }),
   assignedLoads: many(loads),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
 }));
 
 export const loadsRelations = relations(loads, ({ one, many }) => ({
@@ -430,6 +469,8 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
+export type FuelPurchase = typeof fuelPurchases.$inferSelect;
+export type NewFuelPurchase = typeof fuelPurchases.$inferInsert;
 export type UserInvitation = typeof userInvitations.$inferSelect;
 export type NewUserInvitation = typeof userInvitations.$inferInsert;
 export type UserPreference = typeof userPreferences.$inferSelect;
