@@ -175,6 +175,15 @@ export const userInvitations = pgTable("user_invitations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User preferences table
+export const userPreferences = pgTable('user_preferences', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull().unique(),
+  preferences: jsonb('preferences').default('{}').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Documents table
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
@@ -399,6 +408,13 @@ export const userInvitationsRelations = relations(
   }),
 );
 
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
 // Export types
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
@@ -416,6 +432,7 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type UserInvitation = typeof userInvitations.$inferSelect;
 export type NewUserInvitation = typeof userInvitations.$inferInsert;
+export type UserPreference = typeof userPreferences.$inferSelect;
 export type HosLog = typeof hosLogs.$inferSelect;
 export type NewHosLog = typeof hosLogs.$inferInsert;
 export type HosViolation = typeof hosViolations.$inferSelect;
