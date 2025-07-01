@@ -10,7 +10,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { SystemRoles } from '@/types/rbac'
 
 const updateSchema = z.object({
-  id: z.string(),
+  id: z.coerce.number(),
   name: z.string().optional(),
   email: z.string().email(),
   role: z.nativeEnum(SystemRoles),
