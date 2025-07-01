@@ -178,7 +178,7 @@ export const userInvitations = pgTable("user_invitations", {
 // User preferences table
 export const userPreferences = pgTable('user_preferences', {
   id: serial('id').primaryKey(),
-  userId: serial('user_id').references(() => users.id).notNull().unique(),
+  userId: integer('user_id').references(() => users.id).notNull().unique(),
   preferences: jsonb('preferences').default('{}').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
