@@ -1,4 +1,5 @@
-import { pgTable, serial, text, timestamp, boolean, varchar, jsonb, pgEnum, integer } from 'drizzle-orm/pg-core';
+
+import { pgTable, serial, integer, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -67,6 +68,7 @@ export const vehicles = pgTable('vehicles', {
   ownerInfo: varchar('owner_info', { length: 255 }),
   photoUrl: text('photo_url'),
   status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
+
   isActive: boolean('is_active').default(true).notNull(),
   currentDriverId: serial('current_driver_id').references(() => drivers.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -103,6 +105,18 @@ export const auditLogs = pgTable('audit_logs', {
   details: jsonb('details'),
   ipAddress: varchar('ip_address', { length: 45 }),
   userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// User invitations table
+export const userInvitations = pgTable('user_invitations', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  role: systemRoleEnum('role').default('MEMBER').notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  acceptedAt: timestamp('accepted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -209,6 +223,13 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   }),
 }));
 
+export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [userInvitations.orgId],
+    references: [organizations.id],
+  }),
+}));
+
 // Export types
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
@@ -224,3 +245,5 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
+export type UserInvitation = typeof userInvitations.$inferSelect;
+export type NewUserInvitation = typeof userInvitations.$inferInsert;

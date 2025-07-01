@@ -1,5 +1,6 @@
 {
-  "id": "8b706de5-34e5-4c77-84da-3156299aa09a",
+
+  "id": "feeb5f89-9bb7-461a-98f8-3f6ab505935b",
   "prevId": "8cefeeac-9d37-4423-b6d2-c6da035dbafa",
   "version": "7",
   "dialect": "postgresql",
@@ -777,6 +778,7 @@
         },
         "capacity": {
           "name": "capacity",
+
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -813,6 +815,7 @@
           "notNull": true,
           "default": "'ACTIVE'"
         },
+
         "is_active": {
           "name": "is_active",
           "type": "boolean",
@@ -929,6 +932,7 @@
         "CAR",
         "OTHER"
       ]
+
     }
   },
   "schemas": {},
