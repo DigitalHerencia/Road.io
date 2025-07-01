@@ -7,7 +7,7 @@ This page summarizes the main features and user flows in Road.io.
 1. **Sign Up & Onboard:** Register and onboard your company.
 2. **Invite Team Members:** Send email invites to users.
 3. **Add Vehicles:** Populate fleet data.
-4. **Add Drivers:** Add driver profiles.
+4. **Add Drivers:** Register driver profiles and manage licensing.
 5. **Create Loads:** Schedule deliveries.
 6. **Track Operations:** Use dashboards and modules.
 7. **Explore Modules:** See [Module Guides](#module-guides).

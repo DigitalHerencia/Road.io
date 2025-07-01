@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { createUser } from '@/lib/db-utils';
+import { sendWelcomeEmailAction } from '@/lib/actions/admin';
 
 const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
@@ -64,11 +65,14 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name } = evt.data;
       
       // Create user in your database
+      const email = email_addresses[0]?.email_address;
       await createUser({
-        email: email_addresses[ 0 ]?.email_address,
-        name: first_name && last_name ? `${ first_name } ${ last_name }` : first_name || last_name,
+        email,
+        name: first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name,
         clerkUserId: ''
       });
+
+      await sendWelcomeEmailAction(email, 'Road.io');
 
       console.log(`User ${id} created in database`);
     } catch (error) {
