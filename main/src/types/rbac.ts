@@ -30,6 +30,7 @@ export interface UserWithRole {
   orgId: string;
   permissions: string[];
   isActive: boolean;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   createdAt: Date;
   updatedAt: Date;
 }
