@@ -1,160 +1,260 @@
-
-import { pgTable, serial, integer, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  serial,
+  integer,
+  text,
+  timestamp,
+  boolean,
+  varchar,
+  jsonb,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 // Enums
-export const systemRoleEnum = pgEnum('system_role', ['ADMIN', 'DISPATCHER', 'DRIVER', 'COMPLIANCE', 'MEMBER']);
-export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'cancelled', 'past_due', 'trialing']);
-export const loadStatusEnum = pgEnum('load_status', ['pending', 'assigned', 'in_transit', 'delivered', 'cancelled']);
-export const vehicleStatusEnum = pgEnum('vehicle_status', ['ACTIVE', 'MAINTENANCE', 'RETIRED']);
-export const vehicleTypeEnum = pgEnum('vehicle_type', ['TRACTOR', 'TRAILER', 'VAN', 'CAR', 'OTHER']);
+export const systemRoleEnum = pgEnum("system_role", [
+  "ADMIN",
+  "DISPATCHER",
+  "DRIVER",
+  "COMPLIANCE",
+  "MEMBER",
+]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "cancelled",
+  "past_due",
+  "trialing",
+]);
+export const loadStatusEnum = pgEnum("load_status", [
+  "pending",
+  "assigned",
+  "in_transit",
+  "delivered",
+  "cancelled",
+]);
+export const vehicleStatusEnum = pgEnum("vehicle_status", [
+  "ACTIVE",
+  "MAINTENANCE",
+  "RETIRED",
+]);
+export const vehicleTypeEnum = pgEnum("vehicle_type", [
+  "TRACTOR",
+  "TRAILER",
+  "VAN",
+  "CAR",
+  "OTHER",
+]);
+export const fuelPaymentMethodEnum = pgEnum("fuel_payment_method", [
+  "CARD",
+  "CASH",
+  "OTHER",
+]);
+export const fuelTaxStatusEnum = pgEnum("fuel_tax_status", ["PAID", "FREE"]);
 
 // Organizations table (multi-tenant)
-export const organizations = pgTable('organizations', {
-  id: serial('id').primaryKey(),
-  clerkOrgId: varchar('clerk_org_id', { length: 255 }).unique(),
-  name: varchar('name', { length: 255 }).notNull(),
-  slug: varchar('slug', { length: 100 }).notNull().unique(),
-  domain: varchar('domain', { length: 255 }),
-  isActive: boolean('is_active').default(true).notNull(),
-  subscriptionStatus: subscriptionStatusEnum('subscription_status').default('trialing').notNull(),
-  subscriptionPlan: varchar('subscription_plan', { length: 50 }).default('basic'),
-  maxUsers: serial('max_users').default(10),
-  settings: jsonb('settings').default('{}'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const organizations = pgTable("organizations", {
+  id: serial("id").primaryKey(),
+  clerkOrgId: varchar("clerk_org_id", { length: 255 }).unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  domain: varchar("domain", { length: 255 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  subscriptionStatus: subscriptionStatusEnum("subscription_status")
+    .default("trialing")
+    .notNull(),
+  subscriptionPlan: varchar("subscription_plan", { length: 50 }).default(
+    "basic",
+  ),
+  maxUsers: serial("max_users").default(10),
+  settings: jsonb("settings").default("{}"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Users table with multi-tenant support
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  clerkUserId: varchar('clerk_user_id', { length: 255 }).notNull().unique(),
-  email: varchar('email', { length: 255 }).notNull(),
-  name: varchar('name', { length: 255 }),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  role: systemRoleEnum('role').default('MEMBER').notNull(),
-  isActive: boolean('is_active').default(true).notNull(),
-  lastLoginAt: timestamp('last_login_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  role: systemRoleEnum("role").default("MEMBER").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Drivers table (extends users)
-export const drivers = pgTable('drivers', {
-  id: serial('id').primaryKey(),
-  userId: serial('user_id').references(() => users.id).notNull(),
-  licenseNumber: varchar('license_number', { length: 50 }),
-  licenseExpiry: timestamp('license_expiry'),
-  dotNumber: varchar('dot_number', { length: 50 }),
-  isAvailable: boolean('is_available').default(true).notNull(),
-  currentLocation: jsonb('current_location'), // { lat, lng, address }
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const drivers = pgTable("drivers", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id")
+    .references(() => users.id)
+    .notNull(),
+  licenseNumber: varchar("license_number", { length: 50 }),
+  licenseExpiry: timestamp("license_expiry"),
+  dotNumber: varchar("dot_number", { length: 50 }),
+  isAvailable: boolean("is_available").default(true).notNull(),
+  currentLocation: jsonb("current_location"), // { lat, lng, address }
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Vehicles table
-export const vehicles = pgTable('vehicles', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  vin: varchar('vin', { length: 17 }).notNull(),
-  licensePlate: varchar('license_plate', { length: 20 }),
-  make: varchar('make', { length: 50 }),
-  model: varchar('model', { length: 50 }),
-  year: serial('year'),
-  type: vehicleTypeEnum('type'),
-  capacity: integer('capacity'),
-  insuranceProvider: varchar('insurance_provider', { length: 100 }),
-  insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
-  ownerInfo: varchar('owner_info', { length: 255 }),
-  photoUrl: text('photo_url'),
-  status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
+export const vehicles = pgTable("vehicles", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  vin: varchar("vin", { length: 17 }).notNull(),
+  licensePlate: varchar("license_plate", { length: 20 }),
+  make: varchar("make", { length: 50 }),
+  model: varchar("model", { length: 50 }),
+  year: serial("year"),
+  type: vehicleTypeEnum("type"),
+  capacity: integer("capacity"),
+  insuranceProvider: varchar("insurance_provider", { length: 100 }),
+  insurancePolicyNumber: varchar("insurance_policy_number", { length: 100 }),
+  ownerInfo: varchar("owner_info", { length: 255 }),
+  photoUrl: text("photo_url"),
+  status: vehicleStatusEnum("status").default("ACTIVE").notNull(),
 
-  isActive: boolean('is_active').default(true).notNull(),
-  currentDriverId: serial('current_driver_id').references(() => drivers.id),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  currentDriverId: serial("current_driver_id").references(() => drivers.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Loads table
-export const loads = pgTable('loads', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  loadNumber: varchar('load_number', { length: 50 }).notNull(),
-  status: loadStatusEnum('status').default('pending').notNull(),
-  assignedDriverId: serial('assigned_driver_id').references(() => drivers.id),
-  assignedVehicleId: serial('assigned_vehicle_id').references(() => vehicles.id),
-  pickupLocation: jsonb('pickup_location').notNull(), // { address, lat, lng, datetime }
-  deliveryLocation: jsonb('delivery_location').notNull(), // { address, lat, lng, datetime }
-  weight: serial('weight'), // in pounds
-  distance: serial('distance'), // in miles
-  rate: serial('rate'), // in cents
-  notes: text('notes'),
-  createdById: serial('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const loads = pgTable("loads", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  loadNumber: varchar("load_number", { length: 50 }).notNull(),
+  status: loadStatusEnum("status").default("pending").notNull(),
+  assignedDriverId: serial("assigned_driver_id").references(() => drivers.id),
+  assignedVehicleId: serial("assigned_vehicle_id").references(
+    () => vehicles.id,
+  ),
+  pickupLocation: jsonb("pickup_location").notNull(), // { address, lat, lng, datetime }
+  deliveryLocation: jsonb("delivery_location").notNull(), // { address, lat, lng, datetime }
+  weight: serial("weight"), // in pounds
+  distance: serial("distance"), // in miles
+  rate: serial("rate"), // in cents
+  notes: text("notes"),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Audit logs table
-export const auditLogs = pgTable('audit_logs', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  userId: serial('user_id').references(() => users.id),
-  action: varchar('action', { length: 100 }).notNull(),
-  resource: varchar('resource', { length: 100 }).notNull(),
-  resourceId: varchar('resource_id', { length: 50 }),
-  details: jsonb('details'),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  userId: serial("user_id").references(() => users.id),
+  action: varchar("action", { length: 100 }).notNull(),
+  resource: varchar("resource", { length: 100 }).notNull(),
+  resourceId: varchar("resource_id", { length: 50 }),
+  details: jsonb("details"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // User invitations table
-export const userInvitations = pgTable('user_invitations', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  email: varchar('email', { length: 255 }).notNull(),
-  role: systemRoleEnum('role').default('MEMBER').notNull(),
-  token: varchar('token', { length: 255 }).notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-  acceptedAt: timestamp('accepted_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const userInvitations = pgTable("user_invitations", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  role: systemRoleEnum("role").default("MEMBER").notNull(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Documents table
-export const documents = pgTable('documents', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  uploadedById: serial('uploaded_by_id').references(() => users.id).notNull(),
-  loadId: serial('load_id').references(() => loads.id),
-  driverId: serial('driver_id').references(() => drivers.id),
-  fileName: varchar('file_name', { length: 255 }).notNull(),
-  fileUrl: text('file_url').notNull(),
-  fileType: varchar('file_type', { length: 50 }).notNull(),
-  fileSize: serial('file_size'), // in bytes
-  documentType: varchar('document_type', { length: 50 }), // 'pod', 'invoice', 'license', etc.
-  isCompliant: boolean('is_compliant').default(false),
-  reviewedById: serial('reviewed_by_id').references(() => users.id),
-  reviewedAt: timestamp('reviewed_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  uploadedById: serial("uploaded_by_id")
+    .references(() => users.id)
+    .notNull(),
+  loadId: serial("load_id").references(() => loads.id),
+  driverId: serial("driver_id").references(() => drivers.id),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileType: varchar("file_type", { length: 50 }).notNull(),
+  fileSize: serial("file_size"), // in bytes
+  documentType: varchar("document_type", { length: 50 }), // 'pod', 'invoice', 'license', etc.
+  isCompliant: boolean("is_compliant").default(false),
+  reviewedById: serial("reviewed_by_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Fuel purchases table
+export const fuelPurchases = pgTable("fuel_purchases", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: serial("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  vehicleId: serial("vehicle_id")
+    .references(() => vehicles.id)
+    .notNull(),
+  purchaseDate: timestamp("purchase_date").notNull(),
+  quantity: integer("quantity"), // gallons
+  pricePerUnit: integer("price_per_unit"), // cents
+  totalCost: integer("total_cost"), // cents
+  vendor: varchar("vendor", { length: 255 }),
+  state: varchar("state", { length: 2 }),
+  taxStatus: fuelTaxStatusEnum("tax_status").default("PAID").notNull(),
+  paymentMethod: fuelPaymentMethodEnum("payment_method")
+    .default("CARD")
+    .notNull(),
+  receiptUrl: text("receipt_url"),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Trips table
-export const trips = pgTable('trips', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  driverId: serial('driver_id').references(() => drivers.id),
-  vehicleId: serial('vehicle_id').references(() => vehicles.id),
-  loadId: serial('load_id').references(() => loads.id),
-  startLocation: jsonb('start_location').notNull(), // { lat, lng, state }
-  endLocation: jsonb('end_location').notNull(), // { lat, lng, state }
-  distance: serial('distance'), // in miles
-  jurisdictions: jsonb('jurisdictions').default('[]'), // [{state, miles}]
-  isInterstate: boolean('is_interstate').default(false),
-  startedAt: timestamp('started_at').notNull(),
-  endedAt: timestamp('ended_at').notNull(),
-  createdById: serial('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const trips = pgTable("trips", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: serial("driver_id").references(() => drivers.id),
+  vehicleId: serial("vehicle_id").references(() => vehicles.id),
+  loadId: serial("load_id").references(() => loads.id),
+  startLocation: jsonb("start_location").notNull(), // { lat, lng, state }
+  endLocation: jsonb("end_location").notNull(), // { lat, lng, state }
+  distance: serial("distance"), // in miles
+  jurisdictions: jsonb("jurisdictions").default("[]"), // [{state, miles}]
+  isInterstate: boolean("is_interstate").default(false),
+  startedAt: timestamp("started_at").notNull(),
+  endedAt: timestamp("ended_at").notNull(),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Relations
@@ -165,6 +265,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   auditLogs: many(auditLogs),
   documents: many(documents),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -187,6 +288,7 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   assignedLoads: many(loads),
   documents: many(documents),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -200,6 +302,7 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
   }),
   assignedLoads: many(loads),
   trips: many(trips),
+  fuelPurchases: many(fuelPurchases),
 }));
 
 export const loadsRelations = relations(loads, ({ one, many }) => ({
@@ -246,13 +349,15 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   }),
 }));
 
-
-export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [userInvitations.orgId],
-    references: [organizations.id],
+export const userInvitationsRelations = relations(
+  userInvitations,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [userInvitations.orgId],
+      references: [organizations.id],
+    }),
   }),
-}));
+);
 
 // Export types
 export type Organization = typeof organizations.$inferSelect;
@@ -269,5 +374,7 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
+export type FuelPurchase = typeof fuelPurchases.$inferSelect;
+export type NewFuelPurchase = typeof fuelPurchases.$inferInsert;
 export type UserInvitation = typeof userInvitations.$inferSelect;
 export type NewUserInvitation = typeof userInvitations.$inferInsert;
