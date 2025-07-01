@@ -1,12 +1,12 @@
 'use server';
 
 import { db } from '../db';
-import { organizations } from '../schema';
-import { requirePermission } from '../rbac';
+import { organizations, userPreferences } from '../schema';
+import { requirePermission, requireAuth } from '../rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import type { CompanyProfile } from '@/types/settings';
+import type { CompanyProfile, UserPreferences } from '@/types/settings';
 
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),
@@ -16,6 +16,18 @@ const companyProfileSchema = z.object({
   ein: z.string().optional(),
   businessHoursOpen: z.string().optional(),
   businessHoursClose: z.string().optional(),
+});
+
+const userPreferencesSchema = z.object({
+  displayName: z.string().optional(),
+  avatarUrl: z.string().url().optional(),
+  language: z.string().optional(),
+  timeZone: z.string().optional(),
+  dateFormat: z.string().optional(),
+  theme: z.enum(['light', 'dark']).optional(),
+  units: z.enum(['imperial', 'metric']).optional(),
+  currency: z.string().optional(),
+  numberFormat: z.string().optional(),
 });
 
 export async function updateCompanyProfileAction(formData: FormData) {
@@ -67,4 +79,50 @@ export async function updateCompanyProfileAction(formData: FormData) {
     resourceId: user.orgId.toString(),
     details: { updatedBy: user.id, profile },
   });
+}
+
+export async function updateUserPreferencesAction(formData: FormData) {
+  const user = await requireAuth();
+
+  const raw = {
+    displayName: formData.get('displayName') || undefined,
+    avatarUrl: formData.get('avatarUrl') || undefined,
+    language: formData.get('language') || undefined,
+    timeZone: formData.get('timeZone') || undefined,
+    dateFormat: formData.get('dateFormat') || undefined,
+    theme: formData.get('theme') || undefined,
+    units: formData.get('units') || undefined,
+    currency: formData.get('currency') || undefined,
+    numberFormat: formData.get('numberFormat') || undefined,
+  };
+
+  const prefs = userPreferencesSchema.parse(raw);
+
+  const [existing] = await db
+    .select({ id: userPreferences.id, preferences: userPreferences.preferences })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, parseInt(user.id)));
+
+  const preferences: UserPreferences = { ...(existing?.preferences || {}), ...prefs };
+
+  if (existing) {
+    await db
+      .update(userPreferences)
+      .set({ preferences, updatedAt: new Date() })
+      .where(eq(userPreferences.userId, parseInt(user.id)));
+  } else {
+    await db.insert(userPreferences).values({
+      userId: parseInt(user.id),
+      preferences,
+    });
+  }
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.USER_UPDATE,
+    resource: AUDIT_RESOURCES.USER,
+    resourceId: user.id,
+    details: { preferences },
+  });
+
+  return { success: true };
 }

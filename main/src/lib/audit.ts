@@ -120,6 +120,13 @@ export const AUDIT_ACTIONS = {
   FUEL_PURCHASE_CREATE: "fuel_purchase.create",
   FUEL_CARD_IMPORT: "fuel_card.import",
 
+
+  // HOS actions
+  HOS_LOG_CREATE: 'hos.log.create',
+  HOS_VIOLATION: 'hos.violation',
+  HOS_REPORT_GENERATE: 'hos.report.generate',
+  
+
   // Document actions
   DOCUMENT_UPLOAD: "document.upload",
   DOCUMENT_REVIEW: "document.review",
@@ -138,13 +145,15 @@ export const AUDIT_ACTIONS = {
  * Common audit resources
  */
 export const AUDIT_RESOURCES = {
-  USER: "user",
-  LOAD: "load",
-  DRIVER: "driver",
-  VEHICLE: "vehicle",
-  DOCUMENT: "document",
-  ORGANIZATION: "organization",
-  COMPLIANCE: "compliance",
-  TRIP: "trip",
   FUEL_PURCHASE: "fuel_purchase",
+  USER: 'user',
+  LOAD: 'load',
+  DRIVER: 'driver',
+  VEHICLE: 'vehicle',
+  DOCUMENT: 'document',
+  ORGANIZATION: 'organization',
+  COMPLIANCE: 'compliance',
+  TRIP: 'trip',
+  HOS_LOG: 'hos_log',
+  HOS_REPORT: 'hos_report',
 } as const;

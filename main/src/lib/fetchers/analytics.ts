@@ -14,10 +14,26 @@ export interface CapacityUtilization {
   utilizationRate: number;
 }
 
+export interface OnTimeDelivery {
+  totalDelivered: number;
+  onTimeDeliveries: number;
+  onTimeRate: number;
+}
+
+export interface CostPerMile {
+  totalCost: number;
+  totalMiles: number;
+  costPerMile: number;
+}
+
 const MAX_CAPACITY_PER_VEHICLE = 40000; // pounds
 
 function calcRate(total: number, used: number): number {
   return total === 0 ? 0 : Number((used / total).toFixed(2));
+}
+
+function calcCostPerMile(totalCost: number, totalMiles: number): number {
+  return totalMiles === 0 ? 0 : Number((totalCost / totalMiles).toFixed(2));
 }
 
 export async function fetchVehicleUtilization(orgId: number) {
@@ -69,4 +85,57 @@ export async function fetchCapacityUtilization(orgId: number) {
   } satisfies CapacityUtilization;
 }
 
-export { calcRate as calculateUtilizationRate };
+export async function fetchOnTimeDeliveryRate(orgId: number) {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{ total_delivered: number; on_time: number }>(
+    sql`
+      SELECT
+        count(*) FILTER (WHERE status = 'delivered')::int AS total_delivered,
+        count(*) FILTER (
+          WHERE status = 'delivered'
+            AND updated_at <= (delivery_location->>'datetime')::timestamp
+        )::int AS on_time
+      FROM loads
+      WHERE org_id = ${orgId}
+    `
+  );
+
+  const totalDelivered = result.rows[0]?.total_delivered ?? 0;
+  const onTime = result.rows[0]?.on_time ?? 0;
+
+  return {
+    totalDelivered,
+    onTimeDeliveries: onTime,
+    onTimeRate: calcRate(totalDelivered, onTime),
+  } satisfies OnTimeDelivery;
+}
+
+export async function fetchCostPerMile(orgId: number) {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{ total_cost: number; total_miles: number }>(
+    sql`
+      SELECT
+        coalesce(sum(rate),0)::int AS total_cost,
+        coalesce(sum(distance),0)::int AS total_miles
+      FROM loads
+      WHERE org_id = ${orgId} AND status = 'delivered'
+    `
+  );
+
+  const totalCost = result.rows[0]?.total_cost ?? 0;
+  const totalMiles = result.rows[0]?.total_miles ?? 0;
+
+  return {
+    totalCost,
+    totalMiles,
+    costPerMile: calcCostPerMile(totalCost, totalMiles),
+  } satisfies CostPerMile;
+}
+
+export {
+  calcRate as calculateUtilizationRate,
+  calcRate as calculateOnTimeRate,
+  calcCostPerMile,
+};

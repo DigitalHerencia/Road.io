@@ -103,24 +103,23 @@ export const drivers = pgTable("drivers", {
 });
 
 // Vehicles table
-export const vehicles = pgTable("vehicles", {
-  id: serial("id").primaryKey(),
-  orgId: serial("org_id")
-    .references(() => organizations.id)
-    .notNull(),
-  vin: varchar("vin", { length: 17 }).notNull(),
-  licensePlate: varchar("license_plate", { length: 20 }),
-  make: varchar("make", { length: 50 }),
-  model: varchar("model", { length: 50 }),
-  year: serial("year"),
-  type: vehicleTypeEnum("type"),
-  capacity: integer("capacity"),
-  insuranceProvider: varchar("insurance_provider", { length: 100 }),
-  insurancePolicyNumber: varchar("insurance_policy_number", { length: 100 }),
-  ownerInfo: varchar("owner_info", { length: 255 }),
-  photoUrl: text("photo_url"),
-  status: vehicleStatusEnum("status").default("ACTIVE").notNull(),
-
+export const vehicles = pgTable('vehicles', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  vin: varchar('vin', { length: 17 }).notNull(),
+  licensePlate: varchar('license_plate', { length: 20 }),
+  make: varchar('make', { length: 50 }),
+  model: varchar('model', { length: 50 }),
+  year: serial('year'),
+  type: vehicleTypeEnum('type'),
+  capacity: integer('capacity'),
+  insuranceProvider: varchar('insurance_provider', { length: 100 }),
+  insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
+  ownerInfo: varchar('owner_info', { length: 255 }),
+  photoUrl: text('photo_url'),
+  nextMaintenanceDate: timestamp('next_maintenance_date'),
+  nextInspectionDate: timestamp('next_inspection_date'),
+  status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   currentDriverId: serial("current_driver_id").references(() => drivers.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -180,6 +179,15 @@ export const userInvitations = pgTable("user_invitations", {
   expiresAt: timestamp("expires_at").notNull(),
   acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User preferences table
+export const userPreferences = pgTable('user_preferences', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull().unique(),
+  preferences: jsonb('preferences').default('{}').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Documents table
@@ -257,6 +265,55 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Hours of Service enums
+export const hosStatusEnum = pgEnum("hos_status", [
+  "OFF_DUTY",
+  "SLEEPER",
+  "DRIVING",
+  "ON_DUTY",
+]);
+export const hosSourceEnum = pgEnum("hos_source", ["MANUAL", "ELD"]);
+export const hosViolationTypeEnum = pgEnum("hos_violation_type", [
+  "MAX_DRIVE",
+  "SHIFT_LIMIT",
+  "CYCLE_LIMIT",
+]);
+
+// HOS logs table
+export const hosLogs = pgTable("hos_logs", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: serial("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  status: hosStatusEnum("status").notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  location: jsonb("location"), // { lat, lng, address }
+  notes: text("notes"),
+  source: hosSourceEnum("source").default("MANUAL").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// HOS violations table
+export const hosViolations = pgTable("hos_violations", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: serial("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  logId: serial("log_id").references(() => hosLogs.id),
+  type: hosViolationTypeEnum("type").notNull(),
+  message: text("message").notNull(),
+  occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -266,6 +323,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   documents: many(documents),
   trips: many(trips),
   fuelPurchases: many(fuelPurchases),
+  hosLogs: many(hosLogs),
+  hosViolations: many(hosViolations),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -289,6 +348,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   documents: many(documents),
   trips: many(trips),
   fuelPurchases: many(fuelPurchases),
+  hosLogs: many(hosLogs),
+  hosViolations: many(hosViolations),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -326,6 +387,33 @@ export const loadsRelations = relations(loads, ({ one, many }) => ({
   trips: many(trips),
 }));
 
+export const hosLogsRelations = relations(hosLogs, ({ one, many }) => ({
+  driver: one(drivers, {
+    fields: [hosLogs.driverId],
+    references: [drivers.id],
+  }),
+  organization: one(organizations, {
+    fields: [hosLogs.orgId],
+    references: [organizations.id],
+  }),
+  violations: many(hosViolations),
+}));
+
+export const hosViolationsRelations = relations(hosViolations, ({ one }) => ({
+  log: one(hosLogs, {
+    fields: [hosViolations.logId],
+    references: [hosLogs.id],
+  }),
+  driver: one(drivers, {
+    fields: [hosViolations.driverId],
+    references: [drivers.id],
+  }),
+  organization: one(organizations, {
+    fields: [hosViolations.orgId],
+    references: [organizations.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -359,6 +447,13 @@ export const userInvitationsRelations = relations(
   }),
 );
 
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
 // Export types
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
@@ -378,3 +473,8 @@ export type FuelPurchase = typeof fuelPurchases.$inferSelect;
 export type NewFuelPurchase = typeof fuelPurchases.$inferInsert;
 export type UserInvitation = typeof userInvitations.$inferSelect;
 export type NewUserInvitation = typeof userInvitations.$inferInsert;
+export type UserPreference = typeof userPreferences.$inferSelect;
+export type HosLog = typeof hosLogs.$inferSelect;
+export type NewHosLog = typeof hosLogs.$inferInsert;
+export type HosViolation = typeof hosViolations.$inferSelect;
+export type NewHosViolation = typeof hosViolations.$inferInsert;
