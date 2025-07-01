@@ -2,7 +2,13 @@ import { uploadDocumentsAction } from '@/lib/actions/compliance';
 
 export default function UploadDocuments() {
   return (
-    <form action={uploadDocumentsAction} className="space-y-4" encType="multipart/form-data">
+    <form
+      action={async (formData) => {
+        await uploadDocumentsAction(formData);
+      }}
+      className="space-y-4"
+      encType="multipart/form-data"
+    >
       <div>
         <label htmlFor="category" className="block text-sm font-medium">Category</label>
         <select id="category" name="category" className="border rounded p-2">

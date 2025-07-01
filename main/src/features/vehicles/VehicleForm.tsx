@@ -4,14 +4,43 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
+const ALLOWED_TYPES = ['TRACTOR', 'TRAILER', 'VAN', 'CAR', 'OTHER'] as const
+type AllowedType = typeof ALLOWED_TYPES[number]
+
 interface VehicleFormProps {
   vehicle?: Vehicle
 }
 
 export default function VehicleForm({ vehicle }: VehicleFormProps) {
-  const action = vehicle ? updateVehicle.bind(null, vehicle.id) : createVehicle
   return (
-    <form action={action} className="space-y-4" encType="multipart/form-data">
+    <form
+      action={async (formData: FormData) => {
+        const status = formData.get('status') as 'ACTIVE' | 'MAINTENANCE' | 'RETIRED' | undefined
+        const typeValue = formData.get('type') as string
+        const type = ALLOWED_TYPES.includes(typeValue as AllowedType) ? typeValue as AllowedType : undefined
+        const data = {
+          vin: formData.get('vin') as string,
+          licensePlate: formData.get('licensePlate') as string,
+          make: formData.get('make') as string,
+          model: formData.get('model') as string,
+          year: Number(formData.get('year')),
+          type,
+          capacity: formData.get('capacity') ? Number(formData.get('capacity')) : undefined,
+          insuranceProvider: formData.get('insuranceProvider') as string,
+          insurancePolicyNumber: formData.get('insurancePolicyNumber') as string,
+          ownerInfo: formData.get('ownerInfo') as string,
+          photoUrl: formData.get('photoUrl') as string,
+          status, // now correctly typed
+        }
+        if (vehicle) {
+          await updateVehicle(vehicle.id, data)
+        } else {
+          await createVehicle(data)
+        }
+      }}
+      className="space-y-4"
+      encType="multipart/form-data"
+    >
       <div className="space-y-2">
         <Label htmlFor="vin">VIN</Label>
         <Input id="vin" name="vin" defaultValue={vehicle?.vin} required />
@@ -34,7 +63,19 @@ export default function VehicleForm({ vehicle }: VehicleFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="type">Type</Label>
-        <Input id="type" name="type" defaultValue={vehicle?.type ?? ''} />
+        <select
+          id="type"
+          name="type"
+          defaultValue={vehicle?.type ?? ''}
+          className="border rounded h-9 px-3"
+        >
+          <option value="">Select type</option>
+          {ALLOWED_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t.charAt(0) + t.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="capacity">Capacity</Label>

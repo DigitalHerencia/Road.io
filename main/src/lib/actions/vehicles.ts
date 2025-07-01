@@ -8,13 +8,17 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
+// Allowed vehicle types as per your DB schema
+const ALLOWED_TYPES = ['TRACTOR', 'TRAILER', 'VAN', 'CAR', 'OTHER'] as const;
+type AllowedType = typeof ALLOWED_TYPES[number];
+
 export const vehicleInputSchema = z.object({
   vin: z.string().min(1),
   licensePlate: z.string().min(1),
   make: z.string().min(1),
   model: z.string().min(1),
   year: z.coerce.number().int().gte(1900),
-  type: z.string().optional(),
+  type: z.enum(ALLOWED_TYPES).optional(),
   capacity: z.coerce.number().int().optional(),
   insuranceProvider: z.string().optional(),
   insurancePolicyNumber: z.string().optional(),
@@ -26,13 +30,30 @@ export type VehicleInput = z.infer<typeof vehicleInputSchema>
 
 export async function createVehicle(data: VehicleInput) {
   const user = await requirePermission('org:admin:manage_users_and_roles')
-  const values = vehicleInputSchema.parse(data)
+  const values = vehicleInputSchema.parse({
+    ...data,
+    // Optionally map/validate type here if needed
+    type: data.type && ALLOWED_TYPES.includes(data.type as AllowedType) ? data.type : undefined,
+  })
 
-  const [vehicle] = await db.insert(vehicles).values({
+  // Only include fields that exist in the DB schema
+  const insertData = {
     orgId: user.orgId,
-    ...values,
+    vin: values.vin,
+    licensePlate: values.licensePlate,
+    make: values.make,
+    model: values.model,
+    year: values.year,
+    type: values.type,
+    capacity: values.capacity,
+    insuranceProvider: values.insuranceProvider,
+    insurancePolicyNumber: values.insurancePolicyNumber,
+    ownerInfo: values.ownerInfo,
+    photoUrl: values.photoUrl,
     status: values.status ?? 'ACTIVE'
-  }).returning()
+  }
+
+  const [vehicle] = await db.insert(vehicles).values(insertData).returning()
 
   await createAuditLog({
     action: AUDIT_ACTIONS.VEHICLE_CREATE,

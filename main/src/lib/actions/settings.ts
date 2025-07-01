@@ -52,7 +52,7 @@ export async function updateCompanyProfileAction(formData: FormData) {
     .where(eq(organizations.id, user.orgId));
 
   const settings = {
-    ...org?.settings,
+    ...(org?.settings ?? {}),
     companyProfile: profile,
   } as Record<string, unknown>;
 

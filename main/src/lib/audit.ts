@@ -122,6 +122,10 @@ export const AUDIT_ACTIONS = {
   // Organization actions
   ORG_SETTINGS_UPDATE: 'organization.settings_update',
   ORG_BILLING_UPDATE: 'organization.billing_update',
+  ORG_UPDATE: 'organization.update',
+  
+  // Bulk actions
+  USER_BULK_UPDATE: 'user.bulk_update',
   
   // Compliance actions
   COMPLIANCE_REVIEW: 'compliance.review',

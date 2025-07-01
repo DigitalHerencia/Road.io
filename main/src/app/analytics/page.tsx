@@ -1,3 +1,4 @@
+import React from 'react';
 import { getCurrentUser } from '@/lib/rbac';
 import FleetUtilization from '@/features/analytics/components/FleetUtilization';
 import { redirect } from 'next/navigation';

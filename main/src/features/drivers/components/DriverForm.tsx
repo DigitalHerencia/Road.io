@@ -12,7 +12,12 @@ export default function DriverForm({ driver }: DriverFormProps) {
   const action = driver ? updateDriver : createDriver
 
   return (
-    <form action={action} className="space-y-4 max-w-md">
+    <form
+      action={async (formData) => {
+        await action(formData)
+      }}
+      className="space-y-4 max-w-md"
+    >
       {driver && <input type="hidden" name="id" value={driver.id} />}
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>

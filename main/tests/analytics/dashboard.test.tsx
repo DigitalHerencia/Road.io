@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
 import { renderToString } from 'react-dom/server';
 vi.mock('../../src/lib/db', () => ({ db: { execute: vi.fn() } }));
 vi.mock('../../src/lib/fetchers/analytics');

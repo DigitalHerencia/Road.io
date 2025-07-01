@@ -13,6 +13,8 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
-  const profile = org?.settings?.companyProfile as CompanyProfile | undefined;
+  // Explicitly type settings as Record<string, unknown>
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  const profile = settings?.companyProfile as CompanyProfile | undefined;
   return profile ?? null;
 }

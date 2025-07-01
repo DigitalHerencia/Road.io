@@ -18,7 +18,13 @@ export default async function TripsPage() {
             <CardDescription>Manual trip entry</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={recordTripAction} className="space-y-4">
+            <form
+              action={async (formData) => {
+                "use server";
+                await recordTripAction(formData);
+              }}
+              className="space-y-4"
+            >
               <input type="hidden" name="driverId" value={user.id} />
               <div className="space-y-2">
                 <label htmlFor="loadId" className="text-sm font-medium">Load ID</label>
