@@ -98,6 +98,24 @@ export default function VehicleForm({ vehicle }: VehicleFormProps) {
         <Input id="photoUrl" name="photoUrl" defaultValue={vehicle?.photoUrl ?? ''} />
       </div>
       <div className="space-y-2">
+        <Label htmlFor="nextMaintenanceDate">Next Maintenance</Label>
+        <Input
+          id="nextMaintenanceDate"
+          name="nextMaintenanceDate"
+          type="date"
+          defaultValue={vehicle?.nextMaintenanceDate?.toISOString().slice(0, 10) ?? ''}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="nextInspectionDate">Next Inspection</Label>
+        <Input
+          id="nextInspectionDate"
+          name="nextInspectionDate"
+          type="date"
+          defaultValue={vehicle?.nextInspectionDate?.toISOString().slice(0, 10) ?? ''}
+        />
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="status">Status</Label>
         <select id="status" name="status" defaultValue={vehicle?.status ?? 'ACTIVE'} className="border rounded h-9 px-3">
           <option value="ACTIVE">Active</option>

@@ -103,6 +103,11 @@ Below are answers to some common questions about using Road.io:
 **Tip:** You can view the status of uploaded documents (Active, Expiring Soon, Expired) in the
 Compliance dashboard.
 
+### How do I search for uploaded documents?
+
+1. Navigate to the **Compliance** module.
+2. Use the search field to filter documents by name.
+
 ---
 
 ### How do I reset my password?

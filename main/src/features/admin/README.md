@@ -16,6 +16,8 @@ EMAIL_FROM="Road.io <noreply@road.io>"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-## Page
+## Pages
 
-- `/dashboard/admin/users` – Invite users and view the user list.
+- `/dashboard/admin/users` – Invite users, manage roles and statuses.
+- `/dashboard/admin/users/[id]/edit` – Edit an individual user profile.
+

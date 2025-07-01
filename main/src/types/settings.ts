@@ -16,3 +16,15 @@ export interface CompanyProfile {
   businessHours?: BusinessHours;
   bank?: BankDetails;
 }
+
+export interface UserPreferences {
+  displayName?: string;
+  avatarUrl?: string;
+  language?: string;
+  timeZone?: string;
+  dateFormat?: string;
+  theme?: 'light' | 'dark';
+  units?: 'imperial' | 'metric';
+  currency?: string;
+  numberFormat?: string;
+}
