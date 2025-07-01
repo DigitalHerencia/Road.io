@@ -444,6 +444,7 @@ Manage vehicle info, maintenance records, inspections, and assignments.
 -   Add or edit vehicle profiles (with details like VIN, license plate, etc.)
 -   Log maintenance and inspection events for each vehicle
 -   Assign vehicles to drivers or loads and track availability
+-   Role-based access control and audit logging for all actions
 
 ## How to Use
 
@@ -460,6 +461,7 @@ Manage vehicle info, maintenance records, inspections, and assignments.
     compliance and optimal operation.
 -   Before assigning a vehicle to a new load, check its status (e.g., not under maintenance) to avoid
     scheduling conflicts.
+-   Unit tests cover vehicle creation logic to ensure data integrity.
 
 # Driver Management Guide
 
