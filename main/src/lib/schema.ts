@@ -106,7 +106,7 @@ export const vehicles = pgTable("vehicles", {
   licensePlate: varchar("license_plate", { length: 20 }),
   make: varchar("make", { length: 50 }),
   model: varchar("model", { length: 50 }),
-  year: serial("year"),
+  year: integer("year"),
   type: vehicleTypeEnum("type"),
   capacity: integer("capacity"),
   insuranceProvider: varchar("insurance_provider", { length: 100 }),
