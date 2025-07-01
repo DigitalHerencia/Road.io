@@ -2,15 +2,17 @@
 
 import { db } from '@/lib/db';
 import { documents } from '@/lib/schema';
+import { sql } from 'drizzle-orm';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/types/compliance';
 import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
 
 export const uploadFormSchema = z.object({
-  category: z.enum(['driver', 'safety']),
+  category: z.enum(DOCUMENT_CATEGORIES),
   driverId: z.string().optional(),
 });
 
@@ -24,10 +26,12 @@ export function generateUniqueFilename(original: string): string {
 export async function uploadDocumentsAction(formData: FormData) {
   const user = await requirePermission('org:compliance:upload_documents');
 
-  const { category, driverId } = uploadFormSchema.parse({
+  const parsed = uploadFormSchema.parse({
     category: formData.get('category'),
     driverId: formData.get('driverId')?.toString(),
   });
+  const category: DocumentCategory = parsed.category;
+  const { driverId } = parsed;
 
   const files = formData.getAll('documents');
   const saved: unknown[] = [];
@@ -65,4 +69,20 @@ export async function uploadDocumentsAction(formData: FormData) {
 
   revalidatePath('/dashboard/compliance/documents');
   return { success: true, documents: saved };
+}
+
+const searchSchema = z.object({
+  query: z.string().min(1),
+});
+
+export async function searchDocumentsAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const { query } = searchSchema.parse({ query: formData.get('query') });
+  const term = `%${query}%`;
+  const res = await db.execute(sql`
+    SELECT * FROM documents
+    WHERE org_id = ${user.orgId} AND file_name ILIKE ${term}
+    ORDER BY created_at DESC
+  `);
+  return { success: true, documents: res.rows };
 }
