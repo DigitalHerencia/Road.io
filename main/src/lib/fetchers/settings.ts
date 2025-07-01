@@ -25,7 +25,7 @@ export async function getUserPreferences(): Promise<UserPreferences | null> {
   const [pref] = await db
     .select({ preferences: userPreferences.preferences })
     .from(userPreferences)
-    .where(eq(userPreferences.userId, parseInt(user.id)));
+    .where(eq(userPreferences.userId, user.id));
 
   return (pref?.preferences as UserPreferences) ?? null;
 }
