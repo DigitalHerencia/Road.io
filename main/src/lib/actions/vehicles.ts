@@ -69,7 +69,7 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
 }
 
 export async function bulkUpdateVehicleStatus(ids: number[], status: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED') {
-  const user = await requirePermission('org:admin:manage_users_and_roles')
+  const user = await requirePermission('org:admin:manage_vehicles')
   await db
     .update(vehicles)
     .set({ status, updatedAt: new Date() })
