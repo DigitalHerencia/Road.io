@@ -8,6 +8,7 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', '
 export const loadStatusEnum = pgEnum('load_status', ['pending', 'assigned', 'in_transit', 'delivered', 'cancelled']);
 export const vehicleStatusEnum = pgEnum('vehicle_status', ['ACTIVE', 'MAINTENANCE', 'RETIRED']);
 export const vehicleTypeEnum = pgEnum('vehicle_type', ['TRACTOR', 'TRAILER', 'VAN', 'CAR', 'OTHER']);
+export const userStatusEnum = pgEnum('user_status', ['ACTIVE', 'INACTIVE', 'SUSPENDED']);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable('organizations', {
@@ -33,6 +34,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   orgId: serial('org_id').references(() => organizations.id).notNull(),
   role: systemRoleEnum('role').default('MEMBER').notNull(),
+  status: userStatusEnum('status').default('ACTIVE').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

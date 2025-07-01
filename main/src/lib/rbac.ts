@@ -15,6 +15,7 @@ export interface AuthenticatedUser {
   role: SystemRoles;
   permissions: string[];
   isActive: boolean;
+  status: typeof import('./schema').userStatusEnum['_']['enumValues'][number];
 }
 
 /**
@@ -38,6 +39,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
         organizationName: organizations.name,
         organizationSlug: organizations.slug,
         role: users.role,
+        status: users.status,
         isActive: users.isActive,
       })
       .from(users)
@@ -68,6 +70,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       role: user.role as SystemRoles,
       permissions,
       isActive: user.isActive,
+      status: user.status,
     };
   } catch (error) {
     console.error('Error getting current user:', error);
