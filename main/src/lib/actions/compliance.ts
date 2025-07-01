@@ -79,10 +79,14 @@ export async function searchDocumentsAction(formData: FormData) {
   const user = await requirePermission('org:compliance:upload_documents');
   const { query } = searchSchema.parse({ query: formData.get('query') });
   const term = `%${query}%`;
-  const res = await db.execute(sql`
+  const res = await fetchDocumentsBySearchTerm(user.orgId, term);
+  return { success: true, documents: res.rows };
+}
+
+async function fetchDocumentsBySearchTerm(orgId: number, term: string) {
+  return await db.execute(sql`
     SELECT * FROM documents
-    WHERE org_id = ${user.orgId} AND file_name ILIKE ${term}
+    WHERE org_id = ${orgId} AND file_name ILIKE ${term}
     ORDER BY created_at DESC
   `);
-  return { success: true, documents: res.rows };
 }
