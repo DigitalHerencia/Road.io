@@ -9,12 +9,17 @@ import { revalidatePath } from 'next/cache'
 import { eq, inArray } from 'drizzle-orm'
 import { SystemRoles } from '@/types/rbac'
 
+enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}
 const updateSchema = z.object({
   id: z.coerce.number(),
   name: z.string().optional(),
   email: z.string().email(),
   role: z.nativeEnum(SystemRoles),
-  status: z.enum(['ACTIVE','INACTIVE','SUSPENDED']),
+  status: z.nativeEnum(UserStatus),
 })
 
 export async function updateUserAction(formData: FormData) {
