@@ -40,12 +40,14 @@ export default async function FleetDashboard({ orgId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>Maintenance Due</CardTitle>
+          <CardDescription>Vehicles scheduled for maintenance</CardDescription>
         </CardHeader>
         <CardContent className="text-2xl font-bold">{metrics.maintenanceDue}</CardContent>
       </Card>
       <Card>
         <CardHeader>
           <CardTitle>Inspection Due</CardTitle>
+          <CardDescription>Vehicles requiring inspection</CardDescription>
         </CardHeader>
         <CardContent className="text-2xl font-bold">{metrics.inspectionDue}</CardContent>
       </Card>
