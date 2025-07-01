@@ -113,6 +113,11 @@ export const AUDIT_ACTIONS = {
 
   // Trip actions
   TRIP_CREATE: 'trip.create',
+
+  // HOS actions
+  HOS_LOG_CREATE: 'hos.log.create',
+  HOS_VIOLATION: 'hos.violation',
+  HOS_REPORT_GENERATE: 'hos.report.generate',
   
   // Document actions
   DOCUMENT_UPLOAD: 'document.upload',
@@ -140,4 +145,6 @@ export const AUDIT_RESOURCES = {
   ORGANIZATION: 'organization',
   COMPLIANCE: 'compliance',
   TRIP: 'trip',
+  HOS_LOG: 'hos_log',
+  HOS_REPORT: 'hos_report',
 } as const;
