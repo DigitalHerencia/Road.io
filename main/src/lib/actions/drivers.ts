@@ -1,0 +1,112 @@
+'use server'
+
+import { z } from 'zod'
+import { db } from '@/lib/db'
+import { drivers, users } from '@/lib/schema'
+import { revalidatePath } from 'next/cache'
+import { requirePermission } from '@/lib/rbac'
+import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
+import { SystemRoles } from '@/types/rbac'
+import { eq } from 'drizzle-orm'
+
+const createDriverSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  licenseNumber: z.string().min(1),
+  licenseExpiry: z.string().optional(),
+  dotNumber: z.string().optional()
+})
+
+export type CreateDriverInput = z.infer<typeof createDriverSchema>
+
+export async function createDriver(formData: FormData) {
+  const input = createDriverSchema.parse({
+    email: formData.get('email'),
+    name: formData.get('name'),
+    licenseNumber: formData.get('licenseNumber'),
+    licenseExpiry: formData.get('licenseExpiry') || undefined,
+    dotNumber: formData.get('dotNumber') || undefined
+  })
+
+  const current = await requirePermission('org:admin:manage_users_and_roles')
+
+  const [user] = await db.insert(users).values({
+    clerkUserId: 'local-' + Date.now(),
+    email: input.email,
+    name: input.name,
+    orgId: current.orgId,
+    role: SystemRoles.DRIVER
+  }).returning()
+
+  const [driver] = await db.insert(drivers).values({
+    userId: user.id,
+    licenseNumber: input.licenseNumber,
+    licenseExpiry: input.licenseExpiry ? new Date(input.licenseExpiry) : null,
+    dotNumber: input.dotNumber
+  }).returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DRIVER_CREATE,
+    resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: driver.id.toString(),
+    details: { createdBy: current.id }
+  })
+
+  revalidatePath('/drivers')
+  return { success: true }
+}
+
+const updateDriverSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().min(1),
+  licenseNumber: z.string().min(1),
+  licenseExpiry: z.string().optional(),
+  dotNumber: z.string().optional()
+})
+
+export type UpdateDriverInput = z.infer<typeof updateDriverSchema>
+
+export async function updateDriver(formData: FormData) {
+  const input = updateDriverSchema.parse({
+    id: formData.get('id'),
+    email: formData.get('email'),
+    name: formData.get('name'),
+    licenseNumber: formData.get('licenseNumber'),
+    licenseExpiry: formData.get('licenseExpiry') || undefined,
+    dotNumber: formData.get('dotNumber') || undefined
+  })
+
+  const driverId = parseInt(input.id)
+
+  const current = await requirePermission('org:admin:manage_users_and_roles')
+
+  const [driver] = await db.select().from(drivers).where(eq(drivers.id, driverId))
+  if (!driver) {
+    throw new Error('Driver not found')
+  }
+
+  await db.update(users).set({
+    name: input.name,
+    email: input.email,
+    updatedAt: new Date()
+  }).where(eq(users.id, driver.userId))
+
+  await db.update(drivers).set({
+    licenseNumber: input.licenseNumber,
+    licenseExpiry: input.licenseExpiry ? new Date(input.licenseExpiry) : null,
+    dotNumber: input.dotNumber,
+    updatedAt: new Date()
+  }).where(eq(drivers.id, driverId))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DRIVER_UPDATE,
+    resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: driverId.toString(),
+    details: { updatedBy: current.id }
+  })
+
+  revalidatePath('/drivers')
+  revalidatePath(`/drivers/${driverId}`)
+  return { success: true }
+}

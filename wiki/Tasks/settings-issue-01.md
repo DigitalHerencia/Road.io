@@ -16,9 +16,9 @@ Build company profile management features for the Settings module. This includes
 - See [Official Docs](../Official-Docs.md) for Next.js and Drizzle ORM usage.
 
 ## Checklist
-- [ ] Basic company information and business hours
-- [ ] DOT number and USDOT status
-- [ ] Tax and financial information
+- [x] Basic company information and business hours
+- [x] DOT number and USDOT status
+- [x] Tax and financial information
 - [ ] Tests and documentation
 
 ## Verification

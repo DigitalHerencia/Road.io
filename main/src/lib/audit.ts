@@ -91,6 +91,8 @@ export const AUDIT_ACTIONS = {
   USER_UPDATE: 'user.update',
   USER_DELETE: 'user.delete',
   USER_ROLE_CHANGE: 'user.role_change',
+  USER_INVITE: 'user.invite',
+  USER_WELCOME_EMAIL: 'user.welcome_email',
   
   // Load actions
   LOAD_CREATE: 'load.create',
