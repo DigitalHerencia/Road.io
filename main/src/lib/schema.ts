@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -57,7 +57,7 @@ export const vehicles = pgTable('vehicles', {
   licensePlate: varchar('license_plate', { length: 20 }),
   make: varchar('make', { length: 50 }),
   model: varchar('model', { length: 50 }),
-  year: serial('year'),
+  year: integer('year'),
   isActive: boolean('is_active').default(true).notNull(),
   currentDriverId: serial('current_driver_id').references(() => drivers.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -208,6 +208,10 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - Offline capability
 
 ## 🔐 Security and Compliance
+The vehicle module now includes baseline security hardening:
+* Input validation with Zod for vehicle creation.
+* RBAC checks via `requirePermission` in server actions.
+* Audit logs recorded for vehicle events.
 
 ### RBAC Implementation
 - [ ] **Permission Levels**
@@ -233,7 +237,7 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
 ## 🧪 Testing Requirements
 
 ### Unit Tests
-- [ ] Vehicle creation and validation
+- [ ] Vehicle creation and validation *(implemented: see `src/lib/actions/__tests__/fleet.test.ts`)*
 - [ ] Maintenance scheduling logic
 - [ ] Availability calculations
 - [ ] Cost tracking functions
