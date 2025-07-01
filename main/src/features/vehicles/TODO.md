@@ -6,7 +6,7 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
 ## 🚀 Core Features (MVP)
 
 ### Vehicle Registration
-- [ ] **Vehicle Profile Creation**
+- [x] **Vehicle Profile Creation**
   - Basic information (make, model, year, VIN)
   - License plate and registration details
   - Vehicle type and classification
@@ -14,11 +14,11 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - Insurance information
   - Owner/leasing information
 
-- [ ] **Vehicle Profile Management**
-  - Edit vehicle information
-  - Update registration details
-  - Manage vehicle photos
-  - Vehicle status management (Active, Maintenance, Retired)
+- [x] **Vehicle Profile Management**
+  - [x] Edit vehicle information
+  - [x] Update registration details
+  - [x] Manage vehicle photos
+  - [x] Vehicle status management (Active, Maintenance, Retired)
 
 ### Fleet Overview
 - [ ] **Fleet Dashboard**

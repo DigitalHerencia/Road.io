@@ -1,4 +1,5 @@
 {
+
   "id": "feeb5f89-9bb7-461a-98f8-3f6ab505935b",
   "prevId": "8cefeeac-9d37-4423-b6d2-c6da035dbafa",
   "version": "7",
@@ -764,10 +765,57 @@
         },
         "year": {
           "name": "year",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "vehicle_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capacity": {
+          "name": "capacity",
+
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
+        "insurance_provider": {
+          "name": "insurance_provider",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insurance_policy_number": {
+          "name": "insurance_policy_number",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_info": {
+          "name": "owner_info",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_url": {
+          "name": "photo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "vehicle_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ACTIVE'"
+        },
+
         "is_active": {
           "name": "is_active",
           "type": "boolean",
@@ -864,6 +912,27 @@
         "COMPLIANCE",
         "MEMBER"
       ]
+    },
+    "public.vehicle_status": {
+      "name": "vehicle_status",
+      "schema": "public",
+      "values": [
+        "ACTIVE",
+        "MAINTENANCE",
+        "RETIRED"
+      ]
+    },
+    "public.vehicle_type": {
+      "name": "vehicle_type",
+      "schema": "public",
+      "values": [
+        "TRACTOR",
+        "TRAILER",
+        "VAN",
+        "CAR",
+        "OTHER"
+      ]
+
     }
   },
   "schemas": {},

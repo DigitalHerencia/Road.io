@@ -1,3 +1,4 @@
+
 import { pgTable, serial, integer, text, timestamp, boolean, varchar, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -5,6 +6,8 @@ import { relations } from 'drizzle-orm';
 export const systemRoleEnum = pgEnum('system_role', ['ADMIN', 'DISPATCHER', 'DRIVER', 'COMPLIANCE', 'MEMBER']);
 export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'cancelled', 'past_due', 'trialing']);
 export const loadStatusEnum = pgEnum('load_status', ['pending', 'assigned', 'in_transit', 'delivered', 'cancelled']);
+export const vehicleStatusEnum = pgEnum('vehicle_status', ['ACTIVE', 'MAINTENANCE', 'RETIRED']);
+export const vehicleTypeEnum = pgEnum('vehicle_type', ['TRACTOR', 'TRAILER', 'VAN', 'CAR', 'OTHER']);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable('organizations', {
@@ -57,7 +60,15 @@ export const vehicles = pgTable('vehicles', {
   licensePlate: varchar('license_plate', { length: 20 }),
   make: varchar('make', { length: 50 }),
   model: varchar('model', { length: 50 }),
-  year: integer('year'),
+  year: serial('year'),
+  type: vehicleTypeEnum('type'),
+  capacity: integer('capacity'),
+  insuranceProvider: varchar('insurance_provider', { length: 100 }),
+  insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
+  ownerInfo: varchar('owner_info', { length: 255 }),
+  photoUrl: text('photo_url'),
+  status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
+
   isActive: boolean('is_active').default(true).notNull(),
   currentDriverId: serial('current_driver_id').references(() => drivers.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
