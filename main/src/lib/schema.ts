@@ -67,6 +67,8 @@ export const vehicles = pgTable('vehicles', {
   insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
   ownerInfo: varchar('owner_info', { length: 255 }),
   photoUrl: text('photo_url'),
+  nextMaintenanceDate: timestamp('next_maintenance_date'),
+  nextInspectionDate: timestamp('next_inspection_date'),
   status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
 
   isActive: boolean('is_active').default(true).notNull(),
