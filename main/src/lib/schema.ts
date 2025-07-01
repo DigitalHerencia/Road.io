@@ -97,24 +97,23 @@ export const drivers = pgTable("drivers", {
 });
 
 // Vehicles table
-export const vehicles = pgTable("vehicles", {
-  id: serial("id").primaryKey(),
-  orgId: serial("org_id")
-    .references(() => organizations.id)
-    .notNull(),
-  vin: varchar("vin", { length: 17 }).notNull(),
-  licensePlate: varchar("license_plate", { length: 20 }),
-  make: varchar("make", { length: 50 }),
-  model: varchar("model", { length: 50 }),
-  year: integer("year"),
-  type: vehicleTypeEnum("type"),
-  capacity: integer("capacity"),
-  insuranceProvider: varchar("insurance_provider", { length: 100 }),
-  insurancePolicyNumber: varchar("insurance_policy_number", { length: 100 }),
-  ownerInfo: varchar("owner_info", { length: 255 }),
-  photoUrl: text("photo_url"),
-  status: vehicleStatusEnum("status").default("ACTIVE").notNull(),
-
+export const vehicles = pgTable('vehicles', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  vin: varchar('vin', { length: 17 }).notNull(),
+  licensePlate: varchar('license_plate', { length: 20 }),
+  make: varchar('make', { length: 50 }),
+  model: varchar('model', { length: 50 }),
+  year: serial('year'),
+  type: vehicleTypeEnum('type'),
+  capacity: integer('capacity'),
+  insuranceProvider: varchar('insurance_provider', { length: 100 }),
+  insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
+  ownerInfo: varchar('owner_info', { length: 255 }),
+  photoUrl: text('photo_url'),
+  nextMaintenanceDate: timestamp('next_maintenance_date'),
+  nextInspectionDate: timestamp('next_inspection_date'),
+  status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   currentDriverId: serial("current_driver_id").references(() => drivers.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
