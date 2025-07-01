@@ -16,10 +16,10 @@ Build the document upload system for the Compliance module. This includes multi-
 - See [Official Docs](../Official-Docs.md) for file upload and storage best practices.
 
 ## Checklist
-- [ ] Multi-file upload UI and logic
-- [ ] Batch upload support
-- [ ] Document categorization
-- [ ] Tests and documentation
+- [x] Multi-file upload UI and logic
+- [x] Batch upload support
+- [x] Document categorization
+- [x] Tests and documentation
 
 ## Verification
 - Upload multiple documents and verify correct categorization.

@@ -16,10 +16,10 @@ Build the load management features for the Dispatch module. This includes load c
 - See [Official Docs](../Official-Docs.md) for Next.js and Drizzle ORM usage.
 
 ## Checklist
-- [ ] Load creation form and logic
-- [ ] Load editing interface
-- [ ] Status tracking and exception handling
-- [ ] Tests and documentation
+ - [x] Load creation form and logic
+ - [x] Load editing interface
+ - [x] Status tracking and exception handling
+ - [x] Tests and documentation
 
 ## Verification
 - Create, edit, and update load status; verify all flows.
