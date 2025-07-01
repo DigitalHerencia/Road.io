@@ -54,7 +54,10 @@ A modern web application built with the latest technologies including Next.js 15
    ```bash
    # Generate migration files
    npm run db:generate
-   
+
+   # Run migrations
+   npm run db:migrate
+
    # Push schema to database
    npm run db:push
    
@@ -215,6 +218,7 @@ npm run db:studio    # Open Drizzle Studio
 - ✅ Development with Turbopack
 - ✅ ESLint configuration
 - ✅ Environment variable support
+- ✅ Company profile management settings
 
 ## 🔐 Authentication Setup
 

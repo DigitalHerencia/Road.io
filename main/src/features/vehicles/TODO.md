@@ -6,7 +6,7 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
 ## 🚀 Core Features (MVP)
 
 ### Vehicle Registration
-- [ ] **Vehicle Profile Creation**
+- [x] **Vehicle Profile Creation**
   - Basic information (make, model, year, VIN)
   - License plate and registration details
   - Vehicle type and classification
@@ -14,11 +14,11 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - Insurance information
   - Owner/leasing information
 
-- [ ] **Vehicle Profile Management**
-  - Edit vehicle information
-  - Update registration details
-  - Manage vehicle photos
-  - Vehicle status management (Active, Maintenance, Retired)
+- [x] **Vehicle Profile Management**
+  - [x] Edit vehicle information
+  - [x] Update registration details
+  - [x] Manage vehicle photos
+  - [x] Vehicle status management (Active, Maintenance, Retired)
 
 ### Fleet Overview
 - [ ] **Fleet Dashboard**
@@ -208,6 +208,10 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - Offline capability
 
 ## 🔐 Security and Compliance
+The vehicle module now includes baseline security hardening:
+* Input validation with Zod for vehicle creation.
+* RBAC checks via `requirePermission` in server actions.
+* Audit logs recorded for vehicle events.
 
 ### RBAC Implementation
 - [ ] **Permission Levels**
@@ -233,7 +237,7 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
 ## 🧪 Testing Requirements
 
 ### Unit Tests
-- [ ] Vehicle creation and validation
+- [ ] Vehicle creation and validation *(implemented: see `src/lib/actions/__tests__/fleet.test.ts`)*
 - [ ] Maintenance scheduling logic
 - [ ] Availability calculations
 - [ ] Cost tracking functions
