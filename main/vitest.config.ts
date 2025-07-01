@@ -1,10 +1,15 @@
-import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
   test: {
-    environment: "node",
-    clearMocks: true,
+    globals: true,
+    environment: 'node',
+    include: ['tests/**/*.test.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
 });
