@@ -5,7 +5,7 @@ import { vehicles } from '@/lib/schema'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
 import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const vehicleInputSchema = z.object({
@@ -20,6 +20,8 @@ export const vehicleInputSchema = z.object({
   insurancePolicyNumber: z.string().optional(),
   ownerInfo: z.string().optional(),
   photoUrl: z.string().optional(),
+  nextMaintenanceDate: z.coerce.date().optional(),
+  nextInspectionDate: z.coerce.date().optional(),
   status: z.enum(['ACTIVE','MAINTENANCE','RETIRED']).optional(),
 })
 export type VehicleInput = z.infer<typeof vehicleInputSchema>
@@ -64,4 +66,22 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
 
   revalidatePath('/dashboard/vehicles')
   return { success: true, vehicle }
+}
+
+export async function bulkUpdateVehicleStatus(ids: number[], status: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED') {
+  const user = await requirePermission('org:admin:manage_vehicles')
+  await db
+    .update(vehicles)
+    .set({ status, updatedAt: new Date() })
+    .where(inArray(vehicles.id, ids))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.VEHICLE_UPDATE,
+    resource: AUDIT_RESOURCES.VEHICLE,
+    resourceId: ids.join(','),
+    details: { updatedBy: user.id, status },
+  })
+
+  revalidatePath('/dashboard/vehicles')
+  return { success: true }
 }
