@@ -549,6 +549,8 @@ Automate mileage and fuel tracking for IFTA (International Fuel Tax Agreement) r
 2. Enter trip data and fuel purchase information as required:
 
     - Record trips with distance traveled in each state/province.
+      Mileage is automatically calculated from start and end coordinates and
+      trips are flagged as interstate when crossing state lines.
     - Log fuel purchases with quantity and location (state/province).
 
 3. After inputting data for the period, use the module’s report function to **Generate IFTA Report**

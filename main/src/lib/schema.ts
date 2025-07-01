@@ -138,6 +138,25 @@ export const documents = pgTable('documents', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Trips table
+export const trips = pgTable('trips', {
+  id: serial('id').primaryKey(),
+  orgId: serial('org_id').references(() => organizations.id).notNull(),
+  driverId: serial('driver_id').references(() => drivers.id),
+  vehicleId: serial('vehicle_id').references(() => vehicles.id),
+  loadId: serial('load_id').references(() => loads.id),
+  startLocation: jsonb('start_location').notNull(), // { lat, lng, state }
+  endLocation: jsonb('end_location').notNull(), // { lat, lng, state }
+  distance: serial('distance'), // in miles
+  jurisdictions: jsonb('jurisdictions').default('[]'), // [{state, miles}]
+  isInterstate: boolean('is_interstate').default(false),
+  startedAt: timestamp('started_at').notNull(),
+  endedAt: timestamp('ended_at').notNull(),
+  createdById: serial('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -145,6 +164,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   loads: many(loads),
   auditLogs: many(auditLogs),
   documents: many(documents),
+  trips: many(trips),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -166,6 +186,7 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   currentVehicle: one(vehicles),
   assignedLoads: many(loads),
   documents: many(documents),
+  trips: many(trips),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -178,6 +199,7 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
     references: [drivers.id],
   }),
   assignedLoads: many(loads),
+  trips: many(trips),
 }));
 
 export const loadsRelations = relations(loads, ({ one, many }) => ({
@@ -198,6 +220,7 @@ export const loadsRelations = relations(loads, ({ one, many }) => ({
     references: [users.id],
   }),
   documents: many(documents),
+  trips: many(trips),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -222,6 +245,7 @@ export const documentsRelations = relations(documents, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
 
 export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
   organization: one(organizations, {
