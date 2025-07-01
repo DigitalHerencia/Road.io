@@ -25,8 +25,10 @@ This page summarizes the main features and user flows in Road.io.
 
 ## FAQ
 
-- **How do I upload a compliance document?**  
+- **How do I upload a compliance document?**
   Go to Compliance → Upload Document → Select type → Attach file → Submit.
+- **How do I search for a document?**
+  Use the search box in Compliance → Documents to find files by name.
 
 - **How do I reset my password?**  
   On sign-in page, click "Forgot Password", enter email, follow instructions.

@@ -1,4 +1,5 @@
 import { uploadDocumentsAction } from '@/lib/actions/compliance';
+import { DOCUMENT_CATEGORIES } from '@/types/compliance';
 
 export default function UploadDocuments() {
   return (
@@ -6,8 +7,11 @@ export default function UploadDocuments() {
       <div>
         <label htmlFor="category" className="block text-sm font-medium">Category</label>
         <select id="category" name="category" className="border rounded p-2">
-          <option value="driver">Driver</option>
-          <option value="safety">Safety</option>
+          {DOCUMENT_CATEGORIES.map(c => (
+            <option key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </option>
+          ))}
         </select>
       </div>
       <div>

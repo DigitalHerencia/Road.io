@@ -19,10 +19,12 @@ Build the document upload system for the Compliance module. This includes multi-
 - [x] Multi-file upload UI and logic
 - [x] Batch upload support
 - [x] Document categorization
+- [x] Search functionality
 - [x] Tests and documentation
 
 ## Verification
 - Upload multiple documents and verify correct categorization.
+- Search for uploaded documents and verify results.
 - Run all tests and lint/typecheck.
 
 ---

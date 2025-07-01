@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLoadById } from '@/lib/fetchers/loads';
-import { Button } from '@/components/ui/button';
-import { updateLoadStatus } from '@/lib/actions/loads';
-import { loadStatusEnum } from '@/lib/schema';
+import { getLoadById } from '@/lib/fetchers/loads'
+import { getLoadAssignmentHistory } from '@/lib/fetchers/assignments'
+import LoadAssignmentForm from '@/features/dispatch/components/LoadAssignmentForm'
+import AssignmentHistory from '@/features/dispatch/components/AssignmentHistory'
+import { Button } from '@/components/ui/button'
+import { updateLoadStatus } from '@/lib/actions/loads'
+import { loadStatusEnum } from '@/lib/schema'
 
 interface Params { params: { id: string } }
 
@@ -11,6 +14,7 @@ export default async function LoadDetailPage({ params }: Params) {
   const id = Number(params.id);
   const load = await getLoadById(id);
   if (!load) return notFound();
+  const history = await getLoadAssignmentHistory(id)
 
   async function setStatus(formData: FormData) {
     'use server';
@@ -39,6 +43,10 @@ export default async function LoadDetailPage({ params }: Params) {
         </select>
         <Button type="submit">Update Status</Button>
       </form>
+      <div className="border-t pt-6 space-y-4">
+        <LoadAssignmentForm loadId={id} driverId={load.assignedDriverId} vehicleId={load.assignedVehicleId} />
+        <AssignmentHistory history={history} />
+      </div>
     </div>
   );
 }
