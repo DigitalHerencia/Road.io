@@ -12,13 +12,13 @@ describe("fetchLiveFleetStatus", () => {
   it("returns counts from db", async () => {
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 3 }],
-    } as any);
+    } as MockDbResponse);
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as any);
+    } as MockDbResponse);
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 5 }],
-    } as any);
+    } as MockDbResponse);
     const res = await fetchLiveFleetStatus(1);
     expect(res.activeLoads).toBe(3);
     expect(res.availableDrivers).toBe(2);
