@@ -391,7 +391,7 @@ export const accidentReports = pgTable('accident_reports', {
   vehicleId: integer('vehicle_id').references(() => vehicles.id),
   occurredAt: timestamp('occurred_at').notNull(),
   description: text('description'),
-  injuries: boolean('injuries').default(false),
+  injuries: boolean('injuries').default(false).notNull(),
   fatalities: boolean('fatalities').default(false),
   createdById: integer('created_by_id').references(() => users.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
