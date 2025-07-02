@@ -2,6 +2,8 @@
 
 import { db } from '../db';
 import { organizations, userPreferences } from '../schema';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { requirePermission, requireAuth } from '../rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
@@ -12,7 +14,12 @@ import type { CompanyProfile, UserPreferences, SystemConfig } from '@/types/sett
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),
   legalEntity: z.string().min(1),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
   dotNumber: z.string().optional(),
+  mcNumber: z.string().optional(),
+  operatingAuthority: z.string().optional(),
   usdotStatus: z.string().optional(),
   ein: z.string().optional(),
   businessHoursOpen: z.string().optional(),
@@ -42,7 +49,12 @@ export async function updateCompanyProfileAction(formData: FormData) {
   const raw = {
     companyName: formData.get('companyName'),
     legalEntity: formData.get('legalEntity'),
+    email: formData.get('email'),
+    phone: formData.get('phone'),
+    address: formData.get('address'),
     dotNumber: formData.get('dotNumber'),
+    mcNumber: formData.get('mcNumber'),
+    operatingAuthority: formData.get('operatingAuthority'),
     usdotStatus: formData.get('usdotStatus'),
     ein: formData.get('ein'),
     businessHoursOpen: formData.get('businessHoursOpen'),
@@ -50,24 +62,42 @@ export async function updateCompanyProfileAction(formData: FormData) {
   };
 
   const parsed = companyProfileSchema.parse(raw);
-  const profile: CompanyProfile = {
-    companyName: parsed.companyName,
-    legalEntity: parsed.legalEntity,
-    dotNumber: parsed.dotNumber,
-    usdotStatus: parsed.usdotStatus,
-    ein: parsed.ein,
-    businessHours: parsed.businessHoursOpen || parsed.businessHoursClose ? {
-      default: {
-        open: parsed.businessHoursOpen || '',
-        close: parsed.businessHoursClose || '',
-      }
-    } : undefined,
-  };
+  const file = formData.get('logo');
 
   const [org] = await db
     .select({ settings: organizations.settings })
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
+
+  const existingProfile = (org?.settings as Record<string, unknown> | undefined)?.companyProfile as CompanyProfile | undefined;
+
+  let logoUrl: string | undefined = existingProfile?.logoUrl;
+  if (file instanceof File && file.size > 0) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}${path.extname(file.name)}`;
+    const uploadDir = path.join(process.cwd(), 'main/public/uploads');
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.writeFile(path.join(uploadDir, unique), buffer);
+    logoUrl = `/uploads/${unique}`;
+  }
+
+  const profile: CompanyProfile = {
+    ...existingProfile,
+    companyName: parsed.companyName,
+    legalEntity: parsed.legalEntity,
+    email: parsed.email ?? existingProfile?.email,
+    phone: parsed.phone ?? existingProfile?.phone,
+    address: parsed.address ?? existingProfile?.address,
+    dotNumber: parsed.dotNumber ?? existingProfile?.dotNumber,
+    mcNumber: parsed.mcNumber ?? existingProfile?.mcNumber,
+    operatingAuthority: parsed.operatingAuthority ?? existingProfile?.operatingAuthority,
+    usdotStatus: parsed.usdotStatus ?? existingProfile?.usdotStatus,
+    ein: parsed.ein ?? existingProfile?.ein,
+    businessHours: parsed.businessHoursOpen || parsed.businessHoursClose
+      ? { default: { open: parsed.businessHoursOpen || '', close: parsed.businessHoursClose || '' } }
+      : existingProfile?.businessHours,
+    logoUrl,
+  };
 
   const settings = {
     ...(org?.settings ?? {}),

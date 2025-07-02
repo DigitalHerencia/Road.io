@@ -28,7 +28,7 @@ The Admin module provides comprehensive system administration capabilities inclu
   - Role-based access testing
 
 ### Organization Management
-- [ ] **Company Profile**
+- [x] **Company Profile**
   - Company information management
   - Logo and branding upload
   - Contact information
