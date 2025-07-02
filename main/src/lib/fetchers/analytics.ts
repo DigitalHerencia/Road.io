@@ -26,6 +26,16 @@ export interface CostPerMile {
   costPerMile: number;
 }
 
+export interface FuelCost {
+  totalFuelCost: number;
+}
+
+export interface TotalCostOfOwnership {
+  loadCost: number;
+  fuelCost: number;
+  totalCost: number;
+}
+
 export interface LiveFleetStatus {
   activeLoads: number;
   availableDrivers: number;
@@ -45,6 +55,10 @@ function calcRate(total: number, used: number): number {
 
 function calcCostPerMile(totalCost: number, totalMiles: number): number {
   return totalMiles === 0 ? 0 : Number((totalCost / totalMiles).toFixed(2));
+}
+
+function calcTotalCostOfOwnership(loadCost: number, fuelCost: number): number {
+  return loadCost + fuelCost;
 }
 
 export async function fetchLiveFleetStatus(orgId: number): Promise<LiveFleetStatus> {
@@ -195,6 +209,41 @@ export async function fetchCostPerMile(orgId: number) {
   } satisfies CostPerMile;
 }
 
+export async function fetchFuelCost(orgId: number): Promise<FuelCost> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const res = await db.execute<{ total: number }>(sql`
+    SELECT coalesce(sum(total_cost),0)::int AS total
+    FROM fuel_purchases
+    WHERE org_id = ${orgId}
+  `);
+
+  return {
+    totalFuelCost: res.rows[0]?.total ?? 0,
+  };
+}
+
+export async function fetchTotalCostOfOwnership(orgId: number): Promise<TotalCostOfOwnership> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const [loadRes, fuelCostData] = await Promise.all([
+    db.execute<{ total: number }>(sql`
+      SELECT coalesce(sum(rate),0)::int AS total
+      FROM loads
+      WHERE org_id = ${orgId}
+    `),
+    fetchFuelCost(orgId),
+  ]);
+
+  const loadCost = loadRes.rows[0]?.total ?? 0;
+  const fuelCost = fuelCostData.totalFuelCost;
+
+  return {
+    loadCost,
+    fuelCost,
+    totalCost: calcTotalCostOfOwnership(loadCost, fuelCost),
+  };
+=======
 export interface LoadGrossMargin {
   loadId: number;
   loadNumber: string;
@@ -301,4 +350,5 @@ export {
   calcRate as calculateUtilizationRate,
   calcRate as calculateOnTimeRate,
   calcCostPerMile,
+  calcTotalCostOfOwnership,
 };
