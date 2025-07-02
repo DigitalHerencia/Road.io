@@ -10,7 +10,13 @@ export interface BankDetails {
 export interface CompanyProfile {
   companyName: string;
   legalEntity: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string;
   dotNumber?: string;
+  mcNumber?: string;
+  operatingAuthority?: string;
   usdotStatus?: string;
   ein?: string;
   businessHours?: BusinessHours;
