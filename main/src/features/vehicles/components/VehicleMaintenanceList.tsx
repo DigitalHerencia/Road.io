@@ -29,7 +29,7 @@ export default async function VehicleMaintenanceList({ orgId, vehicleId }: Props
             <td>{r.mileage ?? '—'}</td>
             <td>{r.vendor ?? '—'}</td>
             <td>{r.description ?? '—'}</td>
-            <td>{r.cost ? `$${(r.cost / 100).toFixed(2)}` : '—'}</td>
+            <td>{r.cost != null ? `$${(r.cost / 100).toFixed(2)}` : '—'}</td>
           </tr>
         ))}
       </tbody>
