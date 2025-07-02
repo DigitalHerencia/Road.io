@@ -73,6 +73,7 @@ export async function getDocumentTrends(orgId: number, months = 6): Promise<Docu
   `);
   return res.rows.map(r => ({ month: r.month, uploads: r.count }));
 }
+
 export async function listAnnualReviews(orgId: number, driverId?: number) {
   await requirePermission('org:compliance:upload_review_compliance');
   const where = driverId ? sql`AND driver_id = ${driverId}` : sql``;

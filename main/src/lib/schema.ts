@@ -411,6 +411,16 @@ export const accidentReports = pgTable('accident_reports', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// IFTA audit responses
+export const iftaAuditResponses = pgTable('ifta_audit_responses', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  question: text('question').notNull(),
+  response: text('response'),
+  createdById: integer('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -426,6 +436,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   vehicleInspections: many(vehicleInspections),
   vehicleMaintenance: many(vehicleMaintenance),
   accidentReports: many(accidentReports),
+  iftaAuditResponses: many(iftaAuditResponses),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -445,6 +456,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   maintenanceRecords: many(vehicleMaintenance),
   createdReviews: many(driverAnnualReviews),
   accidentReports: many(accidentReports),
+  iftaAuditResponses: many(iftaAuditResponses),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({
@@ -547,6 +559,17 @@ export const iftaReportsRelations = relations(iftaReports, ({ one }) => ({
   }),
 }));
 
+export const iftaAuditResponsesRelations = relations(iftaAuditResponses, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [iftaAuditResponses.orgId],
+    references: [organizations.id],
+  }),
+  createdBy: one(users, {
+    fields: [iftaAuditResponses.createdById],
+    references: [users.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -623,3 +646,5 @@ export type VehicleMaintenanceRecord = typeof vehicleMaintenance.$inferSelect;
 export type NewVehicleMaintenanceRecord = typeof vehicleMaintenance.$inferInsert;
 export type AccidentReport = typeof accidentReports.$inferSelect;
 export type NewAccidentReport = typeof accidentReports.$inferInsert;
+export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
+export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
