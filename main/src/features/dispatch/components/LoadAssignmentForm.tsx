@@ -17,7 +17,7 @@ export default async function LoadAssignmentForm({ loadId, driverId, vehicleId }
 
   return (
     <form
-      action={assignLoad.bind(null, loadId) as (formData: FormData) => Promise<void>}
+       action={assignLoad.bind(null, loadId) as (formData: FormData) => Promise<void>}
       className="space-y-4"
     >
       <div className="space-y-2">

@@ -37,6 +37,11 @@ export const vehicleStatusEnum = pgEnum("vehicle_status", [
   "MAINTENANCE",
   "RETIRED",
 ]);
+export const driverStatusEnum = pgEnum("driver_status", [
+  "AVAILABLE",
+  "ON_DUTY",
+  "OFF_DUTY",
+]);
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -96,6 +101,7 @@ export const drivers = pgTable("drivers", {
   licenseNumber: varchar("license_number", { length: 50 }),
   licenseExpiry: timestamp("license_expiry"),
   dotNumber: varchar("dot_number", { length: 50 }),
+  status: driverStatusEnum("status").default("AVAILABLE").notNull(),
   isAvailable: boolean("is_available").default(true).notNull(),
   currentLocation: jsonb("current_location"), // { lat, lng, address }
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -205,6 +211,7 @@ export const documents = pgTable("documents", {
   fileUrl: text("file_url").notNull(),
   fileType: varchar("file_type", { length: 50 }).notNull(),
   fileSize: serial("file_size"), // in bytes
+  expiresAt: timestamptz("expires_at"),
   documentType: varchar("document_type", { length: 50 }), // 'pod', 'invoice', 'license', etc.
   isCompliant: boolean("is_compliant").default(false),
   reviewedById: serial("reviewed_by_id").references(() => users.id),

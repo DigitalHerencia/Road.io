@@ -24,6 +24,10 @@ export default function UploadDocuments() {
         <label htmlFor="documents" className="block text-sm font-medium">Documents</label>
         <input id="documents" name="documents" type="file" multiple className="block" />
       </div>
+      <div>
+        <label htmlFor="expiresAt" className="block text-sm font-medium">Expiration Date</label>
+        <input id="expiresAt" name="expiresAt" type="date" className="border rounded p-2" />
+      </div>
       <button type="submit" className="px-4 py-2 bg-primary text-white rounded">Upload</button>
     </form>
   );

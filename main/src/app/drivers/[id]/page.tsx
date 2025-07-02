@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getDriverById } from '@/lib/fetchers/drivers'
 import DriverSummary from '@/features/drivers/components/DriverSummary'
+import DriverStatusForm from '@/features/drivers/components/DriverStatusForm'
+import DriverAssignments from '@/features/drivers/components/DriverAssignments'
 import { Button } from '@/components/ui/button'
 
 interface Params { params: { id: string } }
@@ -25,6 +27,10 @@ export default async function DriverDetailPage({ params }: Params) {
         </div>
       </div>
       <DriverSummary driver={driver} />
+      <div className="space-y-4">
+        <DriverStatusForm driverId={driver.id} status={driver.status} />
+        <DriverAssignments driverId={driver.id} />
+      </div>
     </div>
   )
 }

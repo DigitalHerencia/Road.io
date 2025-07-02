@@ -28,3 +28,19 @@ export interface UserPreferences {
   currency?: string;
   numberFormat?: string;
 }
+
+export interface SystemConfig {
+  featureToggles?: Record<string, boolean>;
+  modules?: Record<string, boolean>;
+  defaultPermissions?: Record<string, string[]>;
+  maintenance?: {
+    enabled: boolean;
+    message?: string;
+    start?: string;
+    end?: string;
+  };
+  backup?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    retentionDays: number;
+  };
+}
