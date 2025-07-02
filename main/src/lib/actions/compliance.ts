@@ -185,7 +185,8 @@ export async function markDocumentReviewed(id: number) {
 
   revalidatePath('/dashboard/compliance');
   return { success: true, document: doc as Document };
-=======
+}
+
 export async function recordAnnualReview(formData: FormData) {
   const user = await requirePermission('org:compliance:upload_review_compliance');
   const input = reviewSchema.parse(Object.fromEntries(formData));

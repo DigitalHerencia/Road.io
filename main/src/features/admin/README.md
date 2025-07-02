@@ -23,4 +23,5 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 - `/dashboard/admin/roles` – Manage custom roles and permissions.
 - `/dashboard/admin/company` – Manage company profile and branding.
 - `/dashboard/admin/tenant` – Multi-tenant administration and monitoring.
+- `/dashboard/admin` – Admin dashboard and system metrics overview.
 
