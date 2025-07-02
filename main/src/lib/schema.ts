@@ -55,6 +55,7 @@ export const fuelPaymentMethodEnum = pgEnum("fuel_payment_method", [
   "OTHER",
 ]);
 export const fuelTaxStatusEnum = pgEnum("fuel_tax_status", ["PAID", "FREE"]);
+export const trainingStatusEnum = pgEnum('training_status', ['ASSIGNED', 'COMPLETED']);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable("organizations", {
@@ -397,6 +398,56 @@ export const accidentReports = pgTable('accident_reports', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Training programs
+export const trainingPrograms = pgTable('training_programs', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  title: varchar('title', { length: 100 }).notNull(),
+  description: text('description'),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  createdById: integer('created_by_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Driver training records
+export const driverTrainings = pgTable('driver_trainings', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  programId: integer('program_id').references(() => trainingPrograms.id).notNull(),
+  status: trainingStatusEnum('status').default('ASSIGNED').notNull(),
+  scheduledAt: timestamp('scheduled_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Driver benefits
+export const driverBenefits = pgTable('driver_benefits', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  amount: integer('amount').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Pay statements
+export const payStatements = pgTable('pay_statements', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  periodStart: timestamp('period_start').notNull(),
+  periodEnd: timestamp('period_end').notNull(),
+  miles: integer('miles').notNull(),
+  ratePerMile: integer('rate_per_mile').notNull(),
+  perDiem: integer('per_diem').default(0).notNull(),
+  benefitsDeduction: integer('benefits_deduction').default(0).notNull(),
+  grossPay: integer('gross_pay').notNull(),
+  netPay: integer('net_pay').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -411,6 +462,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   driverAnnualReviews: many(driverAnnualReviews),
   vehicleInspections: many(vehicleInspections),
   accidentReports: many(accidentReports),
+  trainingPrograms: many(trainingPrograms),
+  driverTrainings: many(driverTrainings),
+  driverBenefits: many(driverBenefits),
+  payStatements: many(payStatements),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -429,6 +484,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   vehicleInspections: many(vehicleInspections),
   createdReviews: many(driverAnnualReviews),
   accidentReports: many(accidentReports),
+  createdTrainingPrograms: many(trainingPrograms),
+  payStatements: many(payStatements),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({
@@ -453,6 +510,9 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   hosViolations: many(hosViolations),
   annualReviews: many(driverAnnualReviews),
   accidentReports: many(accidentReports),
+  trainings: many(driverTrainings),
+  benefits: many(driverBenefits),
+  payStatements: many(payStatements),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -604,3 +664,11 @@ export type VehicleInspection = typeof vehicleInspections.$inferSelect;
 export type NewVehicleInspection = typeof vehicleInspections.$inferInsert;
 export type AccidentReport = typeof accidentReports.$inferSelect;
 export type NewAccidentReport = typeof accidentReports.$inferInsert;
+export type TrainingProgram = typeof trainingPrograms.$inferSelect;
+export type NewTrainingProgram = typeof trainingPrograms.$inferInsert;
+export type DriverTraining = typeof driverTrainings.$inferSelect;
+export type NewDriverTraining = typeof driverTrainings.$inferInsert;
+export type DriverBenefit = typeof driverBenefits.$inferSelect;
+export type NewDriverBenefit = typeof driverBenefits.$inferInsert;
+export type PayStatement = typeof payStatements.$inferSelect;
+export type NewPayStatement = typeof payStatements.$inferInsert;
