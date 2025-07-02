@@ -97,16 +97,9 @@ async function fetchDocumentsBySearchTerm(orgId: number, term: string) {
 
 export async function sendExpirationAlerts(withinDays = 30) {
   const user = await requirePermission('org:compliance:upload_documents');
-  const docsRes = await db.execute<Document & { email: string }>(sql`
-    SELECT d.*, u.email FROM documents d
-    JOIN users u ON d.uploaded_by_id = u.id
-    WHERE d.org_id = ${user.orgId}
-      AND d.expires_at IS NOT NULL
-      AND d.expires_at <= now() + (${withinDays} * interval '1 day')
-      AND d.expires_at >= now()
-  `);
+  const docs = await getExpiringDocuments(user.orgId, withinDays);
 
-  for (const doc of docsRes.rows) {
+  for (const doc of docs) {
     await sendEmail({
       to: doc.email,
       subject: `Document ${doc.fileName} expiring soon`,
