@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { users } from '@/lib/schema'
-import { eq, inArray } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { UserProfile } from '@/types/users'
 
 export async function getOrgUsers(orgId: number): Promise<UserProfile[]> {

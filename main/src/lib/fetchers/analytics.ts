@@ -26,6 +26,17 @@ export interface CostPerMile {
   costPerMile: number;
 }
 
+export interface LiveFleetStatus {
+  activeLoads: number;
+  availableDrivers: number;
+  activeVehicles: number;
+}
+
+export interface PerformanceAlert {
+  level: 'info' | 'warning' | 'critical';
+  message: string;
+}
+
 const MAX_CAPACITY_PER_VEHICLE = 40000; // pounds
 
 function calcRate(total: number, used: number): number {
@@ -34,6 +45,56 @@ function calcRate(total: number, used: number): number {
 
 function calcCostPerMile(totalCost: number, totalMiles: number): number {
   return totalMiles === 0 ? 0 : Number((totalCost / totalMiles).toFixed(2));
+}
+
+export async function fetchLiveFleetStatus(orgId: number): Promise<LiveFleetStatus> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const activeLoadsRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM loads
+    WHERE org_id = ${orgId} AND status NOT IN ('delivered', 'cancelled')
+  `);
+  const availableDriversRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM drivers d
+    INNER JOIN users u ON d.user_id = u.id
+    WHERE d.is_available = true AND u.org_id = ${orgId}
+  `);
+  const activeVehiclesRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM vehicles
+    WHERE org_id = ${orgId} AND status != 'RETIRED'
+  `);
+
+  return {
+    activeLoads: activeLoadsRes.rows[0]?.count ?? 0,
+    availableDrivers: availableDriversRes.rows[0]?.count ?? 0,
+    activeVehicles: activeVehiclesRes.rows[0]?.count ?? 0,
+  };
+}
+
+export async function fetchPerformanceAlerts(orgId: number): Promise<PerformanceAlert[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const status = await fetchLiveFleetStatus(orgId);
+  const alerts: PerformanceAlert[] = [];
+
+  if (status.activeLoads > status.activeVehicles) {
+    alerts.push({
+      level: 'warning',
+      message: 'More active loads than available vehicles',
+    });
+  }
+
+  if (status.activeLoads > status.availableDrivers) {
+    alerts.push({
+      level: status.availableDrivers === 0 ? 'critical' : 'warning',
+      message: 'Insufficient drivers for current loads',
+    });
+  }
+
+  return alerts;
 }
 
 export async function fetchVehicleUtilization(orgId: number) {
