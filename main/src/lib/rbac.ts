@@ -1,9 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { db } from './db';
-import { users, organizations } from './schema';
+import { users, organizations, roles } from './schema';
 import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
-import type { UserStatus } from '@/types/users'
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
 
 export interface AuthenticatedUser {

@@ -9,7 +9,11 @@ interface Props {
 }
 
 export default function LoadForm({ load }: Props) {
-  const action = load ? updateLoad.bind(null, load.id) : createLoad;
+  const rawAction = load ? updateLoad.bind(null, load.id) : createLoad;
+  const action = async (formData: FormData) => {
+    await rawAction(formData);
+    // Do not return anything
+  };
   return (
     <form action={action} className="space-y-4">
       {load && <input type="hidden" name="id" value={load.id} />}

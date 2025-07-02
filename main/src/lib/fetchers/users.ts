@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { users } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import type { UserProfile } from '@/types/users'
 
 export async function getOrgUsers(orgId: number): Promise<UserProfile[]> {
@@ -54,7 +54,7 @@ export async function getUserList(
   sort: 'name' | 'email' | 'role' | 'createdAt' = 'createdAt',
   status?: 'ACTIVE' | 'INACTIVE',
 ): Promise<UserProfile[]> {
-  let query = db
+  let queryBuilder = db
     .select({
       id: users.id,
       email: users.email,
@@ -65,11 +65,12 @@ export async function getUserList(
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
     })
-    .from(users)
-    .where(eq(users.orgId, orgId));
+    .from(users);
 
+  const conditions = [eq(users.orgId, orgId)];
+  
   if (status) {
-    query = query.where(eq(users.isActive, status === 'ACTIVE'));
+    conditions.push(eq(users.isActive, status === 'ACTIVE'));
   }
 
   const columnMap = {
@@ -78,9 +79,11 @@ export async function getUserList(
     role: users.role,
     createdAt: users.createdAt,
   } as const;
-  query = query.orderBy(columnMap[sort] ?? users.createdAt);
 
-  const rows = await query;
+  const rows = await queryBuilder
+    .where(conditions.length > 1 ? and(...conditions) : conditions[0])
+    .orderBy(columnMap[sort] ?? users.createdAt);
+
   return rows.map((r) => ({
     ...r,
     role: r.role as import('@/types/rbac').SystemRoles,

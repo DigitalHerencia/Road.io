@@ -19,7 +19,8 @@ export default async function LoadDetailPage({ params }: Params) {
   async function setStatus(formData: FormData) {
     'use server';
     const status = formData.get('status') as typeof loadStatusEnum.enumValues[number];
-    return updateLoadStatus(id, status);
+    await updateLoadStatus(id, status);
+    // Optionally, handle errors or revalidate here
   }
 
   return (

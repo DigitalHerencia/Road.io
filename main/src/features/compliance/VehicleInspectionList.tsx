@@ -13,7 +13,7 @@ export default async function VehicleInspectionList({ orgId, vehicleId }: Props)
   return (
     <ul className="space-y-1 text-sm">
       {inspections.map(i => (
-        <li key={i.id}>{new Date(i.inspectionDate).toLocaleDateString()} - {i.passed ? 'Passed' : 'Failed'}</li>
+        <li key={String(i.id)}>{new Date(i.inspectionDate as string).toLocaleDateString()} - {i.passed ? 'Passed' : 'Failed'}</li>
       ))}
     </ul>
   );

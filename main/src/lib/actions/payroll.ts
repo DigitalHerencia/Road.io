@@ -34,7 +34,7 @@ export async function generatePayStatementAction(formData: FormData) {
     .from(driverBenefits)
     .where(eq(driverBenefits.driverId, data.driverId))
 
-  const benefitsDeduction = benefitsRes[0]?.total ?? 0
+  const benefitsDeduction = Number(benefitsRes[0]?.total ?? 0)
   const grossPay = data.miles * data.ratePerMile + (data.perDiem ?? 0)
   const netPay = grossPay - benefitsDeduction
 

@@ -14,15 +14,17 @@ export async function searchDocuments(orgId: number, query: string): Promise<Doc
   return res.rows;
 }
 
-export async function getExpiringDocuments(orgId: number, withinDays = 30): Promise<Document[]> {
+export async function getExpiringDocuments(orgId: number, withinDays = 30): Promise<(Document & { email: string })[]> {
   await requirePermission('org:compliance:upload_documents');
-  const res = await db.execute<Document>(sql`
-    SELECT * FROM documents
-    WHERE org_id = ${orgId}
-      AND expires_at IS NOT NULL
-      AND expires_at <= now() + (${withinDays} * interval '1 day')
-      AND expires_at >= now()
-    ORDER BY expires_at ASC
+  const res = await db.execute<Document & { email: string }>(sql`
+    SELECT d.*, u.email 
+    FROM documents d
+    JOIN users u ON d.uploaded_by_id = u.id
+    WHERE d.org_id = ${orgId}
+      AND d.expires_at IS NOT NULL
+      AND d.expires_at <= now() + (${withinDays} * interval '1 day')
+      AND d.expires_at >= now()
+    ORDER BY d.expires_at ASC
   `);
   return res.rows;
 }

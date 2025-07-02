@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Role } from '@/types/roles'
 import { Button } from '@/components/ui/button'
+import { deleteRoleAction } from '@/lib/actions/roles'
 
 async function handleDeleteRole(id: number) {
   'use server'

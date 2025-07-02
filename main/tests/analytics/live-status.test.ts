@@ -8,17 +8,30 @@ import {
   fetchPerformanceAlerts,
 } from "../../src/lib/fetchers/analytics";
 
+
 describe("fetchLiveFleetStatus", () => {
   it("returns counts from db", async () => {
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 3 }],
-    } as MockDbResponse);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as MockDbResponse);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 5 }],
-    } as MockDbResponse);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     const res = await fetchLiveFleetStatus(1);
     expect(res.activeLoads).toBe(3);
     expect(res.availableDrivers).toBe(2);
@@ -30,13 +43,25 @@ describe("fetchPerformanceAlerts", () => {
   it("generates alerts based on status", async () => {
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 4 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 1 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     const alerts = await fetchPerformanceAlerts(1);
     expect(alerts.length).toBeGreaterThan(0);
   });
@@ -44,13 +69,25 @@ describe("fetchPerformanceAlerts", () => {
   it("returns no alerts when fleet is balanced", async () => {
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     vi.mocked(db.execute).mockResolvedValueOnce({
       rows: [{ count: 2 }],
-    } as any);
+      fields: [],
+      command: "",
+      rowCount: 1,
+      rowAsArray: false,
+    });
     const alerts = await fetchPerformanceAlerts(1);
     expect(alerts.length).toBe(0);
   });

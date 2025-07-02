@@ -13,8 +13,13 @@ interface Props {
 }
 
 export default function UserForm({ user, roles }: Props) {
+  // Wrap updateUserAction to match the expected return type
+  async function handleSubmit(formData: FormData): Promise<void> {
+    await updateUserAction(formData)
+  }
+
   return (
-    <form action={updateUserAction} className="space-y-4 max-w-md">
+    <form action={handleSubmit} className="space-y-4 max-w-md">
       <input type="hidden" name="id" value={user.id} />
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>

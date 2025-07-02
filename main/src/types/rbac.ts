@@ -35,6 +35,9 @@ export interface UserWithRole {
   updatedAt: Date;
 }
 
+// Permission constants
+export const PERMISSION_IFTA_GENERATE_REPORT = "org:ifta:generate_report";
+
 // Permission definitions by role
 export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
   [SystemRoles.ADMIN]: [

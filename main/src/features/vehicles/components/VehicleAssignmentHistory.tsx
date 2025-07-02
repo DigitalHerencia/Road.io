@@ -8,8 +8,8 @@ export default function VehicleAssignmentHistory({ history }: { history: AuditLo
         return (
           <div key={entry.id} className="border rounded p-2">
             <div className="font-medium">{new Date(entry.createdAt).toLocaleString()}</div>
-            <div>Load: {details?.loadId ?? 'N/A'}</div>
-            <div>Driver: {details?.driverId ?? 'N/A'}</div>
+            <div>Load: {String(details?.loadId ?? 'N/A')}</div>
+            <div>Driver: {String(details?.driverId ?? 'N/A')}</div>
           </div>
         )
       })}

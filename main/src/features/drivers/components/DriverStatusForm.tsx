@@ -6,8 +6,13 @@ interface Props {
 }
 
 export default function DriverStatusForm({ driverId, status }: Props) {
+  // Wrap the action to ensure it returns void
+  const action = async (formData: FormData) => {
+    await updateDriverStatus(formData)
+    // Do not return anything
+  }
   return (
-    <form action={updateDriverStatus} className="space-x-2">
+    <form action={action} className="space-x-2">
       <input type="hidden" name="id" value={driverId} />
       <select
         name="status"

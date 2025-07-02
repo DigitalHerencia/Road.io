@@ -20,7 +20,13 @@ describe('assignLoad', () => {
   })
 
   it('returns error when conflict detected', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [1] })
+    vi.mocked(db.execute).mockResolvedValueOnce({
+      rows: [ { id: 1 } ],
+      fields: [],
+      command: '',
+      rowCount: 0,
+      rowAsArray: false
+    })
     const form = new FormData()
     form.set('driverId', '2')
     form.set('vehicleId', '3')

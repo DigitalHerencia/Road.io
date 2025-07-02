@@ -88,7 +88,7 @@ export interface SystemMetrics {
   dbConnections: number;
 }
 
-export interface RecentAuditLog {
+export interface RecentAuditLog extends Record<string, unknown> {
   id: number;
   action: string;
   resource: string;

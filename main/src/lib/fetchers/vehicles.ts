@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { vehicles } from '@/lib/schema'
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, and } from 'drizzle-orm'
 
 export async function getAllVehicles(orgId: number) {
   return db.select().from(vehicles).where(eq(vehicles.orgId, orgId))
@@ -53,10 +53,12 @@ export async function getVehicleList(
   sort: keyof typeof vehicles | 'id' = 'id',
   status?: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED'
 ) {
-  let query = db.select().from(vehicles).where(eq(vehicles.orgId, orgId))
+  const conditions = [eq(vehicles.orgId, orgId)];
+  
   if (status) {
-    query = query.where(eq(vehicles.status, status))
+    conditions.push(eq(vehicles.status, status));
   }
+  
   const columnMap = {
     id: vehicles.id,
     make: vehicles.make,
@@ -64,9 +66,15 @@ export async function getVehicleList(
     year: vehicles.year,
     status: vehicles.status,
     vin: vehicles.vin,
-  } as const
-  const orderCol = columnMap[sort] ?? vehicles.id
-  return query.orderBy(orderCol)
+  } as const;
+  
+  const orderCol = columnMap[sort] ?? vehicles.id;
+  
+  return db
+    .select()
+    .from(vehicles)
+    .where(conditions.length > 1 ? and(...conditions) : conditions[0])
+    .orderBy(orderCol);
 }
 
 export async function getVehicleById(id: number) {
@@ -139,7 +147,7 @@ export async function getVehicleAssignmentHistory(vehicleId: number): Promise<Au
   return res.rows
 }
 
-export interface VehicleMaintenance {
+export interface VehicleMaintenance extends Record<string, unknown> {
   id: number
   vehicleId: number
   maintenanceDate: Date
@@ -182,6 +190,7 @@ export async function getMaintenanceAlerts(orgId: number, withinDays = 30): Prom
 
   return res.rows.map(row => ({
     id: row.id,
+    vehicleId: row.id,
     nextMaintenanceDate: row.next_maintenance_date,
     overdue: row.next_maintenance_date <= new Date()
   }))

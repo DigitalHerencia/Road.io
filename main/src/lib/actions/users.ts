@@ -50,7 +50,7 @@ export async function updateUserAction(formData: FormData) {
   await createAuditLog({
     action: AUDIT_ACTIONS.USER_UPDATE,
     resource: AUDIT_RESOURCES.USER,
-    resourceId: input.id,
+    resourceId: input.id.toString(),
     details: { updatedBy: admin.id },
   })
 

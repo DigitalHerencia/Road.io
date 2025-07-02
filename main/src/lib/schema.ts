@@ -19,6 +19,11 @@ export const systemRoleEnum = pgEnum("system_role", [
   "COMPLIANCE",
   "MEMBER",
 ]);
+export const userStatusEnum = pgEnum("user_status", [
+  "ACTIVE",
+  "INACTIVE", 
+  "SUSPENDED",
+]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "active",
   "cancelled",
@@ -99,6 +104,7 @@ export const users = pgTable("users", {
     .notNull(),
   role: systemRoleEnum("role").default("MEMBER").notNull(),
   customRoleId: integer("custom_role_id").references(() => roles.id),
+  status: userStatusEnum("status").default("ACTIVE").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -43,7 +43,7 @@ export async function createTrainingProgramAction(formData: FormData) {
   })
 
   revalidatePath('/drivers/training')
-  return { success: true }
+  // Return nothing for form action compatibility
 }
 
 const assignSchema = z.object({

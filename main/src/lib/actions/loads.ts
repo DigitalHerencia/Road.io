@@ -154,7 +154,11 @@ export async function bulkExportLoads(ids: number[]) {
   const rows = await db.select().from(loads).where(inArray(loads.id, ids));
   const lines = [
     'LoadNumber,Status,PickupAddress,DeliveryAddress,Rate',
-    ...rows.map(l => `${l.loadNumber},${l.status},"${l.pickupLocation.address}","${l.deliveryLocation.address}",${l.rate ?? ''}`)
+    ...rows.map(l => {
+      const pickup = l.pickupLocation as { address: string };
+      const delivery = l.deliveryLocation as { address: string };
+      return `${l.loadNumber},${l.status},"${pickup.address}","${delivery.address}",${l.rate ?? ''}`;
+    })
   ];
   const csv = lines.join('\n');
   return new Response(csv, {

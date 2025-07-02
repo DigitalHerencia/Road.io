@@ -17,7 +17,7 @@ export default function MaintenanceForm({ vehicleId }: Props) {
         const description = formData.get('description') as string
         const cost = formData.get('cost') as string
         await recordVehicleMaintenance(vehicleId, {
-          maintenanceDate,
+          maintenanceDate: new Date(maintenanceDate),
           mileage: mileage ? Number(mileage) : undefined,
           vendor: vendor || undefined,
           description: description || undefined,

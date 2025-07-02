@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { requirePermission } from '@/lib/rbac';
+import type { Key } from 'react';
 
 export interface VehicleUtilization {
   totalVehicles: number;
@@ -48,6 +49,7 @@ export interface PerformanceAlert {
 }
 
 export interface LoadMargin {
+  loadId: Key | null | undefined;
   id: number;
   loadNumber: string;
   revenue: number;
@@ -291,7 +293,7 @@ export async function fetchDriverProfitability(
     ), fuel AS (
       SELECT driver_id, SUM(total_cost)::int AS fuel_cost
       FROM fuel_purchases
-      WHERE org_id = ${orgId}
+      WHERE orgId = ${orgId}
       GROUP BY driver_id
     )
     SELECT
@@ -348,6 +350,7 @@ export async function fetchGrossMarginByLoad(
   `);
 
   return result.rows.map(r => ({
+    loadId: r.load_id,
     id: r.load_id,
     loadNumber: r.load_number,
     revenue: r.revenue,

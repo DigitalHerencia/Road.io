@@ -92,6 +92,7 @@ export const AUDIT_ACTIONS = {
   USER_CREATE: "user.create",
   USER_UPDATE: "user.update",
   USER_DELETE: "user.delete",
+  USER_BULK_UPDATE: "user.bulk_update",
   USER_ROLE_CHANGE: "user.role_change",
   USER_INVITE: "user.invite",
   USER_WELCOME_EMAIL: "user.welcome_email",
@@ -144,6 +145,7 @@ export const AUDIT_ACTIONS = {
 
   // Organization actions
   ORG_SETTINGS_UPDATE: "organization.settings_update",
+  ORG_UPDATE: "organization.update",
   ORG_BILLING_UPDATE: "organization.billing_update",
 
   // Compliance actions

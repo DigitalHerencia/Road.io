@@ -14,14 +14,16 @@ export default async function LoadBoard({ orgId, filters }: Props) {
   async function exportSelected(formData: FormData) {
     'use server'
     const ids = formData.getAll('loadId').map(id => Number(id))
-    return bulkExportLoads(ids)
+    await bulkExportLoads(ids)
+    // Do not return anything
   }
 
   async function changeStatus(formData: FormData) {
     'use server'
     const id = Number(formData.get('id'))
     const status = formData.get('status') as typeof loadStatusEnum.enumValues[number]
-    return updateLoadStatus(id, status)
+    await updateLoadStatus(id, status)
+    // Do not return anything
   }
 
   return (

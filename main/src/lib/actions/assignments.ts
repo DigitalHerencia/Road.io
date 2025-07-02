@@ -53,21 +53,34 @@ export async function assignLoad(loadId: number, formData: FormData) {
     }
   }
 
+  const updateData: any = {
+    status: input.driverId && input.vehicleId ? 'assigned' : load.status,
+    updatedAt: new Date(),
+  }
+  
+  if (input.driverId) {
+    updateData.assignedDriverId = input.driverId
+  }
+  
+  if (input.vehicleId) {
+    updateData.assignedVehicleId = input.vehicleId
+  }
+
   const [updated] = await db
     .update(loads)
-    .set({
-      assignedDriverId: (input.driverId ?? null) as number | null,
-      assignedVehicleId: (input.vehicleId ?? null) as number | null,
-      status: input.driverId && input.vehicleId ? 'assigned' : load.status,
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(loads.id, loadId))
     .returning()
 
   if (input.vehicleId) {
+    const vehicleUpdateData: any = { updatedAt: new Date() }
+    if (input.driverId) {
+      vehicleUpdateData.currentDriverId = input.driverId
+    }
+    
     await db
       .update(vehicles)
-      .set({ currentDriverId: (input.driverId ?? null) as number | null, updatedAt: new Date() })
+      .set(vehicleUpdateData)
       .where(eq(vehicles.id, input.vehicleId))
     await createAuditLog({
       action: AUDIT_ACTIONS.VEHICLE_ASSIGN,

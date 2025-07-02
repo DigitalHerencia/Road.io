@@ -12,7 +12,9 @@ export default async function AccidentList({ orgId }: Props) {
   return (
     <ul className="space-y-1 text-sm">
       {accidents.map(a => (
-        <li key={a.id}>{new Date(a.occurredAt).toLocaleDateString()} - {a.description}</li>
+        <li key={String(a.id)}>
+          {new Date(a.occurredAt as string).toLocaleDateString()} - {String(a.description)}
+        </li>
       ))}
     </ul>
   );

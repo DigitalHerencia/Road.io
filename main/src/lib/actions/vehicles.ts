@@ -130,7 +130,7 @@ export async function recordVehicleMaintenance(vehicleId: number, data: Maintena
       vendor: values.vendor,
       description: values.description,
       cost: values.cost,
-      createdById: user.id,
+      createdById: parseInt(user.id),
     })
     .returning()
 

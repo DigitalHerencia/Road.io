@@ -183,14 +183,14 @@ export async function createFuelPurchaseAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/ifta/fuel");
-  return { success: true };
+  // Return nothing for form action compatibility
 }
 
 export async function importFuelCardCsvAction(formData: FormData) {
   const currentUser = await requirePermission("org:driver:log_fuel_purchase");
   const file = formData.get("csv");
   if (!(file instanceof File)) {
-    return { success: false, error: "No file" };
+    throw new Error("No file provided");
   }
   const text = await file.text();
   const rows = text.trim().split(/\r?\n/);
@@ -245,7 +245,7 @@ export async function importFuelCardCsvAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/ifta/fuel");
-  return { success: true, count };
+  // Return nothing for form action compatibility
 }
 
 const ReportSchema = z.object({
@@ -311,7 +311,7 @@ export async function generateIftaReportAction(formData: FormData) {
   doc.text(`Total Tax: $${(totalTax / 100).toFixed(2)}`);
   doc.text(`Interest: $${(interest / 100).toFixed(2)}`);
   doc.end();
-  await new Promise((res) => stream.on("finish", res));
+  await new Promise<void>((resolve) => stream.on("finish", resolve));
 
   const [report] = await db
     .insert(iftaReports)
@@ -391,7 +391,9 @@ export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2'
   lines.push('Trips');
   lines.push('id,startState,endState,distance');
   for (const t of tripsRows) {
-    lines.push(`${t.id},${t.startLocation.state},${t.endLocation.state},${t.distance ?? 0}`);
+    const startLocation = t.startLocation as { state?: string } || {};
+    const endLocation = t.endLocation as { state?: string } || {};
+    lines.push(`${t.id},${startLocation.state || ''},${endLocation.state || ''},${t.distance ?? 0}`);
   }
   lines.push('');
   lines.push('FuelPurchases');
@@ -416,7 +418,7 @@ export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2'
     resource: AUDIT_RESOURCES.IFTA_REPORT,
   });
 
-  return new Response(gz, {
+  return new Response(gz.buffer, {
     headers: {
       'Content-Type': 'application/gzip',
       'Content-Disposition': 'attachment; filename=ifta-audit.gz',

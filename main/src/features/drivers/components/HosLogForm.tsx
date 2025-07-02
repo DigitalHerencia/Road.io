@@ -4,8 +4,13 @@ import { Button } from "@/components/ui/button";
 import { recordHosLog } from "@/lib/actions/hos";
 
 export default function HosLogForm({ driverId }: { driverId: number }) {
+  // Wrap the action to ensure it returns void
+  const action = async (formData: FormData) => {
+    await recordHosLog(formData);
+    // Do not return anything
+  };
   return (
-    <form action={recordHosLog} className="space-y-4">
+    <form action={action} className="space-y-4">
       <input type="hidden" name="driverId" value={driverId} />
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>

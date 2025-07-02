@@ -18,7 +18,12 @@ export default async function TenantConfigForm({ orgId }: Props) {
         <CardTitle>Tenant Configuration</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={updateTenantConfigAction} className="space-y-4">
+        <form
+          action={async (data) => {
+            await updateTenantConfigAction(data);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="dataRetentionDays">Data Retention Days</Label>
             <Input

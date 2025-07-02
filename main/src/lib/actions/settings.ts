@@ -183,7 +183,7 @@ export async function updateUserPreferencesAction(formData: FormData) {
     details: { preferences },
   });
 
-  return { success: true };
+  // Return nothing for form action compatibility
 }
 
 export async function updateSystemConfigAction(formData: FormData) {
@@ -227,7 +227,7 @@ export async function updateSystemConfigAction(formData: FormData) {
   });
 
   revalidatePath('/dashboard/settings/system');
-  return { success: true };
+  // Return nothing for form action compatibility
 }
 
 export async function updateIntegrationSettingsAction(formData: FormData) {
@@ -248,13 +248,14 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
+  const currentSettings = (org?.settings as Record<string, any>) ?? {};
   const integrationSettings: IntegrationSettings = {
-    ...(org?.settings?.integrationSettings ?? {}),
+    ...(currentSettings.integrationSettings ?? {}),
     ...parsed,
   };
 
   const settings = {
-    ...(org?.settings ?? {}),
+    ...currentSettings,
     integrationSettings,
   } as Record<string, unknown>;
 
@@ -271,7 +272,7 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
   });
 
   revalidatePath('/dashboard/settings/integrations');
-  return { success: true };
+  // Return nothing for form action compatibility
 }
 
 export async function updateNotificationSettingsAction(formData: FormData) {
@@ -291,16 +292,17 @@ export async function updateNotificationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
+  const currentSettings = (org?.settings as Record<string, any>) ?? {};
   const notificationSettings: NotificationSettings = {
-    ...(org?.settings?.notificationSettings ?? {}),
+    ...(currentSettings.notificationSettings ?? {}),
     emailEnabled: parsed.emailEnabled ?? false,
     smsEnabled: parsed.smsEnabled ?? false,
     pushEnabled: parsed.pushEnabled ?? false,
-    escalationEmail: parsed.escalationEmail ?? org?.settings?.notificationSettings?.escalationEmail,
+    escalationEmail: parsed.escalationEmail ?? currentSettings.notificationSettings?.escalationEmail,
   };
 
   const settings = {
-    ...(org?.settings ?? {}),
+    ...currentSettings,
     notificationSettings,
   } as Record<string, unknown>;
 
@@ -317,5 +319,5 @@ export async function updateNotificationSettingsAction(formData: FormData) {
   });
 
   revalidatePath('/dashboard/settings/notifications');
-  return { success: true };
+  // Return nothing for form action compatibility
 }
