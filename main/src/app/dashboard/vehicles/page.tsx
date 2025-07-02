@@ -11,9 +11,14 @@ export default async function VehiclesPage() {
     <div className="p-8 space-y-6">
       <div className="flex justify-between">
         <h1 className="text-2xl font-bold">Vehicles</h1>
-        <Link href="/dashboard/vehicles/new">
-          <Button>Add Vehicle</Button>
-        </Link>
+        <div className="space-x-2">
+          <Link href="/dashboard/vehicles/availability">
+            <Button variant="secondary">Availability</Button>
+          </Link>
+          <Link href="/dashboard/vehicles/new">
+            <Button>Add Vehicle</Button>
+          </Link>
+        </div>
       </div>
       <FleetDashboard orgId={user.orgId} />
       <VehicleList orgId={user.orgId} />
