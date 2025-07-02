@@ -70,7 +70,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       role: user.role as SystemRoles,
       permissions,
       isActive: user.isActive,
-      status: 'ACTIVE',
+      status: user.status as UserStatus,
     };
   } catch (error) {
     console.error('Error getting current user:', error);
