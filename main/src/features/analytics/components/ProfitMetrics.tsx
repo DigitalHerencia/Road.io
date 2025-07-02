@@ -31,9 +31,9 @@ export default async function ProfitMetrics({ orgId }: Props) {
             {loads.map(l => (
               <tr key={l.loadId} className="border-t">
                 <td>{l.loadNumber}</td>
-                <td>{(l.revenue / 100).toFixed(2)}</td>
-                <td>{(l.fuelCost / 100).toFixed(2)}</td>
-                <td>{(l.grossMargin / 100).toFixed(2)}</td>
+                <td>{formatCents(l.revenue)}</td>
+                <td>{formatCents(l.fuelCost)}</td>
+                <td>{formatCents(l.grossMargin)}</td>
               </tr>
             ))}
           </tbody>
