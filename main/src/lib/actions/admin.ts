@@ -81,6 +81,55 @@ export async function inviteUserAction(formData: FormData) {
   }
 }
 
+const acceptInviteSchema = z.object({
+  token: z.string(),
+  name: z.string(),
+  clerkUserId: z.string()
+})
+
+export async function acceptInvitationAction(data: z.infer<typeof acceptInviteSchema>) {
+  const values = acceptInviteSchema.parse(data)
+
+  const [invite] = await db
+    .select()
+    .from(userInvitations)
+    .where(eq(userInvitations.token, values.token))
+
+  if (!invite) {
+    return { success: false, error: 'Invalid invitation token' }
+  }
+  if (invite.expiresAt < new Date()) {
+    return { success: false, error: 'Invitation expired' }
+  }
+
+  const [user] = await db
+    .insert(users)
+    .values({
+      clerkUserId: values.clerkUserId,
+      email: invite.email,
+      name: values.name,
+      orgId: invite.orgId,
+      role: invite.role as SystemRoles,
+      isActive: true
+    })
+    .returning()
+
+  await db
+    .update(userInvitations)
+    .set({ acceptedAt: new Date() })
+    .where(eq(userInvitations.id, invite.id))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.USER_CREATE,
+    resource: AUDIT_RESOURCES.USER,
+    resourceId: user.id.toString(),
+    details: { via: 'invitation' }
+  })
+
+  revalidatePath('/dashboard/admin/users')
+  return { success: true, user }
+}
+
 export async function getUsersAction() {
   const currentUser = await requirePermission('org:admin:manage_users_and_roles')
   
