@@ -286,7 +286,9 @@ export async function generateIftaReportAction(formData: FormData) {
     totalTax += gallons * rate.rate;
   }
 
-  const due = new Date(Date.UTC(parsed.year, startMonth + 3, 30));
+  const dueMonth = (startMonth + 3) % 12;
+  const dueYear = parsed.year + Math.floor((startMonth + 3) / 12);
+  const due = new Date(Date.UTC(dueYear, dueMonth, 30));
   let interest = 0;
   if (Date.now() > due.getTime()) {
     const days = Math.floor((Date.now() - due.getTime()) / 86400000);
