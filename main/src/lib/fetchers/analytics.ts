@@ -214,22 +214,22 @@ export async function fetchGrossMarginByLoad(
     revenue: number;
     fuel_cost: number;
   }>(sql`
+    WITH fuel_costs AS (
+      SELECT
+        fp.driver_id,
+        SUM(fp.total_cost) AS total_fuel_cost
+      FROM fuel_purchases fp
+      WHERE fp.org_id = ${orgId}
+      GROUP BY fp.driver_id
+    )
     SELECT
       l.id AS load_id,
       l.load_number,
       coalesce(l.rate, 0)::int AS revenue,
-      COALESCE(
-        (
-          SELECT sum(fp.total_cost)
-          FROM fuel_purchases fp
-          WHERE fp.org_id = ${orgId}
-            AND fp.driver_id = l.assigned_driver_id
-            AND fp.purchase_date BETWEEN (l.pickup_location->>'datetime')::timestamp
-            AND (l.delivery_location->>'datetime')::timestamp
-        ),
-        0
-      )::int AS fuel_cost
+      COALESCE(fc.total_fuel_cost, 0)::int AS fuel_cost
     FROM loads l
+    LEFT JOIN fuel_costs fc
+      ON fc.driver_id = l.assigned_driver_id
     WHERE l.org_id = ${orgId} AND l.status = 'delivered'
     ORDER BY l.updated_at DESC
     LIMIT 5
