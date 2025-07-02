@@ -134,7 +134,7 @@ export async function getVehicleAssignmentHistory(vehicleId: number): Promise<Au
     WHERE resource = ${AUDIT_RESOURCES.VEHICLE}
       AND action = ${AUDIT_ACTIONS.VEHICLE_ASSIGN}
       AND resource_id = ${vehicleId}
-    ORDER BY createdAt DESC
+    ORDER BY created_at DESC
   `)
   return res.rows
 }
