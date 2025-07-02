@@ -182,7 +182,6 @@ export async function getMaintenanceAlerts(orgId: number, withinDays = 30): Prom
 
   return res.rows.map(row => ({
     id: row.id,
-    vehicleId: row.id,
     nextMaintenanceDate: row.next_maintenance_date,
     overdue: row.next_maintenance_date <= new Date()
   }))
