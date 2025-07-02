@@ -138,3 +138,52 @@ export async function getVehicleAssignmentHistory(vehicleId: number): Promise<Au
   `)
   return res.rows
 }
+
+export interface VehicleMaintenance {
+  id: number
+  vehicleId: number
+  maintenanceDate: Date
+  mileage: number | null
+  vendor: string | null
+  description: string | null
+  cost: number | null
+}
+
+export async function listVehicleMaintenance(orgId: number, vehicleId?: number): Promise<VehicleMaintenance[]> {
+  const where = vehicleId ? sql`AND vehicle_id = ${vehicleId}` : sql``
+  const res = await db.execute<VehicleMaintenance>(sql`
+    SELECT id, vehicle_id AS "vehicleId", maintenance_date AS "maintenanceDate",
+           mileage, vendor, description, cost
+    FROM vehicle_maintenance
+    WHERE org_id = ${orgId} ${where}
+    ORDER BY maintenance_date DESC
+  `)
+  return res.rows
+}
+
+export interface MaintenanceAlert {
+  id: number
+  vehicleId: number
+  nextMaintenanceDate: Date
+  overdue: boolean
+}
+
+export async function getMaintenanceAlerts(orgId: number, withinDays = 30): Promise<MaintenanceAlert[]> {
+  const res = await db.execute<{
+    id: number
+    next_maintenance_date: Date
+  }>(sql`
+    SELECT id, next_maintenance_date
+    FROM vehicles
+    WHERE org_id = ${orgId}
+      AND next_maintenance_date IS NOT NULL
+      AND next_maintenance_date <= now() + (${withinDays} * interval '1 day')
+  `)
+
+  return res.rows.map(row => ({
+    id: row.id,
+    vehicleId: row.id,
+    nextMaintenanceDate: row.next_maintenance_date,
+    overdue: row.next_maintenance_date <= new Date()
+  }))
+}
