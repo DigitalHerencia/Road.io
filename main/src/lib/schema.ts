@@ -71,6 +71,17 @@ export const organizations = pgTable("organizations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const roles = pgTable('roles', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: varchar('description', { length: 255 }),
+  baseRole: systemRoleEnum('base_role').default('MEMBER').notNull(),
+  permissions: jsonb('permissions').default('[]').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Users table with multi-tenant support
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -81,6 +92,7 @@ export const users = pgTable("users", {
     .references(() => organizations.id)
     .notNull(),
   role: systemRoleEnum("role").default("MEMBER").notNull(),
+  customRoleId: integer("custom_role_id").references(() => roles.id),
   isActive: boolean("is_active").default(true).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -332,10 +344,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.orgId],
     references: [organizations.id],
   }),
+  customRole: one(roles, {
+    fields: [users.customRoleId],
+    references: [roles.id],
+  }),
   driver: one(drivers),
   createdLoads: many(loads),
   auditLogs: many(auditLogs),
   uploadedDocuments: many(documents),
+}));
+
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [roles.orgId],
+    references: [organizations.id],
+  }),
+  users: many(users),
 }));
 
 export const driversRelations = relations(drivers, ({ one, many }) => ({

@@ -5,6 +5,8 @@ export interface UserProfile {
   email: string
   name: string | null
   role: import('./rbac').SystemRoles
+  customRoleId: number | null
+  customRoleName: string | null
   status: UserStatus
   createdAt: Date
   updatedAt: Date

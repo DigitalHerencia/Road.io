@@ -19,6 +19,7 @@ const updateSchema = z.object({
   name: z.string().optional(),
   email: z.string().email(),
   role: z.nativeEnum(SystemRoles),
+  customRoleId: z.coerce.number().nullable().optional(),
   status: z.nativeEnum(UserStatus),
 })
 
@@ -29,6 +30,7 @@ export async function updateUserAction(formData: FormData) {
     name: formData.get('name') || undefined,
     email: formData.get('email'),
     role: formData.get('role'),
+    customRoleId: formData.get('customRoleId') ? Number(formData.get('customRoleId')) : null,
     status: formData.get('status'),
   })
   const userId = Number(input.id)
@@ -38,6 +40,7 @@ export async function updateUserAction(formData: FormData) {
       name: input.name,
       email: input.email,
       role: input.role,
+      customRoleId: input.customRoleId ?? null,
       status: input.status,
       isActive: input.status === 'ACTIVE',
       updatedAt: new Date(),

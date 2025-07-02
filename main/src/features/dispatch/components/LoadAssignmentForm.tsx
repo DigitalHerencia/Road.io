@@ -15,8 +15,11 @@ export default async function LoadAssignmentForm({ loadId, driverId, vehicleId }
   const drivers = await getAllDrivers()
   const vehicles = await getAllVehicles(user.orgId)
 
+  const action = async (formData: FormData) => {
+    await assignLoad(loadId, formData)
+  }
   return (
-    <form action={assignLoad.bind(null, loadId) as any} className="space-y-4">
+    <form action={action} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="driverId" className="block text-sm font-medium">Driver</label>
         <select id="driverId" name="driverId" defaultValue={driverId ?? ''} className="border rounded h-9 px-3 w-full">
