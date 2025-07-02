@@ -25,7 +25,7 @@ export default async function TenantConfigForm({ orgId }: Props) {
               id="dataRetentionDays"
               name="dataRetentionDays"
               type="number"
-              defaultValue={config?.dataRetentionDays ?? ""}
+              defaultValue={config?.dataRetentionDays?.toString() ?? ""}
             />
           </div>
           <div className="space-y-2">
