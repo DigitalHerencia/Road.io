@@ -126,7 +126,7 @@ export async function acceptInvitationAction(data: z.infer<typeof acceptInviteSc
     details: { via: 'invitation' }
   })
 
-  revalidatePath('/dashboard/admin/users')
+  revalidatePath('/dashboard/settings/users')
   return { success: true, user }
 }
 
