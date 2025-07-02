@@ -9,3 +9,13 @@ This module manages regulatory compliance documents. It now includes basic expir
 - Alerts are logged via the audit system for traceability.
 
 Run `sendExpirationAlerts()` periodically to keep users informed of upcoming renewals.
+
+## Renewal Management
+
+- `sendRenewalReminders` server action emails users about expiring documents.
+- `markDocumentReviewed` marks a document as compliant once renewed.
+
+## Compliance Dashboard
+
+- `ComplianceDashboard` shows active and under review counts and monthly upload trends.
+- `RenewalList` lists documents nearing expiration for quick action.

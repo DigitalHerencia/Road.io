@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { generateUniqueFilename, uploadDocumentsAction, searchDocumentsAction, sendExpirationAlerts } from './compliance'
+import {
+  generateUniqueFilename,
+  uploadDocumentsAction,
+  searchDocumentsAction,
+  sendExpirationAlerts,
+  sendRenewalReminders,
+  markDocumentReviewed
+} from './compliance'
 import { db } from '@/lib/db'
 
 vi.mock('@/lib/db', () => ({
   db: {
     insert: () => ({ values: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }),
-    execute: vi.fn()
+    execute: vi.fn(),
+    update: vi.fn()
   }
 }))
 vi.mock('@/lib/rbac', () => ({ requirePermission: vi.fn(async () => ({ id: '1', orgId: 1 })) }))
@@ -70,5 +78,23 @@ describe('sendExpirationAlerts', () => {
     expect(result.success).toBe(true)
     expect(result.count).toBe(1)
     expect(require('@/lib/email').sendEmail).toHaveBeenCalled()
+  })
+})
+
+describe('sendRenewalReminders', () => {
+  it('sends renewal emails', async () => {
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 2, fileName: 'b.pdf', email: 'b@test.com', expiresAt: new Date() }] } as any)
+    const result = await sendRenewalReminders()
+    expect(result.success).toBe(true)
+    expect(result.count).toBe(1)
+    expect(require('@/lib/email').sendEmail).toHaveBeenCalled()
+  })
+})
+
+describe('markDocumentReviewed', () => {
+  it('updates document review fields', async () => {
+    vi.mocked(db.update).mockReturnValueOnce({ set: () => ({ where: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }) } as any)
+    const result = await markDocumentReviewed(1)
+    expect(result.success).toBe(true)
   })
 })
