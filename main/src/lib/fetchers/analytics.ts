@@ -195,6 +195,108 @@ export async function fetchCostPerMile(orgId: number) {
   } satisfies CostPerMile;
 }
 
+export interface LoadGrossMargin {
+  loadId: number;
+  loadNumber: string;
+  revenue: number;
+  fuelCost: number;
+  grossMargin: number;
+}
+
+export async function fetchGrossMarginByLoad(
+  orgId: number,
+): Promise<LoadGrossMargin[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{
+    load_id: number;
+    load_number: string;
+    revenue: number;
+    fuel_cost: number;
+  }>(sql`
+    WITH fuel_costs AS (
+      SELECT
+        fp.driver_id,
+        SUM(fp.total_cost) AS total_fuel_cost
+      FROM fuel_purchases fp
+      WHERE fp.org_id = ${orgId}
+      GROUP BY fp.driver_id
+    )
+    SELECT
+      l.id AS load_id,
+      l.load_number,
+      coalesce(l.rate, 0)::int AS revenue,
+      COALESCE(fc.total_fuel_cost, 0)::int AS fuel_cost
+    FROM loads l
+    LEFT JOIN fuel_costs fc
+      ON fc.driver_id = l.assigned_driver_id
+    WHERE l.org_id = ${orgId} AND l.status = 'delivered'
+    ORDER BY l.updated_at DESC
+    LIMIT ${DEFAULT_QUERY_LIMIT}
+  `);
+
+  return result.rows.map(r => ({
+    loadId: r.load_id,
+    loadNumber: r.load_number,
+    revenue: r.revenue,
+    fuelCost: r.fuel_cost,
+    grossMargin: r.revenue - r.fuel_cost,
+  }));
+}
+
+export interface DriverProfitability {
+  driverId: number;
+  driverName: string | null;
+  revenue: number;
+  fuelCost: number;
+  profit: number;
+}
+
+export async function fetchDriverProfitability(
+  orgId: number,
+): Promise<DriverProfitability[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{
+    driver_id: number;
+    driver_name: string | null;
+    revenue: number | null;
+    fuel_cost: number | null;
+  }>(sql`
+    WITH revenue AS (
+      SELECT assigned_driver_id AS driver_id, SUM(rate)::int AS revenue
+      FROM loads
+      WHERE org_id = ${orgId} AND status = 'delivered'
+      GROUP BY assigned_driver_id
+    ), fuel AS (
+      SELECT driver_id, SUM(total_cost)::int AS fuel_cost
+      FROM fuel_purchases
+      WHERE org_id = ${orgId}
+      GROUP BY driver_id
+    )
+    SELECT
+      d.id AS driver_id,
+      u.name AS driver_name,
+      COALESCE(r.revenue, 0) AS revenue,
+      COALESCE(f.fuel_cost, 0) AS fuel_cost
+    FROM drivers d
+    INNER JOIN users u ON d.user_id = u.id
+    LEFT JOIN revenue r ON r.driver_id = d.id
+    LEFT JOIN fuel f ON f.driver_id = d.id
+    WHERE u.org_id = ${orgId}
+    ORDER BY u.name
+    LIMIT 5
+  `);
+
+  return result.rows.map(r => ({
+    driverId: r.driver_id,
+    driverName: r.driver_name,
+    revenue: r.revenue ?? 0,
+    fuelCost: r.fuel_cost ?? 0,
+    profit: (r.revenue ?? 0) - (r.fuel_cost ?? 0),
+  }));
+}
+
 export {
   calcRate as calculateUtilizationRate,
   calcRate as calculateOnTimeRate,
