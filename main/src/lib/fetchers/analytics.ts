@@ -37,6 +37,22 @@ export interface PerformanceAlert {
   message: string;
 }
 
+export interface LoadMargin {
+  id: number;
+  loadNumber: string;
+  revenue: number;
+  fuelCost: number;
+  grossMargin: number;
+}
+
+export interface DriverProfit {
+  driverId: number;
+  driverName: string | null;
+  revenue: number;
+  fuelCost: number;
+  profit: number;
+}
+
 const MAX_CAPACITY_PER_VEHICLE = 40000; // pounds
 
 function calcRate(total: number, used: number): number {
@@ -193,6 +209,90 @@ export async function fetchCostPerMile(orgId: number) {
     totalMiles,
     costPerMile: calcCostPerMile(totalCost, totalMiles),
   } satisfies CostPerMile;
+}
+
+export async function fetchDriverProfitability(orgId: number): Promise<DriverProfit[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const res = await db.execute<{
+    driver_id: number;
+    name: string | null;
+    revenue: number;
+    fuel_cost: number;
+  }>(sql`
+    SELECT
+      d.id AS driver_id,
+      u.name,
+      coalesce(sum(l.rate),0)::int AS revenue,
+      coalesce(sum(fp.total_cost),0)::int AS fuel_cost
+    FROM drivers d
+    INNER JOIN users u ON d.user_id = u.id
+    LEFT JOIN loads l ON l.assigned_driver_id = d.id AND l.status = 'delivered'
+    LEFT JOIN fuel_purchases fp ON fp.driver_id = d.id
+    WHERE u.org_id = ${orgId}
+    GROUP BY d.id, u.name
+  `);
+
+  return res.rows.map(row => ({
+    driverId: row.driver_id,
+    driverName: row.name,
+    revenue: row.revenue,
+    fuelCost: row.fuel_cost,
+    profit: row.revenue - row.fuel_cost,
+  }));
+}
+
+export async function fetchGrossMarginByLoad(orgId: number): Promise<LoadMargin[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const loadsRes = await db.execute<{
+    id: number;
+    load_number: string;
+    assigned_driver_id: number;
+    distance: number;
+    rate: number;
+  }>(sql`
+    SELECT id, load_number, assigned_driver_id, distance, rate
+    FROM loads
+    WHERE org_id = ${orgId} AND status = 'delivered'
+  `);
+
+  const fuelRes = await db.execute<{ driver_id: number; total_cost: number }>(sql`
+    SELECT driver_id, coalesce(sum(total_cost),0)::int AS total_cost
+    FROM fuel_purchases
+    WHERE org_id = ${orgId}
+    GROUP BY driver_id
+  `);
+
+  const distanceRes = await db.execute<{ driver_id: number; total_distance: number }>(sql`
+    SELECT assigned_driver_id AS driver_id, coalesce(sum(distance),0)::int AS total_distance
+    FROM loads
+    WHERE org_id = ${orgId} AND status = 'delivered'
+    GROUP BY assigned_driver_id
+  `);
+
+  const fuelByDriver = fuelRes.rows.reduce<Record<number, number>>((acc, r) => {
+    acc[r.driver_id] = r.total_cost;
+    return acc;
+  }, {});
+  const distByDriver = distanceRes.rows.reduce<Record<number, number>>((acc, r) => {
+    acc[r.driver_id] = r.total_distance;
+    return acc;
+  }, {});
+
+  return loadsRes.rows.map(l => {
+    const totalFuel = fuelByDriver[l.assigned_driver_id] ?? 0;
+    const totalDist = distByDriver[l.assigned_driver_id] ?? 0;
+    const costPerMile = totalDist === 0 ? 0 : totalFuel / totalDist;
+    const fuelCost = Math.round(costPerMile * l.distance);
+    return {
+      id: l.id,
+      loadNumber: l.load_number,
+      revenue: l.rate,
+      fuelCost,
+      grossMargin: l.rate - fuelCost,
+    } satisfies LoadMargin;
+  });
 }
 
 export {

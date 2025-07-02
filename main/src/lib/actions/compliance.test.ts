@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { generateUniqueFilename, uploadDocumentsAction, searchDocumentsAction, sendExpirationAlerts } from './compliance'
 import { db } from '@/lib/db'
+import { sendEmail } from '@/lib/email'
 
 vi.mock('@/lib/db', () => ({
   db: {
@@ -56,7 +57,7 @@ describe('searchDocumentsAction', () => {
     const formData = new FormData()
     formData.set('query', 'report')
     const rows = [{ id: 1, fileName: 'report.pdf' }]
-    vi.mocked(db.execute).mockResolvedValue({ rows } as any)
+    vi.mocked(db.execute).mockResolvedValue({ rows } as unknown as { rows: { id: number; fileName: string }[] })
     const result = await searchDocumentsAction(formData)
     expect(result.success).toBe(true)
     expect(result.documents[0].fileName).toBe('report.pdf')
@@ -65,10 +66,10 @@ describe('searchDocumentsAction', () => {
 
 describe('sendExpirationAlerts', () => {
   it('sends emails for expiring docs', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 1, fileName: 'a.pdf', email: 'a@test.com', expiresAt: new Date() }] } as any)
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 1, fileName: 'a.pdf', email: 'a@test.com', expiresAt: new Date() }] } as unknown as { rows: { id: number; fileName: string; email: string; expiresAt: Date }[] })
     const result = await sendExpirationAlerts()
     expect(result.success).toBe(true)
     expect(result.count).toBe(1)
-    expect(require('@/lib/email').sendEmail).toHaveBeenCalled()
+    expect(sendEmail).toHaveBeenCalled()
   })
 })

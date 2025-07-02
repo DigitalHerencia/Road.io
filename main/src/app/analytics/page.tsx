@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/rbac';
 import FleetUtilization from '@/features/analytics/components/FleetUtilization';
 import OperationalKPIs from '@/features/analytics/components/OperationalKPIs';
 import LiveFleetDashboard from '@/features/analytics/components/LiveFleetDashboard';
+import ProfitMetrics from '@/features/analytics/components/ProfitMetrics';
 import { redirect } from 'next/navigation';
 
 export default async function AnalyticsPage() {
@@ -16,6 +17,7 @@ export default async function AnalyticsPage() {
         <LiveFleetDashboard orgId={user.orgId} />
         <FleetUtilization orgId={user.orgId} />
         <OperationalKPIs orgId={user.orgId} />
+        <ProfitMetrics orgId={user.orgId} />
       </div>
     </div>
   );

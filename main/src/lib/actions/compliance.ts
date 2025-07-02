@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { documents, type Document } from '@/lib/schema';
+import { documents } from '@/lib/schema';
 import { sql } from 'drizzle-orm';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
