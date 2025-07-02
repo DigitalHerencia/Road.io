@@ -118,6 +118,7 @@ export const AUDIT_ACTIONS = {
   VEHICLE_CREATE: "vehicle.create",
   VEHICLE_UPDATE: "vehicle.update",
   VEHICLE_ASSIGN: "vehicle.assign",
+  VEHICLE_MAINTENANCE: 'vehicle.maintenance',
 
   // Trip actions
   TRIP_CREATE: "trip.create",
