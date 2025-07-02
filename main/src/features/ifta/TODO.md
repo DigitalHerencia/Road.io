@@ -6,7 +6,7 @@ The IFTA (International Fuel Tax Agreement) Reporting module automates fuel tax 
 ## 🚀 Core Features (MVP)
 
 ### Mileage Tracking
-- [ ] **Trip Recording**
+- [x] **Trip Recording**
   - Manual trip entry interface
   - Origin and destination selection
   - Mileage input and validation
@@ -14,14 +14,14 @@ The IFTA (International Fuel Tax Agreement) Reporting module automates fuel tax 
   - Route information
   - Load association
 
-- [ ] **Jurisdiction Tracking**
+- [x] **Jurisdiction Tracking**
   - State/province mileage allocation
   - Border crossing detection
   - Jurisdiction-specific mileage
   - Tax jurisdiction mapping
   - Interstate vs intrastate classification
 
-- [ ] **Automatic Mileage Calculation**
+- [x] **Automatic Mileage Calculation**
   - GPS-based mileage tracking
   - Route optimization integration
   - ELD integration support
@@ -29,21 +29,21 @@ The IFTA (International Fuel Tax Agreement) Reporting module automates fuel tax 
   - Mileage validation rules
 
 ### Fuel Purchase Management
-- [ ] **Fuel Purchase Entry**
+- [x] **Fuel Purchase Entry**
   - Manual fuel purchase logging
   - Receipt data capture
   - Fuel quantity and price tracking
   - Purchase location recording
   - Tax-paid vs tax-free classification
 
-- [ ] **Fuel Card Integration**
+- [x] **Fuel Card Integration**
   - Fuel card data import
   - Automatic purchase detection
   - Transaction matching
   - Duplicate prevention
   - Data validation
 
-- [ ] **Fuel Receipt Processing**
+- [x] **Fuel Receipt Processing**
   - Receipt photo capture
   - OCR processing for data extraction
   - Manual data verification

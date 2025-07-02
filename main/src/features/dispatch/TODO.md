@@ -6,7 +6,7 @@ The Dispatch module handles load management, driver/vehicle assignment, and real
 ## 🚀 Core Features (MVP)
 
 ### Load Management
-- [ ] **Load Creation Form**
+- [x] **Load Creation Form**
   - Basic load information (origin, destination, cargo)
   - Pickup and delivery time scheduling
   - Special instructions and notes
@@ -14,13 +14,13 @@ The Dispatch module handles load management, driver/vehicle assignment, and real
   - Customer information
   - Rate and billing information
 
-- [ ] **Load Editing Interface**
+- [x] **Load Editing Interface**
   - Modify existing load details
   - Update schedules and assignments
   - Add/edit special instructions
   - Change load status manually
 
-- [ ] **Load Status Tracking**
+- [x] **Load Status Tracking**
   - Status progression (Created → Assigned → In Transit → Delivered → Completed)
   - Real-time status updates from drivers
   - Estimated vs actual times

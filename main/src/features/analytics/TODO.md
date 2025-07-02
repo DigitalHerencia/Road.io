@@ -6,14 +6,14 @@ The Analytics module provides comprehensive performance metrics, financial track
 ## 🚀 Core Features (MVP)
 
 ### Fleet Performance Analytics
-- [ ] **Fleet Utilization Metrics**
+- [x] **Fleet Utilization Metrics**
   - Vehicle utilization rates
   - Driver productivity metrics
   - Route efficiency analysis
   - Asset utilization tracking
   - Capacity utilization reports
 
-- [ ] **Operational KPIs**
+- [x] **Operational KPIs**
   - On-time delivery rates
   - Load completion metrics
   - Miles per gallon tracking

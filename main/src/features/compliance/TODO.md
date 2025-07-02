@@ -14,14 +14,14 @@ The Compliance Management module ensures regulatory compliance by managing docum
   - Document previews
   - Batch upload functionality
 
-- [ ] **Document Categories**
+- [x] **Document Categories**
   - Driver documents (licenses, medical certificates, training)
   - Vehicle documents (registration, insurance, inspection)
   - Company documents (authority, permits, policies)
   - Load documents (BOL, POD, receipts)
   - Safety documents (accident reports, violation records)
 
-- [ ] **Document Storage**
+- [x] **Document Storage**
   - Secure cloud storage
   - Document encryption
   - Access logging

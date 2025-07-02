@@ -13,7 +13,7 @@ The Admin module provides comprehensive system administration capabilities inclu
   - Onboarding workflow
   - Welcome email automation
 
-- [ ] **User Profile Management**
+- [x] **User Profile Management**
   - View all organization users
   - Edit user profiles
   - Role management and assignment

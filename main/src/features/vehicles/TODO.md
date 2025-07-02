@@ -21,14 +21,14 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - [x] Vehicle status management (Active, Maintenance, Retired)
 
 ### Fleet Overview
-- [ ] **Fleet Dashboard**
+- [x] **Fleet Dashboard**
   - Total vehicle count and breakdown
   - Vehicle status overview
   - Maintenance alerts
   - Inspection due dates
   - Fleet utilization metrics
 
-- [ ] **Vehicle List View**
+- [x] **Vehicle List View**
   - Sortable and filterable vehicle list
   - Status indicators
   - Quick action buttons
