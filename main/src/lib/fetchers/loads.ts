@@ -38,7 +38,7 @@ export async function searchLoads(orgId: number, filters: LoadFilters = {}): Pro
     const term = `%${filters.query}%`;
     query = sql`${query} AND (load_number ILIKE ${term} OR pickup_location->>'address' ILIKE ${term} OR delivery_location->>'address' ILIKE ${term})`;
   }
-  query = sql`${query} ORDER BY updated_at DESC`;
+  query = sql`${query} ORDER BY updated_at DESC LIMIT ${limit} OFFSET ${offset}`;
   const result = await db.execute<Load>(query);
   return result.rows;
 }
