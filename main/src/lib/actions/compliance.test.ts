@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { generateUniqueFilename, uploadDocumentsAction, searchDocumentsAction, sendExpirationAlerts } from './compliance'
+import { generateUniqueFilename, uploadDocumentsAction, searchDocumentsAction, sendExpirationAlerts, recordAnnualReview, recordVehicleInspection, recordAccident, calculateSmsScore } from './compliance'
 import { db } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 
@@ -12,8 +12,8 @@ vi.mock('@/lib/db', () => ({
 vi.mock('@/lib/rbac', () => ({ requirePermission: vi.fn(async () => ({ id: '1', orgId: 1 })) }))
 vi.mock('@/lib/audit', () => ({
   createAuditLog: vi.fn(),
-  AUDIT_ACTIONS: { DOCUMENT_UPLOAD: 'doc.upload', DOCUMENT_EXPIRATION_ALERT: 'doc.expiration' },
-  AUDIT_RESOURCES: { DOCUMENT: 'document' }
+  AUDIT_ACTIONS: { DOCUMENT_UPLOAD: 'doc.upload', DOCUMENT_EXPIRATION_ALERT: 'doc.expiration', COMPLIANCE_REVIEW: 'compliance.review' },
+  AUDIT_RESOURCES: { DOCUMENT: 'document', COMPLIANCE: 'compliance' }
 }))
 vi.mock('@/lib/email', () => ({ sendEmail: vi.fn() }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
@@ -71,5 +71,47 @@ describe('sendExpirationAlerts', () => {
     expect(result.success).toBe(true)
     expect(result.count).toBe(1)
     expect(sendEmail).toHaveBeenCalled()
+  })
+})
+
+describe('recordAnnualReview', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+  it('creates a review record', async () => {
+    const form = new FormData()
+    form.set('driverId', '1')
+    form.set('reviewDate', '2024-01-01')
+    const result = await recordAnnualReview(form)
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('recordVehicleInspection', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+  it('creates an inspection record', async () => {
+    const form = new FormData()
+    form.set('vehicleId', '2')
+    form.set('inspectionDate', '2024-01-02')
+    const result = await recordVehicleInspection(form)
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('recordAccident', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+  it('creates an accident record', async () => {
+    const form = new FormData()
+    form.set('occurredAt', '2024-01-03')
+    const result = await recordAccident(form)
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('calculateSmsScore', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+  it('returns summary counts', async () => {
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 1 }] } as any)
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 2 }] } as any)
+    const result = await calculateSmsScore(1)
+    expect(result.score).toBe(1 * 2 + 2)
   })
 })

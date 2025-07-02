@@ -26,3 +26,35 @@ export async function getExpiringDocuments(orgId: number, withinDays = 30): Prom
   `);
   return res.rows;
 }
+
+export async function listAnnualReviews(orgId: number, driverId?: number) {
+  await requirePermission('org:compliance:upload_review_compliance');
+  const where = driverId ? sql`AND driver_id = ${driverId}` : sql``;
+  const res = await db.execute(sql`
+    SELECT * FROM driver_annual_reviews
+    WHERE org_id = ${orgId} ${where}
+    ORDER BY review_date DESC
+  `);
+  return res.rows;
+}
+
+export async function listVehicleInspections(orgId: number, vehicleId?: number) {
+  await requirePermission('org:compliance:upload_review_compliance');
+  const where = vehicleId ? sql`AND vehicle_id = ${vehicleId}` : sql``;
+  const res = await db.execute(sql`
+    SELECT * FROM vehicle_inspections
+    WHERE org_id = ${orgId} ${where}
+    ORDER BY inspection_date DESC
+  `);
+  return res.rows;
+}
+
+export async function listAccidentReports(orgId: number) {
+  await requirePermission('org:compliance:upload_review_compliance');
+  const res = await db.execute(sql`
+    SELECT * FROM accident_reports
+    WHERE org_id = ${orgId}
+    ORDER BY occurred_at DESC
+  `);
+  return res.rows;
+}
