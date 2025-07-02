@@ -8,6 +8,7 @@ export default async function VehicleAvailabilityList({ orgId }: Props) {
   const vehicles = await getVehicleAvailability(orgId)
   return (
     <table className="w-full text-sm">
+      <caption className="sr-only">Vehicle Availability List</caption>
       <thead className="text-left">
         <tr>
           <th>ID</th>
