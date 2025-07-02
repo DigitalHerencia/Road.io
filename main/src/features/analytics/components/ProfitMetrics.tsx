@@ -7,7 +7,8 @@ interface Props {
 }
 
 export default async function ProfitMetrics({ orgId }: Props) {
-  const [loadMargins, driverProfit] = await Promise.all([
+  // Use variable names from main for backend compatibility
+  const [loads, drivers] = await Promise.all([
     fetchGrossMarginByLoad(orgId),
     fetchDriverProfitability(orgId),
   ])
@@ -30,8 +31,8 @@ export default async function ProfitMetrics({ orgId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {loadMargins.map((l) => (
-                <tr key={l.id}>
+              {loads.map((l) => (
+                <tr key={l.loadId}>
                   <td>{l.loadNumber}</td>
                   <td className="text-right">{(l.revenue / 100).toFixed(2)}</td>
                   <td className="text-right">{(l.fuelCost / 100).toFixed(2)}</td>
@@ -58,7 +59,7 @@ export default async function ProfitMetrics({ orgId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {driverProfit.map((d) => (
+              {drivers.map((d) => (
                 <tr key={d.driverId}>
                   <td>{d.driverName ?? `Driver ${d.driverId}`}</td>
                   <td className="text-right">{(d.revenue / 100).toFixed(2)}</td>
