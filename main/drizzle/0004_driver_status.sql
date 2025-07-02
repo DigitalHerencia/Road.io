@@ -1,0 +1,2 @@
+CREATE TYPE "driver_status" AS ENUM ('AVAILABLE','ON_DUTY','OFF_DUTY');
+ALTER TABLE "drivers" ADD COLUMN "status" driver_status NOT NULL DEFAULT 'AVAILABLE';

@@ -6,6 +6,7 @@ export interface DriverProfile {
   licenseNumber: string | null;
   licenseExpiry: Date | null;
   dotNumber: string | null;
+  status: 'AVAILABLE' | 'ON_DUTY' | 'OFF_DUTY';
   isAvailable: boolean;
   createdAt: Date;
   updatedAt: Date;
