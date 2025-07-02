@@ -79,3 +79,57 @@ export async function getTenantMetrics(orgId: number): Promise<TenantMetrics> {
     crossOrgLoadAssignments: iso.crossOrgLoadAssignments,
   };
 }
+
+export interface SystemMetrics {
+  uptime: number;
+  load: number;
+  totalMem: number;
+  freeMem: number;
+  dbConnections: number;
+}
+
+export interface RecentAuditLog {
+  id: number;
+  action: string;
+  resource: string;
+  userId: number | null;
+  createdAt: Date;
+}
+
+export async function fetchSystemMetrics(): Promise<SystemMetrics> {
+  const os = await import('os');
+  const uptime = os.uptime();
+  const [load] = os.loadavg();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  let dbConnections = 0;
+  try {
+    const res = await db.execute<{ count: number }>(
+      sql`SELECT count(*)::int AS count FROM pg_stat_activity`,
+    );
+    dbConnections = res.rows[0]?.count ?? 0;
+  } catch {
+    dbConnections = 0;
+  }
+
+  return { uptime, load, totalMem, freeMem, dbConnections };
+}
+
+export async function fetchRecentAuditLogs(
+  orgId: number,
+  limit = 5,
+): Promise<RecentAuditLog[]> {
+  const res = await db.execute<RecentAuditLog>(sql`
+    SELECT
+      id,
+      action,
+      resource,
+      user_id AS "userId",
+      created_at AS "createdAt"
+    FROM audit_logs
+    WHERE org_id = ${orgId}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `);
+  return res.rows;
+}
