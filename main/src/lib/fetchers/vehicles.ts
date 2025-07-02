@@ -73,3 +73,68 @@ export async function getVehicleById(id: number) {
   const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id))
   return vehicle
 }
+
+export interface VehicleAvailability {
+  id: number
+  make: string | null
+  model: string | null
+  status: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED'
+  isAssigned: boolean
+  nextMaintenanceDate: Date | null
+}
+
+export async function getVehicleAvailability(orgId: number): Promise<VehicleAvailability[]> {
+  const res = await db.execute<{
+    id: number
+    make: string | null
+    model: string | null
+    status: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED'
+    is_assigned: boolean
+    next_maintenance_date: Date | null
+  }>(sql`
+    SELECT
+      v.id,
+      v.make,
+      v.model,
+      v.status,
+      v.next_maintenance_date,
+      EXISTS (
+        SELECT 1 FROM loads
+        WHERE assigned_vehicle_id = v.id
+          AND status NOT IN ('delivered','cancelled')
+      ) AS is_assigned
+    FROM vehicles v
+    WHERE v.org_id = ${orgId}
+  `)
+
+  return res.rows.map(row => ({
+    id: row.id,
+    make: row.make,
+    model: row.model,
+    status: row.status,
+    isAssigned: row.is_assigned,
+    nextMaintenanceDate: row.next_maintenance_date,
+  }))
+}
+
+import type { AuditLog } from '@/lib/schema'
+import { AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
+
+export async function getVehicleAssignmentHistory(vehicleId: number): Promise<AuditLog[]> {
+  const res = await db.execute<AuditLog>(sql`
+    SELECT
+      id AS id,
+      resource AS resource,
+      action AS action,
+      resource_id AS resourceId,
+      details AS details,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM audit_logs
+    WHERE resource = ${AUDIT_RESOURCES.VEHICLE}
+      AND action = ${AUDIT_ACTIONS.VEHICLE_ASSIGN}
+      AND resource_id = ${vehicleId}
+    ORDER BY createdAt DESC
+  `)
+  return res.rows
+}
