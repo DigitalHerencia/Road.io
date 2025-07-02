@@ -46,7 +46,7 @@ export default async function SafetyMetrics({ orgId }: Props) {
             <ul className="space-y-1 text-sm">
               {incidents.map((i) => (
                 <li key={i.id}>
-                  {new Date(i.occurredAt).toLocaleDateString()} - {i.description ?? 'No details'}
+                  {i.occurredAt.toLocaleDateString()} - {i.description ?? 'No details'}
                 </li>
               ))}
             </ul>
