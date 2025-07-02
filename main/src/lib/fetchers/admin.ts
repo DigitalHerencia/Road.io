@@ -32,16 +32,16 @@ export async function getTenantConfig(
 export async function getResourceAllocation(
   orgId: number,
 ): Promise<ResourceAllocation> {
-  const [userRes] = await db.execute<{ count: number }>(
+  const userRes = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM users WHERE org_id = ${orgId}`,
   );
-  const [driverRes] = await db.execute<{ count: number }>(
+  const driverRes = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM drivers d JOIN users u ON d.user_id = u.id WHERE u.org_id = ${orgId}`,
   );
-  const [vehicleRes] = await db.execute<{ count: number }>(
+  const vehicleRes = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM vehicles WHERE org_id = ${orgId}`,
   );
-  const [loadRes] = await db.execute<{ count: number }>(
+  const loadRes = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM loads WHERE org_id = ${orgId}`,
   );
 
