@@ -24,7 +24,7 @@ export default function RoleList({ roles }: Props) {
             <td className="px-2 py-1">{r.baseRole}</td>
             <td className="px-2 py-1 flex gap-2">
               <Link href={`/dashboard/admin/roles/${r.id}/edit`} className="text-blue-600">Edit</Link>
-              <form action={async () => { await deleteRoleAction(r.id) }}>
+              <form action={() => handleDeleteRole(r.id)}>
                 <Button type="submit" variant="ghost" size="sm">Delete</Button>
               </form>
             </td>
