@@ -54,10 +54,10 @@ export async function getResourceAllocation(
 }
 
 export async function getTenantMetrics(orgId: number): Promise<TenantMetrics> {
-  const [userCount] = await db.execute<{ count: number }>(
+  const userCount = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM users WHERE org_id = ${orgId}`,
   );
-  const [activeCount] = await db.execute<{ count: number }>(
+  const activeCount = await db.execute<{ count: number }>(
     sql`SELECT count(*)::int AS count FROM users WHERE org_id = ${orgId} AND is_active = true`,
   );
   const [org] = await db
