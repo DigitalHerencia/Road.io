@@ -3,8 +3,8 @@ import { getCurrentUser } from '@/lib/rbac';
 import FleetUtilization from '@/features/analytics/components/FleetUtilization';
 import OperationalKPIs from '@/features/analytics/components/OperationalKPIs';
 import CostAnalysis from '@/features/analytics/components/CostAnalysis';
-import LiveFleetDashboard from '@/features/analytics/components/LiveFleetDashboard';
 import ProfitMetrics from '@/features/analytics/components/ProfitMetrics';
+import LiveFleetDashboard from '@/features/analytics/components/LiveFleetDashboard';
 import SafetyMetrics from '@/features/analytics/components/SafetyMetrics';
 import { redirect } from 'next/navigation';
 
