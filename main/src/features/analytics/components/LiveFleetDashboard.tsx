@@ -30,10 +30,10 @@ export default function LiveFleetDashboard({ orgId }: Props) {
     }
 
     load()
-    const id = setInterval(load, 5000)
+    const intervalId = setInterval(load, 5000)
     return () => {
       active = false
-      clearInterval(id)
+      clearInterval(intervalId)
     }
   }, [orgId])
 
