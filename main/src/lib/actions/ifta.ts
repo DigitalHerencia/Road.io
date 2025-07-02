@@ -7,14 +7,18 @@ import {
   fuelPurchases,
   iftaReports,
   iftaTaxRates,
+  iftaAuditResponses,
 } from "@/lib/schema";
 import { promises as fsPromises, createWriteStream } from "fs";
+import { gzipSync } from "zlib";
 import path from "path";
 import { requirePermission } from "@/lib/rbac";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import PDFDocument from "pdfkit";
 import { and, between, eq } from "drizzle-orm";
+import { uploadDocumentsAction } from "@/lib/actions/compliance";
+import { getTripsForPeriod, getFuelPurchasesForPeriod } from "@/lib/fetchers/ifta";
 
 const TripFormSchema = z.object({
   driverId: z.coerce.number().optional(),
@@ -330,4 +334,92 @@ export async function generateIftaReportAction(formData: FormData) {
 
   revalidatePath("/dashboard/ifta/reports");
   return { success: true, report };
+}
+
+const AuditResponseSchema = z.object({
+  question: z.string().min(1),
+  response: z.string().optional(),
+});
+
+export async function uploadIftaDocumentsAction(formData: FormData) {
+  formData.set('category', 'ifta');
+  return uploadDocumentsAction(formData);
+}
+
+export async function recordIftaAuditResponseAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:access_audit_logs');
+  const input = AuditResponseSchema.parse(Object.fromEntries(formData));
+
+  const [resp] = await db
+    .insert(iftaAuditResponses)
+    .values({
+      orgId: user.orgId,
+      question: input.question,
+      response: input.response,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.IFTA_REPORT,
+    resourceId: resp.id.toString(),
+  });
+
+  revalidatePath('/dashboard/ifta/audit');
+  return { success: true, response: resp };
+}
+
+export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4') {
+  const user = await requirePermission('org:ifta:generate_report');
+  const startMonth = { Q1: 0, Q2: 3, Q3: 6, Q4: 9 }[quarter];
+  const start = new Date(Date.UTC(year, startMonth, 1));
+  const end = new Date(Date.UTC(year, startMonth + 3, 0, 23, 59, 59));
+
+  const [tripsRows, fuelRows, reports] = await Promise.all([
+    getTripsForPeriod(user.orgId, start, end),
+    getFuelPurchasesForPeriod(user.orgId, start, end),
+    db
+      .select()
+      .from(iftaReports)
+      .where(
+        and(eq(iftaReports.orgId, user.orgId), between(iftaReports.createdAt, start, end)),
+      ),
+  ]);
+
+  const lines: string[] = [];
+  lines.push('Trips');
+  lines.push('id,startState,endState,distance');
+  for (const t of tripsRows) {
+    lines.push(`${t.id},${t.startLocation.state},${t.endLocation.state},${t.distance ?? 0}`);
+  }
+  lines.push('');
+  lines.push('FuelPurchases');
+  lines.push('id,driverId,vehicleId,purchaseDate,quantity,pricePerUnit,state');
+  for (const f of fuelRows) {
+    lines.push(
+      `${f.id},${f.driverId},${f.vehicleId},${f.purchaseDate.toISOString()},${f.quantity ?? 0},${f.pricePerUnit ?? 0},${f.state ?? ''}`,
+    );
+  }
+  lines.push('');
+  lines.push('Reports');
+  lines.push('id,quarter,totalTax,interest,pdfUrl');
+  for (const r of reports) {
+    lines.push(`${r.id},${r.quarter},${r.totalTax},${r.interest},${r.pdfUrl}`);
+  }
+
+  const csv = lines.join('\n');
+  const gz = gzipSync(csv);
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REPORT_GENERATE,
+    resource: AUDIT_RESOURCES.IFTA_REPORT,
+  });
+
+  return new Response(gz, {
+    headers: {
+      'Content-Type': 'application/gzip',
+      'Content-Disposition': 'attachment; filename=ifta-audit.gz',
+    },
+  });
 }

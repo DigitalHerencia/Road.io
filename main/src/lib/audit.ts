@@ -110,11 +110,15 @@ export const AUDIT_ACTIONS = {
   DRIVER_CREATE: "driver.create",
   DRIVER_UPDATE: "driver.update",
   DRIVER_ASSIGN: "driver.assign",
+  TRAINING_CREATE: 'training.create',
+  TRAINING_ASSIGN: 'training.assign',
+  PAY_STATEMENT_CREATE: 'pay_statement.create',
 
   // Vehicle actions
   VEHICLE_CREATE: "vehicle.create",
   VEHICLE_UPDATE: "vehicle.update",
   VEHICLE_ASSIGN: "vehicle.assign",
+  VEHICLE_MAINTENANCE: 'vehicle.maintenance',
 
   // Trip actions
   TRIP_CREATE: "trip.create",
@@ -164,4 +168,6 @@ export const AUDIT_RESOURCES = {
   HOS_REPORT: 'hos_report',
   ROLE: 'role',
   IFTA_REPORT: 'ifta_report',
+  TRAINING_PROGRAM: 'training_program',
+  PAY_STATEMENT: 'pay_statement',
 } as const;

@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { vehicles } from '@/lib/schema'
+import { vehicles, vehicleMaintenance } from '@/lib/schema'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
 import { revalidatePath } from 'next/cache'
@@ -105,4 +105,42 @@ export async function bulkUpdateVehicleStatus(ids: number[], status: 'ACTIVE' | 
 
   revalidatePath('/dashboard/vehicles')
   return { success: true }
+}
+
+export const maintenanceRecordSchema = z.object({
+  maintenanceDate: z.coerce.date(),
+  mileage: z.coerce.number().int().optional(),
+  vendor: z.string().optional(),
+  description: z.string().optional(),
+  cost: z.coerce.number().int().optional(),
+})
+export type MaintenanceRecordInput = z.infer<typeof maintenanceRecordSchema>
+
+export async function recordVehicleMaintenance(vehicleId: number, data: MaintenanceRecordInput) {
+  const user = await requirePermission('org:admin:manage_vehicles')
+  const values = maintenanceRecordSchema.parse(data)
+
+  const [record] = await db
+    .insert(vehicleMaintenance)
+    .values({
+      orgId: user.orgId,
+      vehicleId,
+      maintenanceDate: values.maintenanceDate,
+      mileage: values.mileage,
+      vendor: values.vendor,
+      description: values.description,
+      cost: values.cost,
+      createdById: user.id,
+    })
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.VEHICLE_MAINTENANCE,
+    resource: AUDIT_RESOURCES.VEHICLE,
+    resourceId: vehicleId.toString(),
+    details: { recordId: record.id, createdBy: user.id },
+  })
+
+  revalidatePath(`/dashboard/vehicles/${vehicleId}`)
+  return { success: true, record }
 }
