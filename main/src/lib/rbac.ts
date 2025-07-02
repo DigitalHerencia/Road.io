@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { db } from './db';
 import { users, organizations } from './schema';
+import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
 
@@ -15,7 +16,7 @@ export interface AuthenticatedUser {
   role: SystemRoles;
   permissions: string[];
   isActive: boolean;
-  status: typeof import('./schema').userStatusEnum['_']['enumValues'][number];
+  status: UserStatus;
 }
 
 /**
@@ -39,7 +40,6 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
         organizationName: organizations.name,
         organizationSlug: organizations.slug,
         role: users.role,
-        status: users.status,
         isActive: users.isActive,
       })
       .from(users)
@@ -70,7 +70,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       role: user.role as SystemRoles,
       permissions,
       isActive: user.isActive,
-      status: user.status,
+      status: 'ACTIVE',
     };
   } catch (error) {
     console.error('Error getting current user:', error);

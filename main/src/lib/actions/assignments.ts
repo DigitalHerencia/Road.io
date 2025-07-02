@@ -68,7 +68,7 @@ export async function assignLoad(loadId: number, formData: FormData) {
     await db
       .update(vehicles)
       .set({ currentDriverId: (input.driverId ?? null) as number | null, updatedAt: new Date() })
-      .where(eq(vehicles.id, input.vehicleId))
+      .where(eq(vehicles.id, input.vehicleId!))
   }
 
   await createAuditLog({

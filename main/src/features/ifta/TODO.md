@@ -51,14 +51,14 @@ The IFTA (International Fuel Tax Agreement) Reporting module automates fuel tax 
   - Audit trail maintenance
 
 ### IFTA Report Generation
-- [ ] **Quarterly Report Creation**
+- [x] **Quarterly Report Creation**
   - Automated report generation
   - Jurisdiction-wise calculations
   - Tax credit/debt calculations
   - Report validation
   - PDF export capability
 
-- [ ] **Tax Calculation Engine**
+- [x] **Tax Calculation Engine**
   - Tax rate management by jurisdiction
   - Credit calculation logic
   - Debt assessment

@@ -265,6 +265,32 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// IFTA tax rates
+export const iftaTaxRates = pgTable("ifta_tax_rates", {
+  id: serial("id").primaryKey(),
+  state: varchar("state", { length: 2 }).notNull(),
+  quarter: varchar("quarter", { length: 7 }).notNull(), // e.g. 2024Q1
+  rate: integer("rate").notNull(), // cents per gallon
+  effectiveDate: timestamp("effective_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// IFTA reports
+export const iftaReports = pgTable("ifta_reports", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  quarter: varchar("quarter", { length: 7 }).notNull(),
+  totalTax: integer("total_tax").notNull(),
+  interest: integer("interest").default(0).notNull(),
+  pdfUrl: text("pdf_url").notNull(),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Hours of Service enums
 export const hosStatusEnum = pgEnum("hos_status", [
   "OFF_DUTY",
@@ -414,6 +440,17 @@ export const hosViolationsRelations = relations(hosViolations, ({ one }) => ({
   }),
 }));
 
+export const iftaReportsRelations = relations(iftaReports, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [iftaReports.orgId],
+    references: [organizations.id],
+  }),
+  createdBy: one(users, {
+    fields: [iftaReports.createdById],
+    references: [users.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -478,3 +515,7 @@ export type HosLog = typeof hosLogs.$inferSelect;
 export type NewHosLog = typeof hosLogs.$inferInsert;
 export type HosViolation = typeof hosViolations.$inferSelect;
 export type NewHosViolation = typeof hosViolations.$inferInsert;
+export type IftaTaxRate = typeof iftaTaxRates.$inferSelect;
+export type NewIftaTaxRate = typeof iftaTaxRates.$inferInsert;
+export type IftaReport = typeof iftaReports.$inferSelect;
+export type NewIftaReport = typeof iftaReports.$inferInsert;

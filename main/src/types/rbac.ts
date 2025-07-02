@@ -57,6 +57,7 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
     "org:driver:log_hos",
     "org:driver:record_trip",
     "org:driver:log_fuel_purchase",
+    "org:ifta:generate_report",
     "org:compliance:upload_review_compliance",
     "org:compliance:generate_compliance_req",
     "org:compliance:access_audit_logs",
@@ -89,6 +90,7 @@ export const ROLE_PERMISSIONS: Record<SystemRoles, string[]> = {
     "org:driver:view_assigned_loads",
     "org:driver:upload_documents",
     "org:driver:log_fuel_purchase",
+    "org:ifta:generate_report",
   ],
   [SystemRoles.MEMBER]: ["org:sys_profile:manage", "org:sys_memberships:read"],
 };

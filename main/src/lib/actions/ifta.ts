@@ -2,12 +2,19 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { trips, fuelPurchases } from "@/lib/schema";
-import { promises as fs } from "fs";
+import {
+  trips,
+  fuelPurchases,
+  iftaReports,
+  iftaTaxRates,
+} from "@/lib/schema";
+import { promises as fsPromises, createWriteStream } from "fs";
 import path from "path";
 import { requirePermission } from "@/lib/rbac";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import PDFDocument from "pdfkit";
+import { and, between, eq } from "drizzle-orm";
 
 const TripFormSchema = z.object({
   driverId: z.coerce.number().optional(),
@@ -140,8 +147,8 @@ export async function createFuelPurchaseAction(formData: FormData) {
     const buffer = Buffer.from(arrayBuffer);
     const unique = uniqueName(receipt.name);
     const dir = path.join(process.cwd(), "main/public/uploads");
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(path.join(dir, unique), buffer);
+    await fsPromises.mkdir(dir, { recursive: true });
+    await fsPromises.writeFile(path.join(dir, unique), buffer);
     receiptUrl = `/uploads/${unique}`;
   }
 
@@ -235,4 +242,90 @@ export async function importFuelCardCsvAction(formData: FormData) {
 
   revalidatePath("/dashboard/ifta/fuel");
   return { success: true, count };
+}
+
+const ReportSchema = z.object({
+  year: z.coerce.number(),
+  quarter: z.enum(["Q1", "Q2", "Q3", "Q4"]),
+});
+
+export async function generateIftaReportAction(formData: FormData) {
+  const user = await requirePermission("org:ifta:generate_report");
+  const parsed = ReportSchema.parse({
+    year: formData.get("year"),
+    quarter: formData.get("quarter"),
+  });
+
+  const quarter = `${parsed.year}${parsed.quarter}`;
+  const startMonth = { Q1: 0, Q2: 3, Q3: 6, Q4: 9 }[parsed.quarter];
+  const start = new Date(Date.UTC(parsed.year, startMonth, 1));
+  const end = new Date(Date.UTC(parsed.year, startMonth + 3, 0, 23, 59, 59));
+
+  const [purchases, rates] = await Promise.all([
+    db
+      .select()
+      .from(fuelPurchases)
+      .where(
+        and(
+          eq(fuelPurchases.orgId, user.orgId),
+          between(fuelPurchases.purchaseDate, start, end),
+        ),
+      ),
+    db.select().from(iftaTaxRates).where(eq(iftaTaxRates.quarter, quarter)),
+  ]);
+
+  const gallonsByState = purchases.reduce<Record<string, number>>((acc, p) => {
+    const st = p.state ?? "";
+    acc[st] = (acc[st] || 0) + (p.quantity || 0);
+    return acc;
+  }, {});
+
+  let totalTax = 0;
+  for (const rate of rates) {
+    const gallons = gallonsByState[rate.state] || 0;
+    totalTax += gallons * rate.rate;
+  }
+
+  const due = new Date(Date.UTC(parsed.year, startMonth + 3, 30));
+  let interest = 0;
+  if (Date.now() > due.getTime()) {
+    const days = Math.floor((Date.now() - due.getTime()) / 86400000);
+    interest = Math.round(totalTax * 0.0001 * days);
+  }
+
+  const doc = new PDFDocument();
+  const dir = path.join(process.cwd(), "main/public/uploads");
+  await fsPromises.mkdir(dir, { recursive: true });
+  const filename = `${quarter}-${Date.now()}.pdf`;
+  const filePath = path.join(dir, filename);
+  const stream = createWriteStream(filePath);
+  doc.pipe(stream);
+  doc.fontSize(18).text(`IFTA Report ${quarter}`, { align: "center" });
+  doc.moveDown();
+  doc.text(`Total Tax: $${(totalTax / 100).toFixed(2)}`);
+  doc.text(`Interest: $${(interest / 100).toFixed(2)}`);
+  doc.end();
+  await new Promise((res) => stream.on("finish", res));
+
+  const [report] = await db
+    .insert(iftaReports)
+    .values({
+      orgId: user.orgId,
+      quarter,
+      totalTax,
+      interest,
+      pdfUrl: `/uploads/${filename}`,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.IFTA_REPORT_GENERATE,
+    resource: AUDIT_RESOURCES.IFTA_REPORT,
+    resourceId: report.id.toString(),
+    details: { quarter },
+  });
+
+  revalidatePath("/dashboard/ifta/reports");
+  return { success: true, report };
 }
