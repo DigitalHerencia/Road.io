@@ -278,7 +278,7 @@ export const iftaTaxRates = pgTable("ifta_tax_rates", {
 // IFTA reports
 export const iftaReports = pgTable("ifta_reports", {
   id: serial("id").primaryKey(),
-  orgId: serial("org_id")
+  orgId: integer("org_id")
     .references(() => organizations.id)
     .notNull(),
   quarter: varchar("quarter", { length: 7 }).notNull(),
