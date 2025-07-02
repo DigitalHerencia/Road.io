@@ -7,7 +7,7 @@ import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission, getCurrentUser } from '@/lib/rbac';
 import { loadStatusEnum } from '@/lib/schema';
 import { revalidatePath } from 'next/cache';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { SystemRoles } from '@/types/rbac';
 
 export async function createLoad(formData: FormData) {
@@ -144,4 +144,23 @@ export async function updateLoadStatus(loadId: number, status: typeof loadStatus
 
   revalidatePath('/dashboard/loads');
   return { success: true, load: updatedLoad };
+}
+
+export async function bulkExportLoads(ids: number[]) {
+  await requirePermission('org:dispatcher:create_edit_loads');
+  if (ids.length === 0) {
+    return new Response('No loads selected', { status: 400 });
+  }
+  const rows = await db.select().from(loads).where(inArray(loads.id, ids));
+  const lines = [
+    'LoadNumber,Status,PickupAddress,DeliveryAddress,Rate',
+    ...rows.map(l => `${l.loadNumber},${l.status},"${l.pickupLocation.address}","${l.deliveryLocation.address}",${l.rate ?? ''}`)
+  ];
+  const csv = lines.join('\n');
+  return new Response(csv, {
+    headers: {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': 'attachment; filename=loads.csv',
+    },
+  });
 }
