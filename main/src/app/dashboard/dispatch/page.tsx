@@ -32,11 +32,11 @@ export default async function DispatchPage({ searchParams }: SearchParams) {
           className="border rounded h-8 px-2"
         >
           <option value="">All</option>
-          <option value="pending">pending</option>
-          <option value="assigned">assigned</option>
-          <option value="in_transit">in_transit</option>
-          <option value="delivered">delivered</option>
-          <option value="cancelled">cancelled</option>
+          {Object.values(loadStatusEnum.enumValues).map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
         </select>
         <button type="submit" className="bg-primary text-primary-foreground rounded px-3">
           Filter
