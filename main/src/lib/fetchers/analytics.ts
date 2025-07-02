@@ -226,21 +226,17 @@ export async function fetchFuelCost(orgId: number): Promise<FuelCost> {
 export async function fetchTotalCostOfOwnership(orgId: number): Promise<TotalCostOfOwnership> {
   await requirePermission('org:admin:access_all_reports');
 
-  const [loadRes, fuelRes] = await Promise.all([
+  const [loadRes, fuelCostData] = await Promise.all([
     db.execute<{ total: number }>(sql`
       SELECT coalesce(sum(rate),0)::int AS total
       FROM loads
       WHERE org_id = ${orgId}
     `),
-    db.execute<{ total: number }>(sql`
-      SELECT coalesce(sum(total_cost),0)::int AS total
-      FROM fuel_purchases
-      WHERE org_id = ${orgId}
-    `),
+    fetchFuelCost(orgId),
   ]);
 
   const loadCost = loadRes.rows[0]?.total ?? 0;
-  const fuelCost = fuelRes.rows[0]?.total ?? 0;
+  const fuelCost = fuelCostData.totalFuelCost;
 
   return {
     loadCost,
