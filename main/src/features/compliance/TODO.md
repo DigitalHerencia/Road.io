@@ -29,14 +29,14 @@ The Compliance Management module ensures regulatory compliance by managing docum
   - Search and indexing
 
 ### Expiration Tracking
-- [ ] **Expiration Monitoring**
+- [x] **Expiration Monitoring**
   - Automatic expiration detection
   - Customizable alert thresholds
   - Multi-level notification system
   - Renewal reminders
   - Grace period management
 
-- [ ] **Alert System**
+- [x] **Alert System**
   - Email notifications
   - In-app alerts
   - Dashboard warnings

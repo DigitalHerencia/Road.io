@@ -69,7 +69,6 @@ export async function assignLoad(loadId: number, formData: FormData) {
       .update(vehicles)
       .set({ currentDriverId: (input.driverId ?? null) as number | null, updatedAt: new Date() })
       .where(eq(vehicles.id, input.vehicleId))
-
     await createAuditLog({
       action: AUDIT_ACTIONS.VEHICLE_ASSIGN,
       resource: AUDIT_RESOURCES.VEHICLE,
@@ -77,13 +76,5 @@ export async function assignLoad(loadId: number, formData: FormData) {
       details: { loadId, driverId: input.driverId, assignedBy: user.id },
     })
   }
-
-  await createAuditLog({
-    action: AUDIT_ACTIONS.LOAD_ASSIGN,
-    resource: AUDIT_RESOURCES.LOAD,
-    resourceId: loadId.toString(),
-    details: { driverId: input.driverId, vehicleId: input.vehicleId, assignedBy: user.id },
-  })
-
   return { success: true, load: updated }
 }

@@ -12,7 +12,7 @@ export default function DriverSummary({ driver }: { driver: DriverProfile }) {
         <p><strong>License:</strong> {driver.licenseNumber || 'N/A'}</p>
         <p><strong>License Expiry:</strong> {driver.licenseExpiry ? driver.licenseExpiry.toLocaleDateString() : 'N/A'}</p>
         {driver.dotNumber && <p><strong>DOT:</strong> {driver.dotNumber}</p>}
-        <p><strong>Status:</strong> {driver.isAvailable ? 'Available' : 'Unavailable'}</p>
+        <p><strong>Status:</strong> {driver.status.replace('_', ' ')}</p>
       </CardContent>
     </Card>
   )

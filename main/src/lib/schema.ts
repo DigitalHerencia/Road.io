@@ -37,6 +37,11 @@ export const vehicleStatusEnum = pgEnum("vehicle_status", [
   "MAINTENANCE",
   "RETIRED",
 ]);
+export const driverStatusEnum = pgEnum("driver_status", [
+  "AVAILABLE",
+  "ON_DUTY",
+  "OFF_DUTY",
+]);
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -71,6 +76,17 @@ export const organizations = pgTable("organizations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const roles = pgTable('roles', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: varchar('description', { length: 255 }),
+  baseRole: systemRoleEnum('base_role').default('MEMBER').notNull(),
+  permissions: jsonb('permissions').default('[]').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Users table with multi-tenant support
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -81,6 +97,7 @@ export const users = pgTable("users", {
     .references(() => organizations.id)
     .notNull(),
   role: systemRoleEnum("role").default("MEMBER").notNull(),
+  customRoleId: integer("custom_role_id").references(() => roles.id),
   isActive: boolean("is_active").default(true).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -96,6 +113,7 @@ export const drivers = pgTable("drivers", {
   licenseNumber: varchar("license_number", { length: 50 }),
   licenseExpiry: timestamp("license_expiry"),
   dotNumber: varchar("dot_number", { length: 50 }),
+  status: driverStatusEnum("status").default("AVAILABLE").notNull(),
   isAvailable: boolean("is_available").default(true).notNull(),
   currentLocation: jsonb("current_location"), // { lat, lng, address }
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -205,6 +223,7 @@ export const documents = pgTable("documents", {
   fileUrl: text("file_url").notNull(),
   fileType: varchar("file_type", { length: 50 }).notNull(),
   fileSize: serial("file_size"), // in bytes
+  expiresAt: timestamptz("expires_at"),
   documentType: varchar("document_type", { length: 50 }), // 'pod', 'invoice', 'license', etc.
   isCompliant: boolean("is_compliant").default(false),
   reviewedById: serial("reviewed_by_id").references(() => users.id),
@@ -263,6 +282,32 @@ export const trips = pgTable("trips", {
     .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// IFTA tax rates
+export const iftaTaxRates = pgTable("ifta_tax_rates", {
+  id: serial("id").primaryKey(),
+  state: varchar("state", { length: 2 }).notNull(),
+  quarter: varchar("quarter", { length: 7 }).notNull(), // e.g. 2024Q1
+  rate: integer("rate").notNull(), // cents per gallon
+  effectiveDate: timestamp("effective_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// IFTA reports
+export const iftaReports = pgTable("ifta_reports", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  quarter: varchar("quarter", { length: 7 }).notNull(),
+  totalTax: integer("total_tax").notNull(),
+  interest: integer("interest").default(0).notNull(),
+  pdfUrl: text("pdf_url").notNull(),
+  createdById: serial("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Hours of Service enums
@@ -332,10 +377,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.orgId],
     references: [organizations.id],
   }),
+  customRole: one(roles, {
+    fields: [users.customRoleId],
+    references: [roles.id],
+  }),
   driver: one(drivers),
   createdLoads: many(loads),
   auditLogs: many(auditLogs),
   uploadedDocuments: many(documents),
+}));
+
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [roles.orgId],
+    references: [organizations.id],
+  }),
+  users: many(users),
 }));
 
 export const driversRelations = relations(drivers, ({ one, many }) => ({
@@ -414,6 +471,17 @@ export const hosViolationsRelations = relations(hosViolations, ({ one }) => ({
   }),
 }));
 
+export const iftaReportsRelations = relations(iftaReports, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [iftaReports.orgId],
+    references: [organizations.id],
+  }),
+  createdBy: one(users, {
+    fields: [iftaReports.createdById],
+    references: [users.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -478,3 +546,7 @@ export type HosLog = typeof hosLogs.$inferSelect;
 export type NewHosLog = typeof hosLogs.$inferInsert;
 export type HosViolation = typeof hosViolations.$inferSelect;
 export type NewHosViolation = typeof hosViolations.$inferInsert;
+export type IftaTaxRate = typeof iftaTaxRates.$inferSelect;
+export type NewIftaTaxRate = typeof iftaTaxRates.$inferInsert;
+export type IftaReport = typeof iftaReports.$inferSelect;
+export type NewIftaReport = typeof iftaReports.$inferInsert;

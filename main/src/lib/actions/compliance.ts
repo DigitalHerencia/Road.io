@@ -1,10 +1,11 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { documents } from '@/lib/schema';
+import { documents, type Document } from '@/lib/schema';
 import { sql } from 'drizzle-orm';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
+import { sendEmail } from '@/lib/email';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/types/compliance';
 import { z } from 'zod';
 import { promises as fs } from 'fs';
@@ -14,6 +15,7 @@ import { revalidatePath } from 'next/cache';
 export const uploadFormSchema = z.object({
   category: z.enum(DOCUMENT_CATEGORIES),
   driverId: z.string().optional(),
+  expiresAt: z.string().optional(),
 });
 
 export function generateUniqueFilename(original: string): string {
@@ -29,9 +31,10 @@ export async function uploadDocumentsAction(formData: FormData) {
   const parsed = uploadFormSchema.parse({
     category: formData.get('category'),
     driverId: formData.get('driverId')?.toString(),
+    expiresAt: formData.get('expiresAt')?.toString(),
   });
   const category: DocumentCategory = parsed.category;
-  const { driverId } = parsed;
+  const { driverId, expiresAt } = parsed;
 
   const files = formData.getAll('documents');
   const saved: unknown[] = [];
@@ -54,6 +57,7 @@ export async function uploadDocumentsAction(formData: FormData) {
       fileUrl: `/uploads/${unique}`,
       fileType: file.type,
       fileSize: file.size,
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
       documentType: category,
     }).returning();
 
@@ -89,4 +93,25 @@ async function fetchDocumentsBySearchTerm(orgId: number, term: string) {
     WHERE org_id = ${orgId} AND file_name ILIKE ${term}
     ORDER BY created_at DESC
   `);
+}
+
+export async function sendExpirationAlerts(withinDays = 30) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const docs = await getExpiringDocuments(user.orgId, withinDays);
+
+  for (const doc of docs) {
+    await sendEmail({
+      to: doc.email,
+      subject: `Document ${doc.fileName} expiring soon`,
+      html: `<p>${doc.fileName} expires on ${doc.expiresAt?.toISOString().slice(0,10)}</p>`
+    });
+    await createAuditLog({
+      action: 'document.expiration.alert',
+      resource: AUDIT_RESOURCES.DOCUMENT,
+      resourceId: doc.id.toString(),
+      details: { expiresAt: doc.expiresAt }
+    });
+  }
+
+  return { success: true, count: docsRes.rows.length };
 }

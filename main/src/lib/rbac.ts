@@ -1,7 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { db } from './db';
 import { users, organizations } from './schema';
+import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
+import type { UserStatus } from '@/types/users'
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
 
 export interface AuthenticatedUser {
@@ -13,9 +15,11 @@ export interface AuthenticatedUser {
   organizationName: string;
   organizationSlug: string;
   role: SystemRoles;
+  customRoleId: number | null;
+  customRoleName: string | null;
   permissions: string[];
   isActive: boolean;
-  status: typeof import('./schema').userStatusEnum['_']['enumValues'][number];
+  status: UserStatus;
 }
 
 /**
@@ -39,11 +43,16 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
         organizationName: organizations.name,
         organizationSlug: organizations.slug,
         role: users.role,
+        customRoleId: users.customRoleId,
+        customRoleName: roles.name,
+        customPermissions: roles.permissions,
         status: users.status,
+
         isActive: users.isActive,
       })
       .from(users)
       .innerJoin(organizations, eq(users.orgId, organizations.id))
+      .leftJoin(roles, eq(users.customRoleId, roles.id))
       .where(
         and(
           eq(users.clerkUserId, clerkUserId),
@@ -57,7 +66,10 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     }
 
     const user = result[0];
-    const permissions = ROLE_PERMISSIONS[user.role as SystemRoles] || [];
+    let permissions = ROLE_PERMISSIONS[user.role as SystemRoles] || [];
+    if (user.customPermissions) {
+      permissions = Array.from(new Set([...permissions, ...user.customPermissions]))
+    }
 
     return {
       id: user.id.toString(),
@@ -68,9 +80,11 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       organizationName: user.organizationName,
       organizationSlug: user.organizationSlug,
       role: user.role as SystemRoles,
+      customRoleId: user.customRoleId,
+      customRoleName: user.customRoleName,
       permissions,
       isActive: user.isActive,
-      status: user.status,
+      status: user.status as UserStatus,
     };
   } catch (error) {
     console.error('Error getting current user:', error);

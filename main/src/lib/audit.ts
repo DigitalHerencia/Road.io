@@ -95,6 +95,9 @@ export const AUDIT_ACTIONS = {
   USER_ROLE_CHANGE: "user.role_change",
   USER_INVITE: "user.invite",
   USER_WELCOME_EMAIL: "user.welcome_email",
+  ROLE_CREATE: 'role.create',
+  ROLE_UPDATE: 'role.update',
+  ROLE_DELETE: 'role.delete',
 
   // Load actions
   LOAD_CREATE: "load.create",
@@ -125,6 +128,9 @@ export const AUDIT_ACTIONS = {
   HOS_LOG_CREATE: 'hos.log.create',
   HOS_VIOLATION: 'hos.violation',
   HOS_REPORT_GENERATE: 'hos.report.generate',
+
+  // IFTA actions
+  IFTA_REPORT_GENERATE: 'ifta.report.generate',
   
 
   // Document actions
@@ -156,4 +162,6 @@ export const AUDIT_RESOURCES = {
   TRIP: 'trip',
   HOS_LOG: 'hos_log',
   HOS_REPORT: 'hos_report',
+  ROLE: 'role',
+  IFTA_REPORT: 'ifta_report',
 } as const;
