@@ -110,3 +110,39 @@ export async function updateDriver(formData: FormData) {
   revalidatePath(`/drivers/${driverId}`)
   return { success: true }
 }
+
+const statusSchema = z.object({
+  id: z.string(),
+  status: z.enum(['AVAILABLE', 'ON_DUTY', 'OFF_DUTY'])
+})
+
+export async function updateDriverStatus(formData: FormData) {
+  const input = statusSchema.parse({
+    id: formData.get('id'),
+    status: formData.get('status')
+  })
+
+  const driverId = parseInt(input.id)
+  await requirePermission('org:dispatcher:assign_drivers')
+
+  const [updated] = await db
+    .update(drivers)
+    .set({
+      status: input.status,
+      isAvailable: input.status === 'AVAILABLE',
+      updatedAt: new Date()
+    })
+    .where(eq(drivers.id, driverId))
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DRIVER_UPDATE,
+    resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: driverId.toString(),
+    details: { status: updated.status }
+  })
+
+  revalidatePath('/drivers')
+  revalidatePath(`/drivers/${driverId}`)
+  return { success: true }
+}
