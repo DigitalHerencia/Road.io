@@ -232,7 +232,7 @@ export async function fetchGrossMarginByLoad(
       ON fc.driver_id = l.assigned_driver_id
     WHERE l.org_id = ${orgId} AND l.status = 'delivered'
     ORDER BY l.updated_at DESC
-    LIMIT 5
+    LIMIT ${DEFAULT_QUERY_LIMIT}
   `);
 
   return result.rows.map(r => ({
