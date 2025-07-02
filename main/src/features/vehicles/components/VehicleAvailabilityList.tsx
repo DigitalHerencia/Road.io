@@ -26,7 +26,7 @@ export default async function VehicleAvailabilityList({ orgId }: Props) {
             <td>{v.model}</td>
             <td>{v.status}</td>
             <td>{v.isAssigned ? 'Yes' : 'No'}</td>
-            <td>{v.nextMaintenanceDate ? new Date(v.nextMaintenanceDate).toLocaleDateString() : 'N/A'}</td>
+            <td>{v.nextMaintenanceDate ? v.nextMaintenanceDate.toLocaleDateString() : 'N/A'}</td>
           </tr>
         ))}
       </tbody>
