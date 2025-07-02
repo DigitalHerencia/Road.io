@@ -10,9 +10,20 @@ This module manages regulatory compliance documents and safety records. It now i
 
 Run `sendExpirationAlerts()` periodically to keep users informed of upcoming renewals.
 
+## Renewal Management
+
+- `sendRenewalReminders` server action emails users about expiring documents.
+- `markDocumentReviewed` marks a document as compliant once renewed.
+
+## Compliance Dashboard
+
+- `ComplianceDashboard` shows active and under review counts and monthly upload trends.
+- `RenewalList` lists documents nearing expiration for quick action.
+
 ## DOT & Safety Compliance
 
 - `recordAnnualReview` tracks driver qualification file reviews.
 - `recordVehicleInspection` stores annual or daily vehicle inspections.
 - `recordAccident` logs accident reports for safety tracking.
 - `calculateSmsScore` summarizes accidents and HOS violations to provide a simple Safety Management System (SMS) score.
+

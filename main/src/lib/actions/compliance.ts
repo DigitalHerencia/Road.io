@@ -14,6 +14,7 @@ import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
 import { sendEmail } from '@/lib/email';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/types/compliance';
+import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -146,6 +147,45 @@ export async function sendExpirationAlerts(withinDays = 30) {
   return { success: true, count: docs.length };
 }
 
+export async function sendRenewalReminders(withinDays = 30) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const docs = await getExpiringDocuments(user.orgId, withinDays);
+
+  for (const doc of docs) {
+    await sendEmail({
+      to: doc.email,
+      subject: `Renewal reminder for ${doc.fileName}`,
+      html: `<p>The document ${doc.fileName} will expire on ${doc.expiresAt?.toISOString().slice(0,10)}. Please renew it.</p>`
+    });
+    await createAuditLog({
+      action: 'document.renewal.reminder',
+      resource: AUDIT_RESOURCES.DOCUMENT,
+      resourceId: doc.id.toString(),
+      details: { expiresAt: doc.expiresAt }
+    });
+  }
+
+  return { success: true, count: docs.length };
+}
+
+export async function markDocumentReviewed(id: number) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const [doc] = await db
+    .update(documents)
+    .set({ reviewedById: parseInt(user.id), reviewedAt: new Date(), isCompliant: true })
+    .where(sql`id = ${id}`)
+    .returning();
+
+  await createAuditLog({
+    action: 'document.reviewed',
+    resource: AUDIT_RESOURCES.DOCUMENT,
+    resourceId: id.toString(),
+    details: { reviewedBy: user.id }
+  });
+
+  revalidatePath('/dashboard/compliance');
+  return { success: true, document: doc as Document };
+=======
 export async function recordAnnualReview(formData: FormData) {
   const user = await requirePermission('org:compliance:upload_review_compliance');
   const input = reviewSchema.parse(Object.fromEntries(formData));
