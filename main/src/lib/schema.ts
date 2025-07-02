@@ -359,6 +359,44 @@ export const hosViolations = pgTable("hos_violations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Driver annual reviews
+export const driverAnnualReviews = pgTable('driver_annual_reviews', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  reviewDate: timestamp('review_date').notNull(),
+  isQualified: boolean('is_qualified').default(true).notNull(),
+  notes: text('notes'),
+  createdById: integer('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Vehicle inspections
+export const vehicleInspections = pgTable('vehicle_inspections', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  vehicleId: integer('vehicle_id').references(() => vehicles.id).notNull(),
+  inspectorId: integer('inspector_id').references(() => users.id).notNull(),
+  inspectionDate: timestamp('inspection_date').notNull(),
+  passed: boolean('passed').default(true).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Accident reports
+export const accidentReports = pgTable('accident_reports', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id),
+  vehicleId: integer('vehicle_id').references(() => vehicles.id),
+  occurredAt: timestamp('occurred_at').notNull(),
+  description: text('description'),
+  injuries: boolean('injuries').default(false),
+  fatalities: boolean('fatalities').default(false),
+  createdById: integer('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -370,6 +408,9 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   fuelPurchases: many(fuelPurchases),
   hosLogs: many(hosLogs),
   hosViolations: many(hosViolations),
+  driverAnnualReviews: many(driverAnnualReviews),
+  vehicleInspections: many(vehicleInspections),
+  accidentReports: many(accidentReports),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -385,6 +426,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdLoads: many(loads),
   auditLogs: many(auditLogs),
   uploadedDocuments: many(documents),
+  vehicleInspections: many(vehicleInspections),
+  createdReviews: many(driverAnnualReviews),
+  accidentReports: many(accidentReports),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({
@@ -407,6 +451,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   fuelPurchases: many(fuelPurchases),
   hosLogs: many(hosLogs),
   hosViolations: many(hosViolations),
+  annualReviews: many(driverAnnualReviews),
+  accidentReports: many(accidentReports),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -421,6 +467,8 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
   assignedLoads: many(loads),
   trips: many(trips),
   fuelPurchases: many(fuelPurchases),
+  inspections: many(vehicleInspections),
+  accidentReports: many(accidentReports),
 }));
 
 export const loadsRelations = relations(loads, ({ one, many }) => ({
@@ -550,3 +598,9 @@ export type IftaTaxRate = typeof iftaTaxRates.$inferSelect;
 export type NewIftaTaxRate = typeof iftaTaxRates.$inferInsert;
 export type IftaReport = typeof iftaReports.$inferSelect;
 export type NewIftaReport = typeof iftaReports.$inferInsert;
+export type DriverAnnualReview = typeof driverAnnualReviews.$inferSelect;
+export type NewDriverAnnualReview = typeof driverAnnualReviews.$inferInsert;
+export type VehicleInspection = typeof vehicleInspections.$inferSelect;
+export type NewVehicleInspection = typeof vehicleInspections.$inferInsert;
+export type AccidentReport = typeof accidentReports.$inferSelect;
+export type NewAccidentReport = typeof accidentReports.$inferInsert;

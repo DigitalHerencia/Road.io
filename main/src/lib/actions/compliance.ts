@@ -1,8 +1,15 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { documents, type Document } from '@/lib/schema';
+import {
+  documents,
+  driverAnnualReviews,
+  vehicleInspections,
+  accidentReports,
+  type Document,
+} from '@/lib/schema';
 import { sql } from 'drizzle-orm';
+import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
 import { sendEmail } from '@/lib/email';
@@ -16,6 +23,29 @@ export const uploadFormSchema = z.object({
   category: z.enum(DOCUMENT_CATEGORIES),
   driverId: z.string().optional(),
   expiresAt: z.string().optional(),
+});
+
+const reviewSchema = z.object({
+  driverId: z.coerce.number(),
+  reviewDate: z.coerce.date(),
+  isQualified: z.coerce.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+const inspectionSchema = z.object({
+  vehicleId: z.coerce.number(),
+  inspectionDate: z.coerce.date(),
+  passed: z.coerce.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+const accidentSchema = z.object({
+  driverId: z.coerce.number().optional(),
+  vehicleId: z.coerce.number().optional(),
+  occurredAt: z.coerce.date(),
+  description: z.string().optional(),
+  injuries: z.coerce.boolean().optional(),
+  fatalities: z.coerce.boolean().optional(),
 });
 
 export function generateUniqueFilename(original: string): string {
@@ -113,5 +143,101 @@ export async function sendExpirationAlerts(withinDays = 30) {
     });
   }
 
-  return { success: true, count: docsRes.rows.length };
+  return { success: true, count: docs.length };
+}
+
+export async function recordAnnualReview(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = reviewSchema.parse(Object.fromEntries(formData));
+
+  const [review] = await db
+    .insert(driverAnnualReviews)
+    .values({
+      orgId: user.orgId,
+      driverId: input.driverId,
+      reviewDate: input.reviewDate,
+      isQualified: input.isQualified ?? true,
+      notes: input.notes,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: review.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/dqf');
+  return { success: true, review };
+}
+
+export async function recordVehicleInspection(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = inspectionSchema.parse(Object.fromEntries(formData));
+
+  const [inspection] = await db
+    .insert(vehicleInspections)
+    .values({
+      orgId: user.orgId,
+      vehicleId: input.vehicleId,
+      inspectorId: parseInt(user.id),
+      inspectionDate: input.inspectionDate,
+      passed: input.passed ?? true,
+      notes: input.notes,
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: inspection.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/inspections');
+  return { success: true, inspection };
+}
+
+export async function recordAccident(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = accidentSchema.parse(Object.fromEntries(formData));
+
+  const [accident] = await db
+    .insert(accidentReports)
+    .values({
+      orgId: user.orgId,
+      driverId: input.driverId ?? null,
+      vehicleId: input.vehicleId ?? null,
+      occurredAt: input.occurredAt,
+      description: input.description,
+      injuries: input.injuries ?? false,
+      fatalities: input.fatalities ?? false,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: accident.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/accidents');
+  return { success: true, accident };
+}
+
+export async function calculateSmsScore(orgId: number) {
+  await requirePermission('org:compliance:generate_compliance_req');
+  const accidentRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count FROM accident_reports WHERE org_id = ${orgId}
+  `);
+  const violationRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count FROM hos_violations WHERE org_id = ${orgId}
+  `);
+
+  const accidents = accidentRes.rows[0]?.count ?? 0;
+  const violations = violationRes.rows[0]?.count ?? 0;
+  const score = accidents * 2 + violations;
+
+  return { accidents, violations, score };
 }
