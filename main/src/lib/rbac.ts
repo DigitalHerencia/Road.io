@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { db } from './db';
-import { users, organizations, roles } from './schema';
+import { users, organizations } from './schema';
+import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
 import type { UserStatus } from '@/types/users'
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
@@ -46,6 +47,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
         customRoleName: roles.name,
         customPermissions: roles.permissions,
         status: users.status,
+
         isActive: users.isActive,
       })
       .from(users)
@@ -82,7 +84,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       customRoleName: user.customRoleName,
       permissions,
       isActive: user.isActive,
-      status: user.status,
+      status: user.status as UserStatus,
     };
   } catch (error) {
     console.error('Error getting current user:', error);

@@ -3,8 +3,8 @@ import type { AuditLog } from '@/lib/schema'
 export default function AssignmentHistory({ history }: { history: AuditLog[] }) {
   return (
     <div className="space-y-2 text-sm">
-      {history.map((entry) => {
-        const details = entry.details as Record<string, unknown> | null
+      {history.map(entry => {
+        const details = entry.details as { driverId?: number; vehicleId?: number } | null
         return (
           <div key={entry.id} className="border rounded p-2">
             <div className="font-medium">

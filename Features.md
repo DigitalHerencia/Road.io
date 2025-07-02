@@ -277,8 +277,8 @@ delivery statuses in real-time.
 
 ## Tips
 
--   Use filtering options in the Dispatch module to quickly find loads by status, driver, date, or
-    destination, especially as the number of loads grows.
+ -   Use filtering options in the Dispatch module to quickly find loads by status, driver, or date.
+     The dispatch board also supports multi-select so you can export selected loads for reporting.
 -   Pay attention to color-coding or status labels on the dispatch board (for example, overdue loads
     might be highlighted).
 -   Refer to the [Dispatch Management Guide](../MODULE_GUIDES/dispatch.md) for detailed instructions
