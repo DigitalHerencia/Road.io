@@ -9,7 +9,13 @@ import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import type { CompanyProfile, UserPreferences, SystemConfig } from '@/types/settings';
+import type {
+  CompanyProfile,
+  UserPreferences,
+  SystemConfig,
+  IntegrationSettings,
+  NotificationSettings,
+} from '@/types/settings';
 
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),
@@ -41,6 +47,21 @@ const userPreferencesSchema = z.object({
 const systemConfigSchema = z.object({
   maintenanceEnabled: z.coerce.boolean().optional(),
   backupFrequency: z.enum(['daily', 'weekly', 'monthly']).optional(),
+});
+
+const integrationSettingsSchema = z.object({
+  eldApiKey: z.string().optional(),
+  fuelCardProvider: z.string().optional(),
+  mappingApiKey: z.string().optional(),
+  commsWebhookUrl: z.string().url().optional(),
+  paymentProcessorKey: z.string().optional(),
+});
+
+const notificationSettingsSchema = z.object({
+  emailEnabled: z.coerce.boolean().optional(),
+  smsEnabled: z.coerce.boolean().optional(),
+  pushEnabled: z.coerce.boolean().optional(),
+  escalationEmail: z.string().email().optional(),
 });
 
 export async function updateCompanyProfileAction(formData: FormData) {
@@ -206,5 +227,95 @@ export async function updateSystemConfigAction(formData: FormData) {
   });
 
   revalidatePath('/dashboard/settings/system');
+  return { success: true };
+}
+
+export async function updateIntegrationSettingsAction(formData: FormData) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = {
+    eldApiKey: formData.get('eldApiKey') || undefined,
+    fuelCardProvider: formData.get('fuelCardProvider') || undefined,
+    mappingApiKey: formData.get('mappingApiKey') || undefined,
+    commsWebhookUrl: formData.get('commsWebhookUrl') || undefined,
+    paymentProcessorKey: formData.get('paymentProcessorKey') || undefined,
+  };
+
+  const parsed = integrationSettingsSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const integrationSettings: IntegrationSettings = {
+    ...(org?.settings?.integrationSettings ?? {}),
+    ...parsed,
+  };
+
+  const settings = {
+    ...(org?.settings ?? {}),
+    integrationSettings,
+  } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, integrationSettings },
+  });
+
+  revalidatePath('/dashboard/settings/integrations');
+  return { success: true };
+}
+
+export async function updateNotificationSettingsAction(formData: FormData) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = {
+    emailEnabled: formData.get('emailEnabled'),
+    smsEnabled: formData.get('smsEnabled'),
+    pushEnabled: formData.get('pushEnabled'),
+    escalationEmail: formData.get('escalationEmail') || undefined,
+  };
+
+  const parsed = notificationSettingsSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const notificationSettings: NotificationSettings = {
+    ...(org?.settings?.notificationSettings ?? {}),
+    emailEnabled: parsed.emailEnabled ?? false,
+    smsEnabled: parsed.smsEnabled ?? false,
+    pushEnabled: parsed.pushEnabled ?? false,
+    escalationEmail: parsed.escalationEmail ?? org?.settings?.notificationSettings?.escalationEmail,
+  };
+
+  const settings = {
+    ...(org?.settings ?? {}),
+    notificationSettings,
+  } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, notificationSettings },
+  });
+
+  revalidatePath('/dashboard/settings/notifications');
   return { success: true };
 }

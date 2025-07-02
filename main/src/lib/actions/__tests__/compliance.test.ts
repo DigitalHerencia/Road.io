@@ -1,6 +1,5 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
@@ -14,7 +13,7 @@ import {
   recordVehicleInspection,
   recordAccident,
   calculateSmsScore
-} from './compliance'
+} from '@/lib/actions/compliance'
 import { db } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 
@@ -73,7 +72,7 @@ describe('searchDocumentsAction', () => {
     const formData = new FormData()
     formData.set('query', 'report')
     const rows = [{ id: 1, fileName: 'report.pdf' }]
-    vi.mocked(db.execute).mockResolvedValue({ rows } as unknown as { rows: typeof rows })
+    vi.mocked(db.execute).mockResolvedValue({ rows } as any)
     const result = await searchDocumentsAction(formData)
     expect(result.success).toBe(true)
     expect(result.documents[0].fileName).toBe('report.pdf')
@@ -82,7 +81,7 @@ describe('searchDocumentsAction', () => {
 
 describe('sendExpirationAlerts', () => {
   it('sends emails for expiring docs', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 1, fileName: 'a.pdf', email: 'a@test.com', expiresAt: new Date() }] } as unknown as { rows: Array<{ id: number; fileName: string; email: string; expiresAt: Date }> })
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 1, fileName: 'a.pdf', email: 'a@test.com', expiresAt: new Date() }] } as any)
     const result = await sendExpirationAlerts()
     expect(result.success).toBe(true)
     expect(result.count).toBe(1)
@@ -125,9 +124,7 @@ describe('recordAccident', () => {
 describe('calculateSmsScore', () => {
   beforeEach(() => { vi.clearAllMocks() })
   it('returns summary counts', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 1 }] } as any)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 2 }] } as any)
     const result = await calculateSmsScore(1)
     expect(result.score).toBe(1 * 2 + 2)
@@ -136,7 +133,6 @@ describe('calculateSmsScore', () => {
 
 describe('sendRenewalReminders', () => {
   it('sends renewal emails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 2, fileName: 'b.pdf', email: 'b@test.com', expiresAt: new Date() }] } as any)
     const result = await sendRenewalReminders()
     expect(result.success).toBe(true)
@@ -147,7 +143,6 @@ describe('sendRenewalReminders', () => {
 
 describe('markDocumentReviewed', () => {
   it('updates document review fields', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(db.update).mockReturnValueOnce({ set: () => ({ where: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }) } as any)
     const result = await markDocumentReviewed(1)
     expect(result.success).toBe(true)

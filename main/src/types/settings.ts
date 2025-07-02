@@ -50,3 +50,18 @@ export interface SystemConfig {
     retentionDays: number;
   };
 }
+
+export interface IntegrationSettings {
+  eldApiKey?: string;
+  fuelCardProvider?: string;
+  mappingApiKey?: string;
+  commsWebhookUrl?: string;
+  paymentProcessorKey?: string;
+}
+
+export interface NotificationSettings {
+  emailEnabled?: boolean;
+  smsEnabled?: boolean;
+  pushEnabled?: boolean;
+  escalationEmail?: string;
+}

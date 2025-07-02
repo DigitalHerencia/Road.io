@@ -20,6 +20,12 @@ export default async function SettingsPage() {
         <Link href="/dashboard/settings/roles" className="underline text-sm">
           Manage Roles
         </Link>
+        <Link href="/dashboard/settings/integrations" className="underline text-sm">
+          Integrations
+        </Link>
+        <Link href="/dashboard/settings/notifications" className="underline text-sm">
+          Notifications
+        </Link>
       </div>
     </div>
   );
