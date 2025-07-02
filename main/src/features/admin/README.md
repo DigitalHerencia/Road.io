@@ -21,4 +21,5 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 - `/dashboard/admin/users` – Invite users, manage roles and statuses.
 - `/dashboard/admin/users/[id]/edit` – Edit an individual user profile.
 - `/dashboard/admin/roles` – Manage custom roles and permissions.
+- `/dashboard/admin/tenant` – Multi-tenant administration and monitoring.
 
