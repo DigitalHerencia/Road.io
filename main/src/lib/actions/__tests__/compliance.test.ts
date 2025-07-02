@@ -121,8 +121,8 @@ describe('recordAccident', () => {
 describe('calculateSmsScore', () => {
   beforeEach(() => { vi.clearAllMocks() })
   it('returns summary counts', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 1 }] } as any)
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 2 }] } as any)
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 1 }] } as unknown as { rows: { count: number }[] })
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 2 }] } as unknown as { rows: { count: number }[] })
     const result = await calculateSmsScore(1)
     expect(result.score).toBe(1 * 2 + 2)
   })
@@ -130,17 +130,21 @@ describe('calculateSmsScore', () => {
 
 describe('sendRenewalReminders', () => {
   it('sends renewal emails', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 2, fileName: 'b.pdf', email: 'b@test.com', expiresAt: new Date() }] } as any)
+    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ id: 2, fileName: 'b.pdf', email: 'b@test.com', expiresAt: new Date() }] } as unknown as { rows: { id: number; fileName: string; email: string; expiresAt: Date }[] })
     const result = await sendRenewalReminders()
     expect(result.success).toBe(true)
     expect(result.count).toBe(1)
-    expect(require('@/lib/email').sendEmail).toHaveBeenCalled()
+    expect(sendEmail).toHaveBeenCalled()
   })
 })
 
 describe('markDocumentReviewed', () => {
   it('updates document review fields', async () => {
-    vi.mocked(db.update).mockReturnValueOnce({ set: () => ({ where: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }) } as any)
+    vi.mocked(db.update).mockReturnValueOnce({
+      set: () => ({
+        where: () => ({ returning: () => Promise.resolve([{ id: 1 }]) })
+      })
+    } as unknown as { set: () => { where: () => { returning: () => Promise<{ id: number }[]> } } })
     const result = await markDocumentReviewed(1)
     expect(result.success).toBe(true)
   })

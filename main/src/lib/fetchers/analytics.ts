@@ -351,3 +351,70 @@ export {
   calcCostPerMile,
   calcTotalCostOfOwnership,
 };
+
+export interface AccidentRate {
+  totalMiles: number;
+  accidents: number;
+  accidentsPerMillionMiles: number;
+}
+
+export interface SafetyIncident {
+  id: number;
+  occurredAt: Date;
+  description: string | null;
+  injuries: boolean;
+  fatalities: boolean;
+}
+
+export async function fetchAccidentRate(orgId: number): Promise<AccidentRate> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const [milesRes, accidentsRes] = await Promise.all([
+    db.execute<{ sum: number }>(sql`
+      SELECT coalesce(sum(distance),0)::int AS sum
+      FROM loads
+      WHERE org_id = ${orgId} AND status = 'delivered'
+    `),
+    db.execute<{ count: number }>(sql`
+      SELECT count(*)::int AS count
+      FROM accident_reports
+      WHERE org_id = ${orgId}
+    `),
+  ]);
+
+  const totalMiles = milesRes.rows[0]?.sum ?? 0;
+  const accidents = accidentsRes.rows[0]?.count ?? 0;
+  const rate = totalMiles === 0 ? 0 : Number(((accidents / totalMiles) * 1_000_000).toFixed(2));
+
+  return { totalMiles, accidents, accidentsPerMillionMiles: rate };
+}
+
+export async function fetchSafetyIncidents(
+  orgId: number,
+  limit = 5,
+): Promise<SafetyIncident[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const res = await db.execute<{
+    id: number;
+    occurred_at: Date;
+    description: string | null;
+    injuries: boolean;
+    fatalities: boolean | null;
+  }>(sql`
+    SELECT id, occurred_at, description, injuries, fatalities
+    FROM accident_reports
+    WHERE org_id = ${orgId}
+    ORDER BY occurred_at DESC
+    LIMIT ${limit}
+  `);
+
+  return res.rows.map((r) => ({
+    id: r.id,
+    occurredAt: r.occurred_at,
+    description: r.description,
+    injuries: r.injuries,
+    fatalities: r.fatalities ?? false,
+  }));
+}
+
