@@ -211,6 +211,7 @@ export const documents = pgTable("documents", {
   fileUrl: text("file_url").notNull(),
   fileType: varchar("file_type", { length: 50 }).notNull(),
   fileSize: serial("file_size"), // in bytes
+  expiresAt: timestamptz("expires_at"),
   documentType: varchar("document_type", { length: 50 }), // 'pod', 'invoice', 'license', etc.
   isCompliant: boolean("is_compliant").default(false),
   reviewedById: serial("reviewed_by_id").references(() => users.id),
