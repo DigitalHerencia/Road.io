@@ -1,6 +1,6 @@
 # Compliance Module
 
-This module manages regulatory compliance documents. It now includes basic expiration tracking.
+This module manages regulatory compliance documents and safety records. It now includes basic expiration tracking and DOT compliance tools.
 
 ## Expiration Alerts
 
@@ -19,3 +19,11 @@ Run `sendExpirationAlerts()` periodically to keep users informed of upcoming ren
 
 - `ComplianceDashboard` shows active and under review counts and monthly upload trends.
 - `RenewalList` lists documents nearing expiration for quick action.
+
+## DOT & Safety Compliance
+
+- `recordAnnualReview` tracks driver qualification file reviews.
+- `recordVehicleInspection` stores annual or daily vehicle inspections.
+- `recordAccident` logs accident reports for safety tracking.
+- `calculateSmsScore` summarizes accidents and HOS violations to provide a simple Safety Management System (SMS) score.
+
