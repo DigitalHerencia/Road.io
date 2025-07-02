@@ -5,8 +5,9 @@ import { organizations, userPreferences } from '../schema';
 import { requirePermission, requireAuth } from '../rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import type { CompanyProfile, UserPreferences } from '@/types/settings';
+import type { CompanyProfile, UserPreferences, SystemConfig } from '@/types/settings';
 
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),
@@ -28,6 +29,11 @@ const userPreferencesSchema = z.object({
   units: z.enum(['imperial', 'metric']).optional(),
   currency: z.string().optional(),
   numberFormat: z.string().optional(),
+});
+
+const systemConfigSchema = z.object({
+  maintenanceEnabled: z.coerce.boolean().optional(),
+  backupFrequency: z.enum(['daily', 'weekly', 'monthly']).optional(),
 });
 
 export async function updateCompanyProfileAction(formData: FormData) {
@@ -124,5 +130,49 @@ export async function updateUserPreferencesAction(formData: FormData) {
     details: { preferences },
   });
 
+  return { success: true };
+}
+
+export async function updateSystemConfigAction(formData: FormData) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = {
+    maintenanceEnabled: formData.get('maintenanceEnabled'),
+    backupFrequency: formData.get('backupFrequency'),
+  };
+
+  const parsed = systemConfigSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const systemConfig: SystemConfig = {
+    maintenance: { enabled: parsed.maintenanceEnabled ?? false },
+    backup: {
+      frequency: parsed.backupFrequency ?? 'weekly',
+      retentionDays: 30,
+    },
+  };
+
+  const settings = {
+    ...(org?.settings ?? {}),
+    systemConfig,
+  } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, systemConfig },
+  });
+
+  revalidatePath('/dashboard/settings/system');
   return { success: true };
 }
