@@ -5,7 +5,11 @@ import {
   searchDocumentsAction,
   sendExpirationAlerts,
   sendRenewalReminders,
-  markDocumentReviewed
+  markDocumentReviewed,
+  recordAnnualReview,
+  recordVehicleInspection,
+  recordAccident,
+  calculateSmsScore
 } from './compliance'
 import { db } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
