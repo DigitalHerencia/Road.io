@@ -70,9 +70,9 @@ export default function LiveFleetDashboard({ orgId }: Props) {
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">Performance Alerts</h3>
           <ul className="list-disc list-inside space-y-1">
-            {alerts.map((alert, idx) => (
+            {alerts.map((alert) => (
               <li
-                key={idx}
+                key={`${alert.level}-${alert.message}`}
                 className={
                   alert.level === 'critical'
                     ? 'text-destructive'
