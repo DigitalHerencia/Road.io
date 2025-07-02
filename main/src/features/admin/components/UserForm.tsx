@@ -14,7 +14,7 @@ interface Props {
 
 export default function UserForm({ user, roles }: Props) {
   return (
-    <form action={async (formData) => { await updateUserAction(formData) }} className="space-y-4 max-w-md">
+    <form action={updateUserAction} className="space-y-4 max-w-md">
       <input type="hidden" name="id" value={user.id} />
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
