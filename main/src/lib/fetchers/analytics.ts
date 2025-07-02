@@ -245,45 +245,32 @@ export async function fetchDriverProfitability(orgId: number): Promise<DriverPro
 export async function fetchGrossMarginByLoad(orgId: number): Promise<LoadMargin[]> {
   await requirePermission('org:admin:access_all_reports');
 
-  const loadsRes = await db.execute<{
+  const combinedRes = await db.execute<{
     id: number;
     load_number: string;
     assigned_driver_id: number;
     distance: number;
     rate: number;
+    total_fuel_cost: number;
+    total_distance: number;
   }>(sql`
-    SELECT id, load_number, assigned_driver_id, distance, rate
-    FROM loads
-    WHERE org_id = ${orgId} AND status = 'delivered'
+    SELECT
+      l.id,
+      l.load_number,
+      l.assigned_driver_id,
+      l.distance,
+      l.rate,
+      coalesce(sum(fp.total_cost) FILTER (WHERE fp.driver_id = l.assigned_driver_id), 0)::int AS total_fuel_cost,
+      coalesce(sum(l2.distance) FILTER (WHERE l2.assigned_driver_id = l.assigned_driver_id), 0)::int AS total_distance
+    FROM loads l
+    LEFT JOIN fuel_purchases fp ON fp.org_id = ${orgId}
+    LEFT JOIN loads l2 ON l2.org_id = ${orgId} AND l2.status = 'delivered'
+    WHERE l.org_id = ${orgId} AND l.status = 'delivered'
+    GROUP BY l.id, l.load_number, l.assigned_driver_id, l.distance, l.rate
   `);
 
-  const fuelRes = await db.execute<{ driver_id: number; total_cost: number }>(sql`
-    SELECT driver_id, coalesce(sum(total_cost),0)::int AS total_cost
-    FROM fuel_purchases
-    WHERE org_id = ${orgId}
-    GROUP BY driver_id
-  `);
-
-  const distanceRes = await db.execute<{ driver_id: number; total_distance: number }>(sql`
-    SELECT assigned_driver_id AS driver_id, coalesce(sum(distance),0)::int AS total_distance
-    FROM loads
-    WHERE org_id = ${orgId} AND status = 'delivered'
-    GROUP BY assigned_driver_id
-  `);
-
-  const fuelByDriver = fuelRes.rows.reduce<Record<number, number>>((acc, r) => {
-    acc[r.driver_id] = r.total_cost;
-    return acc;
-  }, {});
-  const distByDriver = distanceRes.rows.reduce<Record<number, number>>((acc, r) => {
-    acc[r.driver_id] = r.total_distance;
-    return acc;
-  }, {});
-
-  return loadsRes.rows.map(l => {
-    const totalFuel = fuelByDriver[l.assigned_driver_id] ?? 0;
-    const totalDist = distByDriver[l.assigned_driver_id] ?? 0;
-    const costPerMile = totalDist === 0 ? 0 : totalFuel / totalDist;
+  return combinedRes.rows.map(l => {
+    const costPerMile = l.total_distance === 0 ? 0 : l.total_fuel_cost / l.total_distance;
     const fuelCost = Math.round(costPerMile * l.distance);
     return {
       id: l.id,
