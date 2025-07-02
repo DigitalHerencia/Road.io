@@ -75,7 +75,9 @@ export async function updateCompanyProfileAction(formData: FormData) {
   if (file instanceof File && file.size > 0) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}${path.extname(file.name)}`;
-    const uploadDir = path.join(process.cwd(), 'main/public/uploads');
+const UPLOADS_DIR = path.join(process.cwd(), 'main', 'public', 'uploads');
+
+    const uploadDir = UPLOADS_DIR;
     await fs.mkdir(uploadDir, { recursive: true });
     await fs.writeFile(path.join(uploadDir, unique), buffer);
     logoUrl = `/uploads/${unique}`;
