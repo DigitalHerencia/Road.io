@@ -14,7 +14,7 @@ export default function AssignmentHistory({ history }: { history: AuditLog[] }) 
             <div>Vehicle: {details?.vehicleId ?? 'N/A'}</div>
           </div>
         )
-      })}
+      })
       {history.length === 0 && <p>No assignments yet.</p>}
     </div>
   )

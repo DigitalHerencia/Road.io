@@ -9,6 +9,7 @@ export async function getOrgUsers(orgId: number): Promise<UserProfile[]> {
       id: users.id,
       email: users.email,
       name: users.name,
+      orgId: users.orgId,
       role: users.role,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
@@ -41,4 +42,3 @@ export async function getUserById(id: number): Promise<UserProfile | undefined> 
   }));
   return row;
 }
-

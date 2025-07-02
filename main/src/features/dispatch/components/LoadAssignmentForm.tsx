@@ -19,7 +19,6 @@ export default async function LoadAssignmentForm({ loadId, driverId, vehicleId }
     'use server'
     return assignLoad(loadId, formData)
   }
-
   return (
     <form
        action={assignLoad.bind(null, loadId) as (formData: FormData) => Promise<void>}
