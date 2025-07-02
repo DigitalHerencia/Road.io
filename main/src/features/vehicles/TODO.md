@@ -57,14 +57,14 @@ The Vehicle Management module handles fleet operations, maintenance tracking, an
   - Custom maintenance types
 
 - [ ] **Maintenance Tracking**
-  - Service record logging
-  - Cost tracking
-  - Vendor management
+  - [x] Service record logging
+  - [x] Cost tracking
+  - [ ] Vendor management
   - Parts inventory integration
 
 - [ ] **Maintenance Alerts**
-  - Upcoming maintenance notifications
-  - Overdue maintenance warnings
+  - [x] Upcoming maintenance notifications
+  - [x] Overdue maintenance warnings
   - Cost threshold alerts
   - Automated scheduling suggestions
 
