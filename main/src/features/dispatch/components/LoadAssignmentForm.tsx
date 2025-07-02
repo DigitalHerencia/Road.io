@@ -15,6 +15,11 @@ export default async function LoadAssignmentForm({ loadId, driverId, vehicleId }
   const drivers = await getAllDrivers()
   const vehicles = await getAllVehicles(user.orgId)
 
+  async function assign(formData: FormData) {
+    'use server'
+    return assignLoad(loadId, formData)
+  }
+
   return (
     <form
        action={assignLoad.bind(null, loadId) as (formData: FormData) => Promise<void>}
