@@ -10,7 +10,11 @@ import { requirePermission, requireRole } from "../rbac";
 import { SystemRoles } from "@/types/rbac";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "../audit";
 import { eq, and, desc, count } from "drizzle-orm";
-import { checkTenantIsolation } from "../fetchers/admin";
+import {
+  checkTenantIsolation,
+  fetchSystemMetrics,
+  fetchRecentAuditLogs,
+} from "../fetchers/admin";
 
 // Validation schemas
 const inviteSchema = z.object({
@@ -379,6 +383,16 @@ export async function getOrganizationStatsAction() {
     console.error("Error fetching organization stats:", error);
     return { success: false, error: "Failed to fetch organization stats" };
   }
+}
+
+export async function getSystemMetricsAction() {
+  await requireRole(SystemRoles.ADMIN);
+  return fetchSystemMetrics();
+}
+
+export async function getRecentAuditLogsAction({ limit = 5 }: { limit?: number }) {
+  const admin = await requireRole(SystemRoles.ADMIN);
+  return fetchRecentAuditLogs(admin.orgId, limit);
 }
 
 export async function sendWelcomeEmailAction(

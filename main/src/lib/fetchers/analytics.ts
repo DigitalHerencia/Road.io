@@ -63,6 +63,17 @@ export interface DriverProfit {
   profit: number;
 }
 
+export interface LoadRevenue {
+  id: number;
+  loadNumber: string;
+  revenue: number;
+}
+
+export interface SeasonalRevenue {
+  period: string;
+  totalRevenue: number;
+}
+
 const MAX_CAPACITY_PER_VEHICLE = 40000; // pounds
 
 function calcRate(total: number, used: number): number {
@@ -342,6 +353,43 @@ export async function fetchGrossMarginByLoad(
     revenue: r.revenue,
     fuelCost: r.fuel_cost,
     grossMargin: r.revenue - r.fuel_cost,
+  }));
+}
+
+export async function fetchLoadRevenue(orgId: number): Promise<LoadRevenue[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{ id: number; load_number: string; revenue: number }>(sql`
+    SELECT id, load_number, coalesce(rate, 0)::int AS revenue
+    FROM loads
+    WHERE org_id = ${orgId} AND status = 'delivered'
+    ORDER BY updated_at DESC
+  `);
+
+  return result.rows.map(r => ({
+    id: r.id,
+    loadNumber: r.load_number,
+    revenue: r.revenue ?? 0,
+  }));
+}
+
+export async function fetchSeasonalRevenue(
+  orgId: number,
+): Promise<SeasonalRevenue[]> {
+  await requirePermission('org:admin:access_all_reports');
+
+  const result = await db.execute<{ period: string; total: number }>(sql`
+    SELECT to_char(date_trunc('month', updated_at), 'YYYY-MM') AS period,
+      SUM(rate)::int AS total
+    FROM loads
+    WHERE org_id = ${orgId} AND status = 'delivered'
+    GROUP BY 1
+    ORDER BY 1
+  `);
+
+  return result.rows.map(r => ({
+    period: r.period,
+    totalRevenue: r.total ?? 0,
   }));
 }
 

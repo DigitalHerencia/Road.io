@@ -4,6 +4,7 @@ import FleetUtilization from '@/features/analytics/components/FleetUtilization';
 import OperationalKPIs from '@/features/analytics/components/OperationalKPIs';
 import CostAnalysis from '@/features/analytics/components/CostAnalysis';
 import ProfitMetrics from '@/features/analytics/components/ProfitMetrics';
+import RevenueMetrics from '@/features/analytics/components/RevenueMetrics';
 import LiveFleetDashboard from '@/features/analytics/components/LiveFleetDashboard';
 import SafetyMetrics from '@/features/analytics/components/SafetyMetrics';
 import { redirect } from 'next/navigation';
@@ -20,6 +21,7 @@ export default async function AnalyticsPage() {
         <FleetUtilization orgId={user.orgId} />
         <OperationalKPIs orgId={user.orgId} />
         <CostAnalysis orgId={user.orgId} />
+        <RevenueMetrics orgId={user.orgId} />
         <ProfitMetrics orgId={user.orgId} />
         <SafetyMetrics orgId={user.orgId} />
       </div>
