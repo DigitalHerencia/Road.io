@@ -8,6 +8,10 @@ import type {
   SystemConfig,
   IntegrationSettings,
   NotificationSettings,
+  WorkflowAutomationSettings,
+  SecuritySettings,
+  MobileSettings,
+  AnalyticsSettings,
 } from '@/features/settings/types';
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
@@ -77,4 +81,54 @@ export async function getNotificationSettings(): Promise<NotificationSettings | 
   const settings = org?.settings as Record<string, unknown> | undefined;
   const notifications = settings?.notificationSettings as NotificationSettings | undefined;
   return notifications ?? null;
+}
+
+export async function getWorkflowAutomationSettings(): Promise<
+  WorkflowAutomationSettings | null
+> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  const workflow = settings?.workflowAutomation as WorkflowAutomationSettings | undefined;
+  return workflow ?? null;
+}
+
+export async function getSecuritySettings(): Promise<SecuritySettings | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  const security = settings?.securitySettings as SecuritySettings | undefined;
+  return security ?? null;
+}
+
+export async function getMobileSettings(): Promise<MobileSettings | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  const mobile = settings?.mobileSettings as MobileSettings | undefined;
+  return mobile ?? null;
+}
+
+export async function getAnalyticsSettings(): Promise<AnalyticsSettings | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  const analytics = settings?.analyticsSettings as AnalyticsSettings | undefined;
+  return analytics ?? null;
 }
