@@ -9,7 +9,7 @@ import { sendEmail } from "../email";
 import { requirePermission, requireRole } from "../rbac";
 import { SystemRoles } from "@/types/rbac";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "../audit";
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc, count, inArray } from "drizzle-orm";
 import {
   checkTenantIsolation,
   fetchSystemMetrics,
@@ -251,25 +251,18 @@ export async function bulkUpdateUsersAction(
       .select({ id: users.id })
       .from(users)
       .where(
-        and(
-          eq(users.orgId, currentUser.orgId),
-          // Add condition to filter by userIds
-        ),
+        and(eq(users.orgId, currentUser.orgId), inArray(users.id, values.userIds)),
       );
 
     if (targetUsers.length !== values.userIds.length) {
       return { success: false, error: "Some users not found in organization" };
     }
 
-    const results = await Promise.all(
-      values.userIds.map((userId) =>
-        db
-          .update(users)
-          .set(updateData)
-          .where(eq(users.id, userId))
-          .returning(),
-      ),
-    );
+    const results = await db
+      .update(users)
+      .set(updateData)
+      .where(and(eq(users.orgId, currentUser.orgId), inArray(users.id, values.userIds)))
+      .returning();
 
     await createAuditLog({
       action: AUDIT_ACTIONS.USER_BULK_UPDATE,
