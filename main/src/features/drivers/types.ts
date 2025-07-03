@@ -4,9 +4,19 @@ export interface DriverProfile {
   name: string | null;
   email: string;
   licenseNumber: string | null;
+  licenseClass: string | null;
+  endorsements: string | null;
   licenseExpiry: Date | null;
   dotNumber: string | null;
   status: 'AVAILABLE' | 'ON_DUTY' | 'OFF_DUTY';
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface DriverMessage {
+  id: number;
+  driverId: number;
+  sender: 'DRIVER' | 'DISPATCH';
+  message: string;
+  createdAt: Date;
 }

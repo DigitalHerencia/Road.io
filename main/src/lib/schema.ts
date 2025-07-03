@@ -47,6 +47,10 @@ export const driverStatusEnum = pgEnum("driver_status", [
   "ON_DUTY",
   "OFF_DUTY",
 ]);
+export const driverMessageSenderEnum = pgEnum('driver_message_sender', [
+  'DRIVER',
+  'DISPATCH',
+])
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -118,6 +122,8 @@ export const drivers = pgTable("drivers", {
     .references(() => users.id)
     .notNull(),
   licenseNumber: varchar("license_number", { length: 50 }),
+  licenseClass: varchar("license_class", { length: 5 }),
+  endorsements: varchar("endorsements", { length: 255 }),
   licenseExpiry: timestamp("license_expiry"),
   dotNumber: varchar("dot_number", { length: 50 }),
   status: driverStatusEnum("status").default("AVAILABLE").notNull(),
@@ -442,6 +448,28 @@ export const driverTrainings = pgTable('driver_trainings', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Driver license violations
+export const driverViolations = pgTable('driver_violations', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  description: text('description'),
+  occurredAt: timestamp('occurred_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Driver certifications (DOT medical, hazmat, etc.)
+export const driverCertifications = pgTable('driver_certifications', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  issuedAt: timestamp('issued_at'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Driver benefits
 export const driverBenefits = pgTable('driver_benefits', {
   id: serial('id').primaryKey(),
@@ -465,6 +493,30 @@ export const payStatements = pgTable('pay_statements', {
   benefitsDeduction: integer('benefits_deduction').default(0).notNull(),
   grossPay: integer('gross_pay').notNull(),
   netPay: integer('net_pay').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Dispatch driver messages
+export const dispatchMessages = pgTable('dispatch_messages', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  senderId: integer('sender_id').references(() => users.id).notNull(),
+  message: text('message').notNull(),
+  emergency: boolean('emergency').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  readAt: timestamp('read_at'),
+});
+
+// Customer notifications
+export const customerNotifications = pgTable('customer_notifications', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  loadId: integer('load_id').references(() => loads.id).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  type: varchar('type', { length: 20 }).default('status').notNull(),
+  message: text('message').notNull(),
+  sentAt: timestamp('sent_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -496,7 +548,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   trainingPrograms: many(trainingPrograms),
   driverTrainings: many(driverTrainings),
   driverBenefits: many(driverBenefits),
+  driverViolations: many(driverViolations),
+  driverCertifications: many(driverCertifications),
   payStatements: many(payStatements),
+  driverMessages: many(driverMessages),
   iftaAuditResponses: many(iftaAuditResponses),
 }));
 
@@ -546,7 +601,10 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   accidentReports: many(accidentReports),
   trainings: many(driverTrainings),
   benefits: many(driverBenefits),
+  violations: many(driverViolations),
+  certifications: many(driverCertifications),
   payStatements: many(payStatements),
+  messages: many(driverMessages),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -636,6 +694,32 @@ export const iftaAuditResponsesRelations = relations(iftaAuditResponses, ({ one 
   }),
 }));
 
+export const dispatchMessagesRelations = relations(dispatchMessages, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [dispatchMessages.orgId],
+    references: [organizations.id],
+  }),
+  driver: one(drivers, {
+    fields: [dispatchMessages.driverId],
+    references: [drivers.id],
+  }),
+  sender: one(users, {
+    fields: [dispatchMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const customerNotificationsRelations = relations(customerNotifications, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [customerNotifications.orgId],
+    references: [organizations.id],
+  }),
+  load: one(loads, {
+    fields: [customerNotifications.loadId],
+    references: [loads.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -718,7 +802,18 @@ export type DriverTraining = typeof driverTrainings.$inferSelect;
 export type NewDriverTraining = typeof driverTrainings.$inferInsert;
 export type DriverBenefit = typeof driverBenefits.$inferSelect;
 export type NewDriverBenefit = typeof driverBenefits.$inferInsert;
+export type DriverViolation = typeof driverViolations.$inferSelect;
+export type NewDriverViolation = typeof driverViolations.$inferInsert;
+export type DriverCertification = typeof driverCertifications.$inferSelect;
+export type NewDriverCertification = typeof driverCertifications.$inferInsert;
 export type PayStatement = typeof payStatements.$inferSelect;
 export type NewPayStatement = typeof payStatements.$inferInsert;
+export type DispatchMessage = typeof dispatchMessages.$inferSelect;
+export type NewDispatchMessage = typeof dispatchMessages.$inferInsert;
+export type CustomerNotification = typeof customerNotifications.$inferSelect;
+export type NewCustomerNotification = typeof customerNotifications.$inferInsert;
 export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
 export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
+export type DriverMessage = typeof driverMessages.$inferSelect;
+export type NewDriverMessage = typeof driverMessages.$inferInsert;
+

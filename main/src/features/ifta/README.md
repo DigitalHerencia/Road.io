@@ -17,3 +17,14 @@ This feature manages IFTA record keeping and audit support.
 - Responses are logged to the audit trail for traceability.
 
 Use the fetchers in `lib/fetchers/ifta.ts` to retrieve documents and audit responses for dashboard views.
+
+## ELD Data Import
+
+- `importEldCsvAction` processes ELD CSV files uploaded via `EldImportForm`.
+- Each row creates a trip record with mileage calculated server side.
+- Imported trips are logged with the `eld.import` audit action.
+
+## Fleet Integration
+
+- Vehicle assignments are synced from the dispatch module when trips are imported.
+- Use `importEldCsvAction` to keep IFTA mileage in sync with dispatch loads.

@@ -25,3 +25,23 @@ export interface Load {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface DriverMessage {
+  id: number;
+  driverId: number;
+  senderId: number;
+  message: string;
+  emergency: boolean;
+  createdAt: Date;
+  readAt: Date | null;
+}
+
+export interface CustomerNotification {
+  id: number;
+  loadId: number;
+  email: string;
+  type: 'status' | 'exception';
+  message: string;
+  sentAt: Date | null;
+  createdAt: Date;
+}
