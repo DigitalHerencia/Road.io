@@ -7,6 +7,7 @@ import {
   boolean,
   varchar,
   jsonb,
+  index,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -238,6 +239,8 @@ export const userPreferences = pgTable("user_preferences", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const userPreferencesIdx = index('user_prefs_user_id_idx').on(userPreferences.userId);
 
 // Documents table
 export const documents = pgTable("documents", {
