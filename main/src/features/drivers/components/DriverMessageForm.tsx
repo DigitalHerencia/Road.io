@@ -20,25 +20,26 @@ export default function DriverMessageForm({ driverId }: Props) {
   }, [])
 
   // Flush when online
-  useEffect(() => {
-    async function flush() {
-      if (navigator.onLine && queue.length > 0) {
-        const items = [...queue]
-        setQueue([])
-        localStorage.setItem('driverOfflineMessages', '[]')
-        for (const msg of items) {
-          const data = new FormData()
-          data.set('driverId', driverId.toString())
-          data.set('sender', 'DRIVER')
-          data.set('message', msg)
-          await sendDriverMessage(data)
-        }
+  const flush = useCallback(async () => {
+    if (navigator.onLine && queue.length > 0) {
+      const items = [...queue]
+      setQueue([])
+      localStorage.setItem('driverOfflineMessages', '[]')
+      for (const msg of items) {
+        const data = new FormData()
+        data.set('driverId', driverId.toString())
+        data.set('sender', 'DRIVER')
+        data.set('message', msg)
+        await sendDriverMessage(data)
       }
     }
+  }, [queue, driverId])
+
+  useEffect(() => {
     flush()
     window.addEventListener('online', flush)
     return () => window.removeEventListener('online', flush)
-  }, [queue, driverId])
+  }, [flush])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
