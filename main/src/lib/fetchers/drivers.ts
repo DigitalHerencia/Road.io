@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { drivers, users } from '@/lib/schema';
+import { drivers, users, driverMessages } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 import { DriverProfile } from '@/features/drivers/types';
 
@@ -92,4 +92,48 @@ export async function getDriverAssignmentStats(
     completed,
     completionRate: total === 0 ? 0 : Number((completed / total).toFixed(2)),
   };
+}
+
+export interface DriverMessage {
+  id: number
+  driverId: number
+  sender: 'DRIVER' | 'DISPATCH'
+  message: string
+  createdAt: Date
+}
+
+export async function fetchDriverMessages(
+  driverId: number,
+  limit = 50,
+): Promise<DriverMessage[]> {
+  return db
+    .select({
+      id: driverMessages.id,
+      driverId: driverMessages.driverId,
+      sender: driverMessages.sender,
+      message: driverMessages.message,
+      createdAt: driverMessages.createdAt,
+    })
+    .from(driverMessages)
+    .where(eq(driverMessages.driverId, driverId))
+    .orderBy(sql`${driverMessages.createdAt} desc`)
+    .limit(limit)
+}
+
+export async function createDriverMessage(params: {
+  orgId: number
+  driverId: number
+  sender: 'DRIVER' | 'DISPATCH'
+  message: string
+}): Promise<DriverMessage> {
+  const [msg] = await db
+    .insert(driverMessages)
+    .values({
+      orgId: params.orgId,
+      driverId: params.driverId,
+      sender: params.sender,
+      message: params.message,
+    })
+    .returning()
+  return msg
 }
