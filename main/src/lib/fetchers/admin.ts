@@ -5,6 +5,9 @@ import type {
   TenantConfig,
   ResourceAllocation,
   TenantMetrics,
+  ApplicationSettings,
+  IntegrationConfig,
+  IntegrationStatus,
 } from "@/features/admin/types";
 
 export async function checkTenantIsolation(orgId: number) {
@@ -132,4 +135,40 @@ export async function fetchRecentAuditLogs(
     LIMIT ${limit}
   `);
   return res.rows;
+}
+
+export async function getApplicationSettings(
+  orgId: number,
+): Promise<ApplicationSettings | null> {
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, orgId));
+
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  return (settings?.applicationSettings as ApplicationSettings) ?? null;
+}
+
+export async function getIntegrationConfigs(
+  orgId: number,
+): Promise<IntegrationConfig[]> {
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, orgId));
+
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  return Object.values(settings?.integrationConfigs || {}) as IntegrationConfig[];
+}
+
+export async function getIntegrationStatuses(
+  orgId: number,
+): Promise<IntegrationStatus[]> {
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, orgId));
+
+  const settings = org?.settings as Record<string, unknown> | undefined;
+  return (settings?.integrationStatuses as IntegrationStatus[]) ?? [];
 }

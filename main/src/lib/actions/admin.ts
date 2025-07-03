@@ -449,3 +449,131 @@ export async function verifyTenantIsolationAction() {
   const res = await checkTenantIsolation(admin.orgId);
   return { success: true, ...res };
 }
+
+const applicationSettingsSchema = z.object({
+  featureToggles: z
+    .string()
+    .transform((v) => (v ? (JSON.parse(v) as Record<string, boolean>) : undefined))
+    .optional(),
+  maintenanceMode: z.coerce.boolean().optional(),
+  rateLimit: z.coerce.number().min(0).optional(),
+  sessionTimeout: z.coerce.number().min(0).optional(),
+  securityPolicies: z
+    .string()
+    .transform((v) => (v ? (JSON.parse(v) as Record<string, unknown>) : undefined))
+    .optional(),
+});
+
+export async function updateApplicationSettingsAction(data: FormData) {
+  const admin = await requireRole(SystemRoles.ADMIN);
+  const parsed = applicationSettingsSchema.parse({
+    featureToggles: data.get('featureToggles'),
+    maintenanceMode: data.get('maintenanceMode'),
+    rateLimit: data.get('rateLimit'),
+    sessionTimeout: data.get('sessionTimeout'),
+    securityPolicies: data.get('securityPolicies'),
+  });
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, admin.orgId));
+
+  const current = (org?.settings as Record<string, unknown>) ?? {};
+  const settings = {
+    ...current,
+    applicationSettings: {
+      ...(current.applicationSettings as Record<string, unknown> | undefined),
+      ...parsed,
+    },
+  } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, admin.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: admin.orgId.toString(),
+    details: { updatedBy: admin.id, applicationSettings: parsed },
+  });
+
+  revalidatePath('/dashboard/admin/settings');
+  return { success: true };
+}
+
+const integrationConfigSchema = z.object({
+  service: z.string(),
+  apiKey: z.string().optional(),
+  webhookUrl: z.string().optional(),
+  enabled: z.coerce.boolean().optional(),
+});
+
+export async function updateIntegrationConfigAction(data: FormData) {
+  const admin = await requireRole(SystemRoles.ADMIN);
+  const parsed = integrationConfigSchema.parse({
+    service: data.get('service'),
+    apiKey: data.get('apiKey') || undefined,
+    webhookUrl: data.get('webhookUrl') || undefined,
+    enabled: data.get('enabled'),
+  });
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, admin.orgId));
+
+  const current = (org?.settings as Record<string, unknown>) ?? {};
+  const configs = (current.integrationConfigs as Record<string, any>) ?? {};
+  const existing = (configs[parsed.service] as Record<string, unknown>) ?? {};
+  configs[parsed.service] = { ...existing, ...parsed };
+
+  const settings = { ...current, integrationConfigs: configs } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, admin.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: admin.orgId.toString(),
+    details: { updatedBy: admin.id, integration: parsed.service },
+  });
+
+  revalidatePath('/dashboard/admin/integrations');
+  return { success: true };
+}
+
+export async function generateIntegrationApiKey(service: string) {
+  const admin = await requireRole(SystemRoles.ADMIN);
+  const key = generateSecureToken(32);
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, admin.orgId));
+
+  const current = (org?.settings as Record<string, unknown>) ?? {};
+  const configs = (current.integrationConfigs as Record<string, any>) ?? {};
+  const cfg = (configs[service] as Record<string, unknown>) ?? { service, enabled: false };
+  configs[service] = { ...cfg, apiKey: key };
+
+  const settings = { ...current, integrationConfigs: configs } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, admin.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: admin.orgId.toString(),
+    details: { updatedBy: admin.id, generatedKeyFor: service },
+  });
+
+  return { success: true, apiKey: key };
+}
