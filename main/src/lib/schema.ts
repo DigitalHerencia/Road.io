@@ -21,7 +21,7 @@ export const systemRoleEnum = pgEnum("system_role", [
 ]);
 export const userStatusEnum = pgEnum("user_status", [
   "ACTIVE",
-  "INACTIVE", 
+  "INACTIVE",
   "SUSPENDED",
 ]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
@@ -47,10 +47,10 @@ export const driverStatusEnum = pgEnum("driver_status", [
   "ON_DUTY",
   "OFF_DUTY",
 ]);
-export const driverMessageSenderEnum = pgEnum('driver_message_sender', [
-  'DRIVER',
-  'DISPATCH',
-])
+export const driverMessageSenderEnum = pgEnum("driver_message_sender", [
+  "DRIVER",
+  "DISPATCH",
+]);
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -97,15 +97,17 @@ export const organizations = pgTable("organizations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const roles = pgTable('roles', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  name: varchar('name', { length: 100 }).notNull(),
-  description: varchar('description', { length: 255 }),
-  baseRole: systemRoleEnum('base_role').default('MEMBER').notNull(),
-  permissions: jsonb('permissions').default('[]').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: varchar("description", { length: 255 }),
+  baseRole: systemRoleEnum("base_role").default("MEMBER").notNull(),
+  permissions: jsonb("permissions").default("[]").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Users table with multi-tenant support
@@ -145,23 +147,25 @@ export const drivers = pgTable("drivers", {
 });
 
 // Vehicles table
-export const vehicles = pgTable('vehicles', {
-  id: serial('id').primaryKey(),
-  orgId: serial('org_id').references(() => organizations.id).notNull(),
-  vin: varchar('vin', { length: 17 }).notNull(),
-  licensePlate: varchar('license_plate', { length: 20 }),
-  make: varchar('make', { length: 50 }),
-  model: varchar('model', { length: 50 }),
-  year: serial('year'),
-  type: vehicleTypeEnum('type'),
-  capacity: integer('capacity'),
-  insuranceProvider: varchar('insurance_provider', { length: 100 }),
-  insurancePolicyNumber: varchar('insurance_policy_number', { length: 100 }),
-  ownerInfo: varchar('owner_info', { length: 255 }),
-  photoUrl: text('photo_url'),
-  nextMaintenanceDate: timestamp('next_maintenance_date'),
-  nextInspectionDate: timestamp('next_inspection_date'),
-  status: vehicleStatusEnum('status').default('ACTIVE').notNull(),
+export const vehicles = pgTable("vehicles", {
+  id: serial("id").primaryKey(),
+  orgId: serial("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  vin: varchar("vin", { length: 17 }).notNull(),
+  licensePlate: varchar("license_plate", { length: 20 }),
+  make: varchar("make", { length: 50 }),
+  model: varchar("model", { length: 50 }),
+  year: serial("year"),
+  type: vehicleTypeEnum("type"),
+  capacity: integer("capacity"),
+  insuranceProvider: varchar("insurance_provider", { length: 100 }),
+  insurancePolicyNumber: varchar("insurance_policy_number", { length: 100 }),
+  ownerInfo: varchar("owner_info", { length: 255 }),
+  photoUrl: text("photo_url"),
+  nextMaintenanceDate: timestamp("next_maintenance_date"),
+  nextInspectionDate: timestamp("next_inspection_date"),
+  status: vehicleStatusEnum("status").default("ACTIVE").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   currentDriverId: serial("current_driver_id").references(() => drivers.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -224,12 +228,15 @@ export const userInvitations = pgTable("user_invitations", {
 });
 
 // User preferences table
-export const userPreferences = pgTable('user_preferences', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull().unique(),
-  preferences: jsonb('preferences').default('{}').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull()
+    .unique(),
+  preferences: jsonb("preferences").default("{}").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Documents table
@@ -243,6 +250,7 @@ export const documents = pgTable("documents", {
     .notNull(),
   loadId: serial("load_id").references(() => loads.id),
   driverId: serial("driver_id").references(() => drivers.id),
+  vehicleId: serial("vehicle_id").references(() => vehicles.id),
   fileName: varchar("file_name", { length: 255 }).notNull(),
   fileUrl: text("file_url").notNull(),
   fileType: varchar("file_type", { length: 50 }).notNull(),
@@ -384,55 +392,94 @@ export const hosViolations = pgTable("hos_violations", {
 });
 
 // Driver annual reviews
-export const driverAnnualReviews = pgTable('driver_annual_reviews', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  reviewDate: timestamp('review_date').notNull(),
-  isQualified: boolean('is_qualified').default(true).notNull(),
-  notes: text('notes'),
-  createdById: integer('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const driverAnnualReviews = pgTable("driver_annual_reviews", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  reviewDate: timestamp("review_date").notNull(),
+  isQualified: boolean("is_qualified").default(true).notNull(),
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Vehicle inspections
-export const vehicleInspections = pgTable('vehicle_inspections', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  vehicleId: integer('vehicle_id').references(() => vehicles.id).notNull(),
-  inspectorId: integer('inspector_id').references(() => users.id).notNull(),
-  inspectionDate: timestamp('inspection_date').notNull(),
-  passed: boolean('passed').default(true).notNull(),
-  notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const vehicleInspections = pgTable("vehicle_inspections", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  vehicleId: integer("vehicle_id")
+    .references(() => vehicles.id)
+    .notNull(),
+  inspectorId: integer("inspector_id")
+    .references(() => users.id)
+    .notNull(),
+  inspectionDate: timestamp("inspection_date").notNull(),
+  passed: boolean("passed").default(true).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Vehicle maintenance records
-export const vehicleMaintenance = pgTable('vehicle_maintenance', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  vehicleId: integer('vehicle_id').references(() => vehicles.id).notNull(),
-  maintenanceDate: timestamp('maintenance_date').notNull(),
-  mileage: integer('mileage'),
-  vendor: varchar('vendor', { length: 100 }),
-  description: text('description'),
-  cost: integer('cost'),
-  createdById: integer('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const vehicleMaintenance = pgTable("vehicle_maintenance", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  vehicleId: integer("vehicle_id")
+    .references(() => vehicles.id)
+    .notNull(),
+  maintenanceDate: timestamp("maintenance_date").notNull(),
+  mileage: integer("mileage"),
+  vendor: varchar("vendor", { length: 100 }),
+  description: text("description"),
+  cost: integer("cost"),
+  createdById: integer("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Vehicle telematics records
+export const vehicleTelematics = pgTable("vehicle_telematics", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  vehicleId: integer("vehicle_id")
+    .references(() => vehicles.id)
+    .notNull(),
+  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
+  location: jsonb("location"), // { lat, lng }
+  odometer: integer("odometer"),
+  engineHours: integer("engine_hours"),
+  data: jsonb("data"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Accident reports
-export const accidentReports = pgTable('accident_reports', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id),
-  vehicleId: integer('vehicle_id').references(() => vehicles.id),
-  occurredAt: timestamp('occurred_at').notNull(),
-  description: text('description'),
-  injuries: boolean('injuries').default(false).notNull(),
-  fatalities: boolean('fatalities').default(false),
-  createdById: integer('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const accidentReports = pgTable("accident_reports", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id").references(() => drivers.id),
+  vehicleId: integer("vehicle_id").references(() => vehicles.id),
+  occurredAt: timestamp("occurred_at").notNull(),
+  description: text("description"),
+  injuries: boolean("injuries").default(false).notNull(),
+  fatalities: boolean("fatalities").default(false),
+  createdById: integer("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Compliance workflows
@@ -461,49 +508,65 @@ export const complianceTasks = pgTable('compliance_tasks', {
 });
 
 // Training programs
-export const trainingPrograms = pgTable('training_programs', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  title: varchar('title', { length: 100 }).notNull(),
-  description: text('description'),
-  startDate: timestamp('start_date'),
-  endDate: timestamp('end_date'),
-  createdById: integer('created_by_id').references(() => users.id),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const trainingPrograms = pgTable("training_programs", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  title: varchar("title", { length: 100 }).notNull(),
+  description: text("description"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Driver training records
-export const driverTrainings = pgTable('driver_trainings', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  programId: integer('program_id').references(() => trainingPrograms.id).notNull(),
-  status: trainingStatusEnum('status').default('ASSIGNED').notNull(),
-  scheduledAt: timestamp('scheduled_at'),
-  completedAt: timestamp('completed_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const driverTrainings = pgTable("driver_trainings", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  programId: integer("program_id")
+    .references(() => trainingPrograms.id)
+    .notNull(),
+  status: trainingStatusEnum("status").default("ASSIGNED").notNull(),
+  scheduledAt: timestamp("scheduled_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Driver license violations
-export const driverViolations = pgTable('driver_violations', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  type: varchar('type', { length: 50 }).notNull(),
-  description: text('description'),
-  occurredAt: timestamp('occurred_at').defaultNow().notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const driverViolations = pgTable("driver_violations", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  description: text("description"),
+  occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Driver certifications (DOT medical, hazmat, etc.)
-export const driverCertifications = pgTable('driver_certifications', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  type: varchar('type', { length: 50 }).notNull(),
-  issuedAt: timestamp('issued_at'),
-  expiresAt: timestamp('expires_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const driverCertifications = pgTable("driver_certifications", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  issuedAt: timestamp("issued_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Performance reviews
@@ -541,63 +604,85 @@ export const driverSafetyPrograms = pgTable('driver_safety_programs', {
 });
 
 // Driver benefits
-export const driverBenefits = pgTable('driver_benefits', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  type: varchar('type', { length: 50 }).notNull(),
-  amount: integer('amount').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const driverBenefits = pgTable("driver_benefits", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  amount: integer("amount").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Pay statements
-export const payStatements = pgTable('pay_statements', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  periodStart: timestamp('period_start').notNull(),
-  periodEnd: timestamp('period_end').notNull(),
-  miles: integer('miles').notNull(),
-  ratePerMile: integer('rate_per_mile').notNull(),
-  perDiem: integer('per_diem').default(0).notNull(),
-  benefitsDeduction: integer('benefits_deduction').default(0).notNull(),
-  grossPay: integer('gross_pay').notNull(),
-  netPay: integer('net_pay').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const payStatements = pgTable("pay_statements", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  miles: integer("miles").notNull(),
+  ratePerMile: integer("rate_per_mile").notNull(),
+  perDiem: integer("per_diem").default(0).notNull(),
+  benefitsDeduction: integer("benefits_deduction").default(0).notNull(),
+  grossPay: integer("gross_pay").notNull(),
+  netPay: integer("net_pay").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Dispatch driver messages
-export const dispatchMessages = pgTable('dispatch_messages', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  driverId: integer('driver_id').references(() => drivers.id).notNull(),
-  senderId: integer('sender_id').references(() => users.id).notNull(),
-  message: text('message').notNull(),
-  emergency: boolean('emergency').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  readAt: timestamp('read_at'),
+export const dispatchMessages = pgTable("dispatch_messages", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  driverId: integer("driver_id")
+    .references(() => drivers.id)
+    .notNull(),
+  senderId: integer("sender_id")
+    .references(() => users.id)
+    .notNull(),
+  message: text("message").notNull(),
+  emergency: boolean("emergency").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  readAt: timestamp("read_at"),
 });
 
 // Customer notifications
-export const customerNotifications = pgTable('customer_notifications', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  loadId: integer('load_id').references(() => loads.id).notNull(),
-  email: varchar('email', { length: 255 }).notNull(),
-  type: varchar('type', { length: 20 }).default('status').notNull(),
-  message: text('message').notNull(),
-  sentAt: timestamp('sent_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const customerNotifications = pgTable("customer_notifications", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  loadId: integer("load_id")
+    .references(() => loads.id)
+    .notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  type: varchar("type", { length: 20 }).default("status").notNull(),
+  message: text("message").notNull(),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // IFTA audit responses
-export const iftaAuditResponses = pgTable('ifta_audit_responses', {
-  id: serial('id').primaryKey(),
-  orgId: integer('org_id').references(() => organizations.id).notNull(),
-  question: text('question').notNull(),
-  response: text('response'),
-  createdById: integer('created_by_id').references(() => users.id).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const iftaAuditResponses = pgTable("ifta_audit_responses", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id")
+    .references(() => organizations.id)
+    .notNull(),
+  question: text("question").notNull(),
+  response: text("response"),
+  createdById: integer("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Relations
@@ -614,6 +699,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   driverAnnualReviews: many(driverAnnualReviews),
   vehicleInspections: many(vehicleInspections),
   vehicleMaintenance: many(vehicleMaintenance),
+  vehicleTelematics: many(vehicleTelematics),
   accidentReports: many(accidentReports),
   complianceWorkflows: many(complianceWorkflows),
   complianceTasks: many(complianceTasks),
@@ -704,6 +790,7 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
   fuelPurchases: many(fuelPurchases),
   inspections: many(vehicleInspections),
   maintenanceRecords: many(vehicleMaintenance),
+  telematics: many(vehicleTelematics),
   accidentReports: many(accidentReports),
 }));
 
@@ -766,42 +853,51 @@ export const iftaReportsRelations = relations(iftaReports, ({ one }) => ({
   }),
 }));
 
-export const iftaAuditResponsesRelations = relations(iftaAuditResponses, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [iftaAuditResponses.orgId],
-    references: [organizations.id],
+export const iftaAuditResponsesRelations = relations(
+  iftaAuditResponses,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [iftaAuditResponses.orgId],
+      references: [organizations.id],
+    }),
+    createdBy: one(users, {
+      fields: [iftaAuditResponses.createdById],
+      references: [users.id],
+    }),
   }),
-  createdBy: one(users, {
-    fields: [iftaAuditResponses.createdById],
-    references: [users.id],
-  }),
-}));
+);
 
-export const dispatchMessagesRelations = relations(dispatchMessages, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [dispatchMessages.orgId],
-    references: [organizations.id],
+export const dispatchMessagesRelations = relations(
+  dispatchMessages,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [dispatchMessages.orgId],
+      references: [organizations.id],
+    }),
+    driver: one(drivers, {
+      fields: [dispatchMessages.driverId],
+      references: [drivers.id],
+    }),
+    sender: one(users, {
+      fields: [dispatchMessages.senderId],
+      references: [users.id],
+    }),
   }),
-  driver: one(drivers, {
-    fields: [dispatchMessages.driverId],
-    references: [drivers.id],
-  }),
-  sender: one(users, {
-    fields: [dispatchMessages.senderId],
-    references: [users.id],
-  }),
-}));
+);
 
-export const customerNotificationsRelations = relations(customerNotifications, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [customerNotifications.orgId],
-    references: [organizations.id],
+export const customerNotificationsRelations = relations(
+  customerNotifications,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [customerNotifications.orgId],
+      references: [organizations.id],
+    }),
+    load: one(loads, {
+      fields: [customerNotifications.loadId],
+      references: [loads.id],
+    }),
   }),
-  load: one(loads, {
-    fields: [customerNotifications.loadId],
-    references: [loads.id],
-  }),
-}));
+);
 
 export const complianceWorkflowsRelations = relations(complianceWorkflows, ({ one, many }) => ({
   organization: one(organizations, { fields: [complianceWorkflows.orgId], references: [organizations.id] }),
@@ -831,6 +927,10 @@ export const documentsRelations = relations(documents, ({ one }) => ({
     fields: [documents.driverId],
     references: [drivers.id],
   }),
+  vehicle: one(vehicles, {
+    fields: [documents.vehicleId],
+    references: [vehicles.id],
+  }),
   reviewedBy: one(users, {
     fields: [documents.reviewedById],
     references: [users.id],
@@ -847,12 +947,15 @@ export const userInvitationsRelations = relations(
   }),
 );
 
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-  user: one(users, {
-    fields: [userPreferences.userId],
-    references: [users.id],
+export const userPreferencesRelations = relations(
+  userPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userPreferences.userId],
+      references: [users.id],
+    }),
   }),
-}));
+);
 
 // Export types
 export type Organization = typeof organizations.$inferSelect;
@@ -887,7 +990,10 @@ export type NewDriverAnnualReview = typeof driverAnnualReviews.$inferInsert;
 export type VehicleInspection = typeof vehicleInspections.$inferSelect;
 export type NewVehicleInspection = typeof vehicleInspections.$inferInsert;
 export type VehicleMaintenanceRecord = typeof vehicleMaintenance.$inferSelect;
-export type NewVehicleMaintenanceRecord = typeof vehicleMaintenance.$inferInsert;
+export type NewVehicleMaintenanceRecord =
+  typeof vehicleMaintenance.$inferInsert;
+export type VehicleTelematicsRecord = typeof vehicleTelematics.$inferSelect;
+export type NewVehicleTelematicsRecord = typeof vehicleTelematics.$inferInsert;
 export type AccidentReport = typeof accidentReports.$inferSelect;
 export type NewAccidentReport = typeof accidentReports.$inferInsert;
 export type TrainingProgram = typeof trainingPrograms.$inferSelect;
