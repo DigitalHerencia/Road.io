@@ -1,7 +1,15 @@
-import { db } from '@/lib/db';
-import type { Document, AuditLog, ComplianceWorkflow, ComplianceTask } from '@/lib/schema';
-import { requirePermission } from '@/lib/rbac';
-import { sql } from 'drizzle-orm';
+import { db } from '@/lib/db'
+import {
+  organizations,
+  drivers,
+  users,
+  type Document,
+  type AuditLog,
+  type ComplianceWorkflow,
+  type ComplianceTask,
+} from '@/lib/schema'
+import { requirePermission } from '@/lib/rbac'
+import { sql, eq } from 'drizzle-orm'
 
 export async function searchDocuments(orgId: number, query: string): Promise<Document[]> {
   await requirePermission('org:compliance:upload_documents');
@@ -164,6 +172,42 @@ export async function listComplianceTasks(workflowId: number): Promise<Complianc
   await requirePermission('org:compliance:manage_workflows')
   const res = await db.execute<ComplianceTask>(sql`
     SELECT * FROM compliance_tasks WHERE workflow_id = ${workflowId} ORDER BY created_at DESC
+  `)
+  return res.rows
+}
+
+export interface ComplianceConfig {
+  regulatory: { dotRules: boolean; environmental: boolean }
+  hazmat: { emergencyContact?: string }
+}
+
+export async function getComplianceConfig(orgId: number): Promise<ComplianceConfig> {
+  await requirePermission('org:compliance:configure_settings')
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+
+  const cfg = (org?.settings as Record<string, any>)?.complianceConfig as ComplianceConfig | undefined
+  return cfg ?? { regulatory: { dotRules: false, environmental: false }, hazmat: {} }
+}
+
+export interface HazmatEndorsement {
+  id: number
+  driverId: number
+  driverName: string
+  expiresAt: Date | null
+}
+
+export async function listHazmatEndorsements(orgId: number): Promise<HazmatEndorsement[]> {
+  await requirePermission('org:compliance:configure_settings')
+  const res = await db.execute<HazmatEndorsement>(sql`
+    SELECT dc.id, dc.driver_id AS "driverId", u.name AS "driverName", dc.expires_at AS "expiresAt"
+    FROM driver_certifications dc
+    JOIN drivers d ON dc.driver_id = d.id
+    JOIN users u ON d.user_id = u.id
+    WHERE dc.org_id = ${orgId} AND dc.type = 'HAZMAT'
+    ORDER BY dc.expires_at ASC
   `)
   return res.rows
 }
