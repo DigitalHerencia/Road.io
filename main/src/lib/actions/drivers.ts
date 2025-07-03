@@ -247,6 +247,7 @@ export async function addDriverCertification(
 
   revalidatePath(`/drivers/${values.driverId}`)
   return { success: true }
+}
 const messageSchema = z.object({
   driverId: z.coerce.number().int().positive(),
   sender: z.enum(['DRIVER', 'DISPATCH']).default('DISPATCH'),
