@@ -144,17 +144,17 @@ CREATE TABLE "posts" (
 
 ## 🔌 API Endpoints
 
-### Users API
-- `GET /api/users` - Get all users
-- `POST /api/users` - Create a new user
+### Users Actions
+- `listUsersAction` - Get all users
+- `createUserAction` - Create a new user
 
 ### Authentication API
 - `GET /api/protected` - Protected endpoint (requires authentication)
 - `POST /api/protected` - Protected data processing (requires authentication)
 
-### Database Test API
-- `GET /api/test-db` - Test database connection
-- `POST /api/test-db` - Create a test user
+### Database Test Actions
+- `testDbConnectionAction` - Test database connection
+- `createTestUserAction` - Create a test user
 
 ### Webhooks
 - `POST /api/webhooks/clerk` - Clerk user events webhook

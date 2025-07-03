@@ -15,7 +15,6 @@
 
 # Auth & Security
 /main/src/app/api/user/           @auth_security
-/main/src/app/api/users/          @auth_security
 /main/src/app/api/webhooks/       @auth_security
 /main/src/lib/rbac.ts             @auth_security
 

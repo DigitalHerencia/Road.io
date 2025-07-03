@@ -1,10 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  listUsersAction,
+  createUserAction,
+  testDbConnectionAction,
+} from '@/lib/actions/dev'
 
 interface User {
   id: number;
@@ -22,81 +33,68 @@ export default function DatabaseTest() {
   const [newUserName, setNewUserName] = useState('');
 
   const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     try {
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      
+      const data = await listUsersAction()
       if (data.success) {
-        setUsers(data.users);
+        setUsers(data.users)
       } else {
-        setError(data.message);
+        setError(data.message)
       }
     } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to fetch users');
+      console.error('Error fetching users:', err)
+      setError('Failed to fetch users')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const createUser = async () => {
     if (!newUserEmail) {
-      setError('Email is required');
-      return;
+      setError('Email is required')
+      return
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: newUserEmail,
-          name: newUserName || undefined,
-        }),
-      });
-
-      const data = await response.json();
-      
+      const data = await createUserAction({
+        email: newUserEmail,
+        name: newUserName || undefined,
+      })
       if (data.success) {
-        setNewUserEmail('');
-        setNewUserName('');
-        await fetchUsers(); // Refresh the list
+        setNewUserEmail('')
+        setNewUserName('')
+        await fetchUsers()
       } else {
-        setError(data.message);
+        setError(data.message ?? 'Failed to create user')
       }
     } catch (err) {
-      console.error('Error creating user:', err);
-      setError('Failed to create user');
+      console.error('Error creating user:', err)
+      setError('Failed to create user')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const testConnection = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     try {
-      const response = await fetch('/api/test-db');
-      const data = await response.json();
-      
+      const data = await testDbConnectionAction()
       if (data.success) {
-        setUsers(data.users);
+        setUsers(data.users)
       } else {
-        setError(data.message);
+        setError(data.message)
       }
     } catch (err) {
-      console.error('Database connection error:', err);
-      setError('Database connection failed');
+      console.error('Database connection error:', err)
+      setError('Database connection failed')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-2">

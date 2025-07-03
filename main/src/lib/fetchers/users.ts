@@ -54,7 +54,7 @@ export async function getUserList(
   sort: 'name' | 'email' | 'role' | 'createdAt' = 'createdAt',
   status?: 'ACTIVE' | 'INACTIVE',
 ): Promise<UserProfile[]> {
-  let queryBuilder = db
+  const queryBuilder = db
     .select({
       id: users.id,
       email: users.email,
