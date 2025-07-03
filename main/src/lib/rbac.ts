@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { db } from './db';
-import { users, organizations, roles } from './schema';
+import { db } from '@/lib/db';
+import { users, organizations, roles } from '@/lib/schema';
 import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
