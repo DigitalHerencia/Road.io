@@ -65,6 +65,17 @@ export const fuelPaymentMethodEnum = pgEnum("fuel_payment_method", [
 ]);
 export const fuelTaxStatusEnum = pgEnum("fuel_tax_status", ["PAID", "FREE"]);
 export const trainingStatusEnum = pgEnum('training_status', ['ASSIGNED', 'COMPLETED']);
+export const complianceWorkflowStatusEnum = pgEnum('compliance_workflow_status', [
+  'OPEN',
+  'IN_REVIEW',
+  'APPROVED',
+  'REJECTED',
+]);
+export const complianceTaskStatusEnum = pgEnum('compliance_task_status', [
+  'PENDING',
+  'IN_PROGRESS',
+  'COMPLETED',
+]);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable("organizations", {
@@ -424,6 +435,31 @@ export const accidentReports = pgTable('accident_reports', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Compliance workflows
+export const complianceWorkflows = pgTable('compliance_workflows', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  status: complianceWorkflowStatusEnum('status').default('OPEN').notNull(),
+  createdById: integer('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Compliance tasks
+export const complianceTasks = pgTable('compliance_tasks', {
+  id: serial('id').primaryKey(),
+  workflowId: integer('workflow_id').references(() => complianceWorkflows.id).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  assignedToId: integer('assigned_to_id').references(() => users.id),
+  dueDate: timestamp('due_date'),
+  status: complianceTaskStatusEnum('status').default('PENDING').notNull(),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Training programs
 export const trainingPrograms = pgTable('training_programs', {
   id: serial('id').primaryKey(),
@@ -545,6 +581,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   vehicleInspections: many(vehicleInspections),
   vehicleMaintenance: many(vehicleMaintenance),
   accidentReports: many(accidentReports),
+  complianceWorkflows: many(complianceWorkflows),
+  complianceTasks: many(complianceTasks),
   trainingPrograms: many(trainingPrograms),
   driverTrainings: many(driverTrainings),
   driverBenefits: many(driverBenefits),
@@ -573,6 +611,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdReviews: many(driverAnnualReviews),
   accidentReports: many(accidentReports),
   createdTrainingPrograms: many(trainingPrograms),
+  createdWorkflows: many(complianceWorkflows),
+  assignedComplianceTasks: many(complianceTasks),
   payStatements: many(payStatements),
   iftaAuditResponses: many(iftaAuditResponses),
 }));
@@ -720,6 +760,17 @@ export const customerNotificationsRelations = relations(customerNotifications, (
   }),
 }));
 
+export const complianceWorkflowsRelations = relations(complianceWorkflows, ({ one, many }) => ({
+  organization: one(organizations, { fields: [complianceWorkflows.orgId], references: [organizations.id] }),
+  createdBy: one(users, { fields: [complianceWorkflows.createdById], references: [users.id] }),
+  tasks: many(complianceTasks),
+}));
+
+export const complianceTasksRelations = relations(complianceTasks, ({ one }) => ({
+  workflow: one(complianceWorkflows, { fields: [complianceTasks.workflowId], references: [complianceWorkflows.id] }),
+  assignedTo: one(users, { fields: [complianceTasks.assignedToId], references: [users.id] }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -816,4 +867,8 @@ export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
 export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
 export type DriverMessage = typeof driverMessages.$inferSelect;
 export type NewDriverMessage = typeof driverMessages.$inferInsert;
+export type ComplianceWorkflow = typeof complianceWorkflows.$inferSelect;
+export type NewComplianceWorkflow = typeof complianceWorkflows.$inferInsert;
+export type ComplianceTask = typeof complianceTasks.$inferSelect;
+export type NewComplianceTask = typeof complianceTasks.$inferInsert;
 
