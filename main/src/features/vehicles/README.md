@@ -24,3 +24,16 @@ Vehicle fetchers use `unstable_cache` with `vehicles` tags to cache lists and me
 ## Mobile Features
 
 `MobileMaintenanceForm` and `MobileInspectionForm` allow technicians to record maintenance and inspections from mobile devices. Submissions are queued in `localStorage` when offline and automatically sent when connectivity returns.
+
+## Security Hardening
+
+- All server actions require RBAC permissions via `requirePermission`.
+- Inputs are validated with Zod schemas before database writes.
+- Telematics data uses `safeParseJSON` to safely parse JSON payloads.
+- Audit logs capture vehicle changes for compliance.
+
+## Testing
+
+- Unit tests cover fetchers, actions and React components under `main/tests/vehicles`.
+- Additional schema tests ensure validation rules.
+- Run `npm run test` from the `main` directory to execute the suite.
