@@ -7,6 +7,7 @@ import {
   fetchExceptionRate,
   calculateOptimalRoute,
   updateDriverLocation,
+  fetchDriverLocations,
   isWithinGeofence,
 } from "@/lib/fetchers/dispatch";
 import { z } from "zod";
@@ -46,6 +47,11 @@ export async function getDriverProductivityAction(params: { orgId: number }) {
 export async function getExceptionRateAction(params: { orgId: number }) {
   const { orgId } = orgIdSchema.parse(params);
   return fetchExceptionRate(orgId);
+}
+
+export async function getDriverLocationsAction(params: { orgId: number }) {
+  const { orgId } = orgIdSchema.parse(params)
+  return fetchDriverLocations(orgId)
 }
 
 const coordSchema = z.object({
