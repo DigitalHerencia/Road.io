@@ -9,4 +9,4 @@ This wiki supplements the repository documentation. See the project [README](../
 - [Official Documentation Links](Official-Docs.md)
 - [Troubleshooting](Troubleshooting.md)
 
-Module guides and role specific documentation are linked from the **Features Overview** page.
+Module guides and role-specific documentation are linked from the **Features Overview** page.
