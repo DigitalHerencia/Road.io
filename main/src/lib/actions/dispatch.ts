@@ -124,6 +124,7 @@ export async function broadcastEmergencyAlertAction(data: z.infer<typeof emergen
   await createAuditLog({
     action: AUDIT_ACTIONS.EMERGENCY_ALERT,
     resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: 'all-drivers',
     details: { count: driversList.length },
   })
 
