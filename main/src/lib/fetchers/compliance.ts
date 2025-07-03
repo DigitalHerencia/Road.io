@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import type { Document, AuditLog } from '@/lib/schema';
+import type { Document, AuditLog, ComplianceWorkflow, ComplianceTask } from '@/lib/schema';
 import { requirePermission } from '@/lib/rbac';
 import { sql } from 'drizzle-orm';
 
@@ -150,4 +150,20 @@ export async function getComplianceReportData(orgId: number, category?: string):
     vehicleInspections: inspections.rows[0]?.count ?? 0,
     accidents: accidents.rows[0]?.count ?? 0
   }
+}
+
+export async function listComplianceWorkflows(orgId: number): Promise<ComplianceWorkflow[]> {
+  await requirePermission('org:compliance:manage_workflows')
+  const res = await db.execute<ComplianceWorkflow>(sql`
+    SELECT * FROM compliance_workflows WHERE org_id = ${orgId} ORDER BY created_at DESC
+  `)
+  return res.rows
+}
+
+export async function listComplianceTasks(workflowId: number): Promise<ComplianceTask[]> {
+  await requirePermission('org:compliance:manage_workflows')
+  const res = await db.execute<ComplianceTask>(sql`
+    SELECT * FROM compliance_tasks WHERE workflow_id = ${workflowId} ORDER BY created_at DESC
+  `)
+  return res.rows
 }

@@ -34,3 +34,13 @@ Use the fetchers in `lib/fetchers/ifta.ts` to retrieve documents and audit respo
 - `getFuelEfficiencyAction` and `getRouteEfficiencyAction` return fuel usage and route metrics for the organization.
 - `getTaxOptimizationAction` lists jurisdictions with the lowest fuel tax rates to assist in planning fuel stops.
 - Use `FuelRouteAnalytics` and `TaxOptimizationTools` components on `/dashboard/ifta/analytics` for visualizations.
+
+## Dashboard Components
+
+- `IFTADashboard` provides an overview of trips, fuel purchases and reports.
+- `TripLogger` and `FuelPurchaseForm` allow manual data entry.
+- `ReportGenerator` creates quarterly reports via `generateIftaReportAction`.
+- `JurisdictionManager` manages tax rates by quarter.
+- `ReceiptProcessor` uploads receipts for OCR processing.
+- `TaxCalculator` estimates tax due without creating a report.
+- `ComplianceTracker` lists auditor questions and responses.

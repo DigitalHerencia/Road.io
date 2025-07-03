@@ -115,4 +115,35 @@ export async function fetchTaxEfficientStates(orgId: number): Promise<TaxRateSug
     LIMIT 3
   `)
   return rates.rows.map(r => ({ state: r.state, rate: r.rate }))
+=======
+
+export interface IftaOverview {
+  totalTrips: number;
+  totalFuel: number;
+  totalCost: number;
+  reports: number;
+}
+
+export async function getIftaOverview(orgId: number): Promise<IftaOverview> {
+  const [tripsRes, fuelRes, costRes, reportRes] = await Promise.all([
+    db.execute<{ count: number }>(
+      sql`SELECT count(*)::int AS count FROM trips WHERE org_id = ${orgId}`,
+    ),
+    db.execute<{ gallons: number }>(
+      sql`SELECT coalesce(sum(quantity),0)::int AS gallons FROM fuel_purchases WHERE org_id = ${orgId}`,
+    ),
+    db.execute<{ cost: number }>(
+      sql`SELECT coalesce(sum(total_cost),0)::int AS cost FROM fuel_purchases WHERE org_id = ${orgId}`,
+    ),
+    db.execute<{ count: number }>(
+      sql`SELECT count(*)::int AS count FROM ifta_reports WHERE org_id = ${orgId}`,
+    ),
+  ]);
+
+  return {
+    totalTrips: tripsRes.rows[0]?.count ?? 0,
+    totalFuel: fuelRes.rows[0]?.gallons ?? 0,
+    totalCost: costRes.rows[0]?.cost ?? 0,
+    reports: reportRes.rows[0]?.count ?? 0,
+  };
 }
