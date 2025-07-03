@@ -45,3 +45,10 @@ Run `sendExpirationAlerts()` periodically to keep users informed of upcoming ren
 - `createComplianceTaskAction` adds tasks to a workflow.
 - `completeComplianceTaskAction` marks tasks complete and updates status.
 - `WorkflowList`, `WorkflowForm`, `TaskList`, and `TaskForm` provide basic UI.
+
+## Compliance Configuration & HAZMAT Management
+
+- `updateComplianceConfigAction` saves regulatory settings and emergency contact info.
+- `recordHazmatEndorsementAction` records driver HAZMAT endorsements.
+- `ComplianceConfigForm` updates DOT and environmental compliance options.
+- `HazmatInfo` shows emergency contact and endorsement expirations.
