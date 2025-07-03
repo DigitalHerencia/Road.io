@@ -122,7 +122,7 @@ export async function fetchTaxEfficientStates(orgId: number): Promise<TaxRateSug
     LIMIT 3
   `)
   return rates.rows.map(r => ({ state: r.state, rate: r.rate }))
-=======
+}
 
 export interface IftaOverview {
   totalTrips: number;
