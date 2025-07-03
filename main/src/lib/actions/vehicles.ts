@@ -1,12 +1,14 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { vehicles, vehicleMaintenance, vehicleTelematics } from "@/lib/schema";
-import { requirePermission } from "@/lib/rbac";
-import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "@/lib/audit";
-import { revalidatePath } from "next/cache";
-import { eq, inArray } from "drizzle-orm";
-import { z } from "zod";
+import { db } from '@/lib/db'
+import { vehicles, vehicleMaintenance } from '@/lib/schema'
+import { requirePermission } from '@/lib/rbac'
+import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { VEHICLE_CACHE_TAG } from '@/lib/fetchers/vehicles'
+import { eq, inArray } from 'drizzle-orm'
+import { z } from 'zod'
+
 
 // Allowed vehicle types as per your DB schema
 const ALLOWED_TYPES = ["TRACTOR", "TRAILER", "VAN", "CAR", "OTHER"] as const;
@@ -67,8 +69,10 @@ export async function createVehicle(data: VehicleInput) {
     details: { createdBy: user.id },
   });
 
-  revalidatePath("/dashboard/vehicles");
-  return { success: true, vehicle };
+  revalidatePath('/dashboard/vehicles')
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
+  return { success: true, vehicle }
 }
 
 export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
@@ -80,17 +84,6 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
     .set({ ...values, updatedAt: new Date() })
     .where(eq(vehicles.id, id))
     .returning();
-
-  await createAuditLog({
-    action: AUDIT_ACTIONS.VEHICLE_UPDATE,
-    resource: AUDIT_RESOURCES.VEHICLE,
-    resourceId: id.toString(),
-    details: { updatedBy: user.id },
-  });
-
-  revalidatePath("/dashboard/vehicles");
-  return { success: true, vehicle };
-}
 
 export async function bulkUpdateVehicleStatus(
   ids: number[],
@@ -109,8 +102,11 @@ export async function bulkUpdateVehicleStatus(
     details: { updatedBy: user.id, status },
   });
 
-  revalidatePath("/dashboard/vehicles");
-  return { success: true };
+  revalidatePath('/dashboard/vehicles')
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
+  return { success: true }
+
 }
 
 export const maintenanceRecordSchema = z.object({

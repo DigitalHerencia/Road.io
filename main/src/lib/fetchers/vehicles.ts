@@ -1,10 +1,14 @@
-import { db } from "@/lib/db";
-import { vehicles } from "@/lib/schema";
-import { eq, sql, and } from "drizzle-orm";
 
-export async function getAllVehicles(orgId: number) {
-  return db.select().from(vehicles).where(eq(vehicles.orgId, orgId));
+import { db } from '@/lib/db'
+import { vehicles } from '@/lib/schema'
+import { eq, sql, and } from 'drizzle-orm'
+import { cache } from 'react'
+
+async function _getAllVehicles(orgId: number) {
+  return db.select().from(vehicles).where(eq(vehicles.orgId, orgId))
+
 }
+export const getAllVehicles = cache(_getAllVehicles)
 
 export interface FleetOverview {
   total: number;
@@ -15,7 +19,7 @@ export interface FleetOverview {
   inspectionDue: number;
 }
 
-export async function getFleetOverview(orgId: number): Promise<FleetOverview> {
+async function _getFleetOverview(orgId: number): Promise<FleetOverview> {
   const totalRes = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count FROM vehicles WHERE org_id = ${orgId}
   `);
@@ -50,8 +54,9 @@ export async function getFleetOverview(orgId: number): Promise<FleetOverview> {
     inspectionDue: inspDueRes.rows[0]?.count ?? 0,
   };
 }
+export const getFleetOverview = cache(_getFleetOverview)
 
-export async function getVehicleList(
+async function _getVehicleList(
   orgId: number,
   sort: "id" | "make" | "model" | "year" | "status" | "vin" = "id",
   status?: "ACTIVE" | "MAINTENANCE" | "RETIRED",
@@ -80,10 +85,11 @@ export async function getVehicleList(
     .orderBy(orderCol);
 }
 
-export async function getVehicleById(id: number) {
-  const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id));
-  return vehicle;
+async function _getVehicleById(id: number) {
+  const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id))
+  return vehicle
 }
+export const getVehicleById = cache(_getVehicleById)
 
 export interface VehicleAvailability {
   id: number;
@@ -97,6 +103,7 @@ export interface VehicleAvailability {
 export async function getVehicleAvailability(
   orgId: number,
 ): Promise<VehicleAvailability[]> {
+
   const res = await db.execute<{
     id: number;
     make: string | null;
@@ -129,6 +136,7 @@ export async function getVehicleAvailability(
     nextMaintenanceDate: row.next_maintenance_date,
   }));
 }
+export const getVehicleAvailability = cache(_getVehicleAvailability)
 
 import type { AuditLog } from "@/lib/schema";
 import { AUDIT_ACTIONS, AUDIT_RESOURCES } from "@/lib/audit";
@@ -153,6 +161,7 @@ export async function getVehicleAssignmentHistory(
   `);
   return res.rows;
 }
+export const getVehicleAssignmentHistory = cache(_getVehicleAssignmentHistory)
 
 export interface VehicleMaintenance extends Record<string, unknown> {
   id: number;
@@ -163,7 +172,6 @@ export interface VehicleMaintenance extends Record<string, unknown> {
   description: string | null;
   cost: number | null;
 }
-
 export async function listVehicleMaintenance(
   orgId: number,
   vehicleId?: number,
@@ -178,6 +186,7 @@ export async function listVehicleMaintenance(
   `);
   return res.rows;
 }
+export const listVehicleMaintenance = cache(_listVehicleMaintenance)
 
 export interface MaintenanceAlert {
   id: number;
@@ -190,6 +199,7 @@ export async function getMaintenanceAlerts(
   orgId: number,
   withinDays = 30,
 ): Promise<MaintenanceAlert[]> {
+
   const res = await db.execute<{
     id: number;
     next_maintenance_date: Date;
@@ -245,3 +255,4 @@ export async function listVehicleDocuments(
   `);
   return res.rows;
 }
+export const getMaintenanceAlerts = cache(_getMaintenanceAlerts)

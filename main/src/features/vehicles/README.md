@@ -1,5 +1,4 @@
 # Vehicles Module
-
 This feature module manages fleet vehicles, maintenance and advanced telematics.
 
 ## Advanced Features
@@ -15,3 +14,13 @@ This feature module manages fleet vehicles, maintenance and advanced telematics.
 
 Fetchers and actions live in `lib/fetchers/vehicles.ts` and
 `lib/actions/vehicles.ts`.
+
+This module manages fleet vehicles and maintenance operations.
+
+## Performance Optimization
+
+Vehicle fetchers use `unstable_cache` with `vehicles` tags to cache lists and metrics. Server actions call `revalidateTag` to ensure data stays fresh when vehicles or maintenance records change.
+
+## Mobile Features
+
+`MobileMaintenanceForm` and `MobileInspectionForm` allow technicians to record maintenance and inspections from mobile devices. Submissions are queued in `localStorage` when offline and automatically sent when connectivity returns.

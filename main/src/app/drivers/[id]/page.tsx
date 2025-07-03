@@ -6,6 +6,10 @@ import DriverStatusForm from '@/features/drivers/components/DriverStatusForm'
 import DriverAssignments from '@/features/drivers/components/DriverAssignments'
 import DriverViolationList from '@/features/drivers/components/DriverViolationList'
 import DriverCertificationList from '@/features/drivers/components/DriverCertificationList'
+import PerformanceMetrics from '@/features/drivers/components/PerformanceMetrics'
+import PerformanceReviewList from '@/features/drivers/components/PerformanceReviewList'
+import PerformanceReviewForm from '@/features/drivers/components/PerformanceReviewForm'
+import SafetyProgramList from '@/features/drivers/components/SafetyProgramList'
 import ViolationForm from '@/features/drivers/components/ViolationForm'
 import CertificationForm from '@/features/drivers/components/CertificationForm'
 import { Button } from '@/components/ui/button'
@@ -34,6 +38,19 @@ export default async function DriverDetailPage({ params }: Params) {
       <div className="space-y-4">
         <DriverStatusForm driverId={driver.id} status={driver.status} />
         <DriverAssignments driverId={driver.id} />
+        <div>
+          <h2 className="font-semibold">Performance Metrics</h2>
+          <PerformanceMetrics driverId={driver.id} />
+        </div>
+        <div>
+          <h2 className="font-semibold">Performance Reviews</h2>
+          <PerformanceReviewList driverId={driver.id} />
+          <PerformanceReviewForm driverId={driver.id} />
+        </div>
+        <div>
+          <h2 className="font-semibold">Safety Programs</h2>
+          <SafetyProgramList driverId={driver.id} />
+        </div>
         <div>
           <h2 className="font-semibold">Violations</h2>
           <DriverViolationList driverId={driver.id} />

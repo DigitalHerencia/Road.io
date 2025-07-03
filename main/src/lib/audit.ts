@@ -154,6 +154,9 @@ export const AUDIT_ACTIONS = {
   // Compliance actions
   COMPLIANCE_REVIEW: "compliance.review",
   COMPLIANCE_REPORT_GENERATE: "compliance.report_generate",
+  COMPLIANCE_WORKFLOW_CREATE: 'compliance.workflow_create',
+  COMPLIANCE_TASK_CREATE: 'compliance.task_create',
+  COMPLIANCE_TASK_COMPLETE: 'compliance.task_complete',
 } as const;
 
 /**
