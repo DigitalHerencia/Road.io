@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
+import { z } from 'zod'
+
+const userSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional()
+})
 
 export async function GET() {
   try {
@@ -28,19 +34,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, name } = body;
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: 'Email is required' },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json();
+    const { email, name } = userSchema.parse(raw);
 
     // Insert a new user
     // clerkUserId is required, so provide a placeholder or generate one
-    const [newUser] = await db.insert(users).values({ 
+    const [newUser] = await db.insert(users).values({
       clerkUserId: 'test-' + Date.now(), // or use a real value if available
       email, 
       name 
@@ -53,6 +52,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating user:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid request', errors: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

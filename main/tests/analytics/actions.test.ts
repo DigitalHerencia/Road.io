@@ -25,4 +25,8 @@ describe("analytics actions", () => {
     expect(Array.isArray(res)).toBe(true);
     expect(fetchers.fetchPerformanceAlerts).toHaveBeenCalledWith(1);
   });
+
+  it("validates orgId", async () => {
+    await expect(getLiveFleetStatusAction({ orgId: 0 } as any)).rejects.toThrow();
+  });
 });
