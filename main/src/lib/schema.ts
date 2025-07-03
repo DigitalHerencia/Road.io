@@ -47,6 +47,10 @@ export const driverStatusEnum = pgEnum("driver_status", [
   "ON_DUTY",
   "OFF_DUTY",
 ]);
+export const driverMessageSenderEnum = pgEnum('driver_message_sender', [
+  'DRIVER',
+  'DISPATCH',
+])
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -521,6 +525,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   driverTrainings: many(driverTrainings),
   driverBenefits: many(driverBenefits),
   payStatements: many(payStatements),
+  driverMessages: many(driverMessages),
   iftaAuditResponses: many(iftaAuditResponses),
 }));
 
@@ -571,6 +576,7 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   trainings: many(driverTrainings),
   benefits: many(driverBenefits),
   payStatements: many(payStatements),
+  messages: many(driverMessages),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -776,3 +782,6 @@ export type CustomerNotification = typeof customerNotifications.$inferSelect;
 export type NewCustomerNotification = typeof customerNotifications.$inferInsert;
 export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
 export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
+export type DriverMessage = typeof driverMessages.$inferSelect;
+export type NewDriverMessage = typeof driverMessages.$inferInsert;
+

@@ -3,6 +3,8 @@
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { drivers, users } from '@/lib/schema'
+import { createDriverMessage } from '@/lib/fetchers/drivers'
+import { fetchDriverMessages } from '@/lib/fetchers/drivers'
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
@@ -145,4 +147,35 @@ export async function updateDriverStatus(formData: FormData) {
   revalidatePath('/drivers')
   revalidatePath(`/drivers/${driverId}`)
   return { success: true }
+}
+
+const messageSchema = z.object({
+  driverId: z.coerce.number().int().positive(),
+  sender: z.enum(['DRIVER', 'DISPATCH']).default('DISPATCH'),
+  message: z.string().min(1)
+})
+
+export async function sendDriverMessage(formData: FormData) {
+  const { driverId, sender, message } = messageSchema.parse({
+    driverId: formData.get('driverId'),
+    sender: formData.get('sender'),
+    message: formData.get('message')
+  })
+
+  const current = await requirePermission('org:dispatcher:send_messages')
+
+  await createDriverMessage({
+    orgId: current.orgId,
+    driverId,
+    sender,
+    message,
+  })
+
+  revalidatePath(`/drivers/${driverId}/messages`)
+  return { success: true }
+}
+
+export async function getDriverMessagesAction(params: { driverId: number }) {
+  const { driverId } = messageSchema.pick({ driverId: true }).parse(params)
+  return fetchDriverMessages(driverId)
 }
