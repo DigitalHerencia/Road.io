@@ -15,3 +15,12 @@ and analytics.
 All metrics are calculated via fetchers in `lib/fetchers/dispatch.ts` and exposed
 through server actions in `lib/actions/dispatch.ts`.
 
+## Route Optimization & Tracking
+
+Additional server actions provide advanced dispatch features:
+
+- `planRouteAction` calculates optimal stop order.
+- `updateDriverLocationAction` stores GPS updates.
+- `checkGeofenceAction` determines if a location is inside a geofence.
+
+Core logic resides in `lib/fetchers/dispatch.ts`.
