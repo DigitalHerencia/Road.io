@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db } from '@/lib/db'
 import {
   drivers,
   users,
@@ -7,9 +7,14 @@ import {
   performanceReviews,
   safetyPrograms,
   driverSafetyPrograms,
-} from '@/lib/schema';
-import { eq, sql } from 'drizzle-orm';
-import { DriverProfile } from '@/features/drivers/types';
+  driverTrainings,
+  complianceTasks,
+  complianceWorkflows,
+  payStatements,
+} from '@/lib/schema'
+import { eq, sql } from 'drizzle-orm'
+import { DriverProfile } from '@/features/drivers/types'
+import { requirePermission } from '@/lib/rbac'
 
 export async function getAllDrivers(): Promise<DriverProfile[]> {
   const rows = await db
@@ -239,4 +244,71 @@ export async function getTrainingRecommendations(driverId: number) {
     recs.push('Efficiency Training')
   }
   return recs
+}
+
+export interface DriverDashboardStats {
+  totalDrivers: number
+  availableDrivers: number
+  onDutyDrivers: number
+  scheduledLoads: number
+  upcomingTrainings: number
+  pendingComplianceTasks: number
+  recentPayStatements: number
+}
+
+export async function getDriverDashboardStats(
+  orgId: number,
+): Promise<DriverDashboardStats> {
+  await requirePermission('org:admin:access_all_reports')
+
+  const [driverCounts, loadsRes, trainingRes, tasksRes, payrollRes] =
+    await Promise.all([
+      db.execute<{ total: number; available: number; on_duty: number }>(sql`
+        SELECT
+          count(*)::int AS total,
+          count(*) FILTER (WHERE d.status = 'AVAILABLE')::int AS available,
+          count(*) FILTER (WHERE d.status = 'ON_DUTY')::int AS on_duty
+        FROM drivers d
+        JOIN users u ON d.user_id = u.id
+        WHERE u.org_id = ${orgId}
+      `),
+      db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count
+        FROM loads l
+        WHERE l.org_id = ${orgId}
+          AND l.assigned_driver_id IS NOT NULL
+          AND l.status NOT IN ('delivered','cancelled')
+          AND (l.pickup_location->>'datetime')::timestamp >= now()
+      `),
+      db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count
+        FROM driver_trainings
+        WHERE org_id = ${orgId}
+          AND status = 'ASSIGNED'
+          AND scheduled_at >= now()
+      `),
+      db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count
+        FROM compliance_tasks ct
+        JOIN compliance_workflows w ON ct.workflow_id = w.id
+        WHERE w.org_id = ${orgId}
+          AND ct.status = 'PENDING'
+      `),
+      db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count
+        FROM pay_statements
+        WHERE org_id = ${orgId}
+          AND created_at >= now() - interval '30 days'
+      `),
+    ])
+
+  return {
+    totalDrivers: driverCounts.rows[0]?.total ?? 0,
+    availableDrivers: driverCounts.rows[0]?.available ?? 0,
+    onDutyDrivers: driverCounts.rows[0]?.on_duty ?? 0,
+    scheduledLoads: loadsRes.rows[0]?.count ?? 0,
+    upcomingTrainings: trainingRes.rows[0]?.count ?? 0,
+    pendingComplianceTasks: tasksRes.rows[0]?.count ?? 0,
+    recentPayStatements: payrollRes.rows[0]?.count ?? 0,
+  }
 }

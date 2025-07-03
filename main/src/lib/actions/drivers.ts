@@ -9,7 +9,7 @@ import {
   driverSafetyPrograms,
 } from '@/lib/schema'
 import { createDriverMessage } from '@/lib/fetchers/drivers'
-import { fetchDriverMessages } from '@/lib/fetchers/drivers'
+import { fetchDriverMessages, getDriverDashboardStats } from '@/lib/fetchers/drivers'
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
@@ -343,4 +343,11 @@ export async function completeSafetyProgramAction(formData: FormData) {
     .set({ status: 'COMPLETED', completedAt: new Date() })
     .where(eq(driverSafetyPrograms.id, data.recordId))
   return { success: true }
+}
+
+const dashboardSchema = z.object({ orgId: z.coerce.number().int().positive() })
+
+export async function getDriverDashboardAction(params: { orgId: number }) {
+  const { orgId } = dashboardSchema.parse(params)
+  return getDriverDashboardStats(orgId)
 }
