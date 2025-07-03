@@ -158,7 +158,7 @@ export async function getIntegrationConfigs(
     .where(eq(organizations.id, orgId));
 
   const settings = org?.settings as Record<string, unknown> | undefined;
-  return (settings?.integrationConfigs as IntegrationConfig[]) ?? [];
+  return Object.values(settings?.integrationConfigs || {}) as IntegrationConfig[];
 }
 
 export async function getIntegrationStatuses(
