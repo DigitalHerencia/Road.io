@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createDriver, updateDriver } from '@/lib/actions/drivers'
-import { DriverProfile } from '@/types/drivers'
+import { DriverProfile } from '@/features/drivers/types'
 
 interface DriverFormProps {
   driver?: DriverProfile

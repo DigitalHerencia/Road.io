@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { loads, loadStatusEnum } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
-import type { Load } from '@/types/loads';
+import type { Load } from '@/features/dispatch/types';
 
 export async function getAllLoads(orgId: number): Promise<Load[]> {
   const results = await db.select().from(loads).where(eq(loads.orgId, orgId));

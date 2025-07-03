@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { z } from 'zod'
+
+const bodySchema = z.object({ message: z.string().min(1) })
 
 export async function GET() {
   try {
@@ -43,9 +46,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    
-    // Example of processing authenticated user data
+    const raw = await request.json();
+    const body = bodySchema.parse(raw)
+
     return NextResponse.json({
       success: true,
       message: 'Data processed successfully',
@@ -55,6 +58,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing authenticated request:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid request', errors: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Load } from '@/types/loads';
+import type { Load } from '@/features/dispatch/types';
 
 export default function LoadSummary({ load }: { load: Load }) {
   return (
