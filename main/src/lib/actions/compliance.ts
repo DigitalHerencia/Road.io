@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db'
 import {
   documents,
   driverAnnualReviews,
@@ -8,8 +8,10 @@ import {
   accidentReports,
   complianceWorkflows,
   complianceTasks,
+  driverCertifications,
+  organizations,
   type Document,
-} from '@/lib/schema';
+} from '@/lib/schema'
 import { sql, eq } from 'drizzle-orm';
 import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
@@ -68,6 +70,17 @@ const taskSchema = z.object({
 const taskCompleteSchema = z.object({
   taskId: z.coerce.number(),
 });
+
+const complianceConfigSchema = z.object({
+  dotRules: z.coerce.boolean().optional(),
+  environmental: z.coerce.boolean().optional(),
+  emergencyContact: z.string().optional(),
+})
+
+const hazmatSchema = z.object({
+  driverId: z.coerce.number(),
+  expiresAt: z.string().optional(),
+})
 
 export function generateUniqueFilename(original: string): string {
   const ext = path.extname(original);
@@ -421,4 +434,74 @@ export async function completeComplianceTaskAction(formData: FormData) {
 
   revalidatePath(`/dashboard/compliance/workflows/${task.workflowId}`)
   return { success: true, task }
+}
+
+export async function updateComplianceConfigAction(formData: FormData | { [key: string]: unknown }) {
+  const user = await requirePermission('org:compliance:configure_settings')
+  const raw = formData instanceof FormData ? {
+    dotRules: formData.get('dotRules'),
+    environmental: formData.get('environmental'),
+    emergencyContact: formData.get('emergencyContact') || undefined,
+  } : formData
+  const input = complianceConfigSchema.parse(raw)
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId))
+
+  const current = (org?.settings as Record<string, any>) ?? {}
+  const complianceConfig = {
+    regulatory: {
+      dotRules: input.dotRules ?? false,
+      environmental: input.environmental ?? false,
+    },
+    hazmat: {
+      emergencyContact: input.emergencyContact ?? (current.complianceConfig as any)?.hazmat?.emergencyContact,
+    },
+  }
+
+  const settings = { ...current, complianceConfig } as Record<string, unknown>
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, complianceConfig },
+  })
+
+  revalidatePath('/dashboard/compliance/settings')
+}
+
+export async function recordHazmatEndorsementAction(formData: FormData | { [key: string]: unknown }) {
+  const user = await requirePermission('org:compliance:configure_settings')
+  const raw = formData instanceof FormData ? {
+    driverId: formData.get('driverId'),
+    expiresAt: formData.get('expiresAt') || undefined,
+  } : formData
+
+  const input = hazmatSchema.parse(raw)
+
+  await db.insert(driverCertifications).values({
+    orgId: user.orgId,
+    driverId: input.driverId,
+    type: 'HAZMAT',
+    issuedAt: new Date(),
+    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+  })
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DRIVER_UPDATE,
+    resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: input.driverId.toString(),
+    details: { certification: 'HAZMAT' },
+  })
+
+  revalidatePath(`/drivers/${input.driverId}`)
+  return { success: true }
 }
