@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { createLoad, updateLoad } from '@/lib/actions/loads';
-import type { Load } from '@/types/loads';
+import type { Load } from '@/features/dispatch/types';
 
 interface Props {
   load?: Load;

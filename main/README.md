@@ -33,14 +33,51 @@ Road.io is a feature-driven fleet management platform built with Next.js 15 and 
 ```text
 main/
 ├── src/
-│   ├── app/        # Next.js routes and layouts
-│   ├── features/   # Domain modules (admin, dispatch, vehicles, ...)
-│   ├── lib/        # Fetchers, server actions, schema
-│   ├── components/ # Shared UI components
-│   └── types/      # Shared TypeScript types
-├── public/         # Static assets
-└── tests/          # Vitest suites
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/               # API routes
+│   │   │   ├── users/         # User CRUD operations
+│   │   │   ├── protected/     # Protected API endpoint
+│   │   │   ├── test-db/       # Database connection test
+│   │   │   └── webhooks/      # Clerk webhooks
+│   │   │       └── clerk/     # Clerk user events
+│   │   ├── dashboard/         # Protected dashboard page
+│   │   ├── globals.css        # Global styles
+│   │   ├── layout.tsx         # Root layout with ClerkProvider
+│   │   └── page.tsx           # Home page
+│   ├── components/            # React components
+│   │   ├── ui/               # shadcn/ui components
+│   │   ├── AuthSection.tsx   # Authentication status display
+│   │   ├── AuthTest.tsx      # API authentication testing
+│   │   └── DatabaseTest.tsx   # Database testing component
+│   ├── features/              # Feature modules grouped by domain
+│   │   ├── drivers/          # Driver management UI and logic
+│   │   └── ...               # Other domain folders
+│   ├── lib/                   # Utilities and configurations
+│   │   ├── db.ts             # Database connection
+│   │   ├── db-utils.ts       # Database utility functions
+│   │   ├── schema.ts         # Database schema
+│   │   └── utils.ts          # General utilities
+│   └── middleware.ts          # Clerk route protection
+├── drizzle/                   # Database migrations
+├── public/                    # Static assets
+├── .env.local                # Environment variables
+├── components.json           # shadcn/ui configuration
+├── drizzle.config.ts         # Drizzle ORM configuration
+└── package.json              # Dependencies and scripts
 ```
+
+## 🗄️ Database Schema
+
+### Users Table
+```sql
+CREATE TABLE "users" (
+  "id" serial PRIMARY KEY,
+  "email" varchar(255) NOT NULL UNIQUE,
+  "name" varchar(255),
+  "created_at" timestamp DEFAULT now() NOT NULL,
+  "updated_at" timestamp DEFAULT now() NOT NULL
+);
+
 
 Business logic lives in **server actions** under `lib/actions/`. API routes are reserved for authentication, webhooks and public integrations.
 

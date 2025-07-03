@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { DriverProfile } from '@/types/drivers'
+import { DriverProfile } from '@/features/drivers/types'
 
 export default function DriverSummary({ driver }: { driver: DriverProfile }) {
   return (

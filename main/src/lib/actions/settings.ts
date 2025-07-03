@@ -15,7 +15,7 @@ import type {
   SystemConfig,
   IntegrationSettings,
   NotificationSettings,
-} from '@/types/settings';
+} from '@/features/settings/types';
 
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),

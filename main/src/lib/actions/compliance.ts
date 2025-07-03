@@ -13,7 +13,7 @@ import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
 import { sendEmail } from '@/lib/email';
-import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/types/compliance';
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/features/compliance/types';
 import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';

@@ -8,7 +8,7 @@ import type {
   SystemConfig,
   IntegrationSettings,
   NotificationSettings,
-} from '@/types/settings';
+} from '@/features/settings/types';
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
   const user = await getCurrentUser();

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { drivers, users } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
-import { DriverProfile } from '@/types/drivers';
+import { DriverProfile } from '@/features/drivers/types';
 
 export async function getAllDrivers(): Promise<DriverProfile[]> {
   const rows = await db
