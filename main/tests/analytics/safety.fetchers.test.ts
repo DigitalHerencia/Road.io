@@ -10,7 +10,7 @@ describe('fetchAccidentRate', () => {
     vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ sum: 1000 }] } as any)
     vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ count: 2 }] } as any)
     const res = await fetchAccidentRate(1)
-    expect(res.accidentsPerMillionMiles).toBeCloseTo(2000000, 2)
+    expect(res.accidentsPerMillionMiles).toBeCloseTo(2000, 2)
   })
 })
 
