@@ -8,6 +8,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { VEHICLE_CACHE_TAG } from '@/lib/fetchers/vehicles'
 import { eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { safeParseJSON } from '@/lib/utils'
 
 
 // Allowed vehicle types as per your DB schema
@@ -181,7 +182,7 @@ export async function recordVehicleTelematics(formData: FormData) {
         input.lat && input.lng ? { lat: input.lat, lng: input.lng } : null,
       odometer: input.odometer,
       engineHours: input.engineHours,
-      data: input.data ? JSON.parse(input.data) : null,
+      data: safeParseJSON(input.data),
       createdAt: new Date(),
     })
     .returning();
