@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { listIftaReports } from '../src/lib/fetchers/ifta'
 import { db } from '../src/lib/db'
 
-vi.mock('../src/lib/db', () => ({
+vi.mock('@/lib/db', () => ({
   db: { select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn() })) })) }
 }))
 
