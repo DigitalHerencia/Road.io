@@ -43,6 +43,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
     Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+
 }
 
 export async function recordTripAction(formData: FormData) {
@@ -510,6 +511,8 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
 
   }
 
+  }
+
   await createAuditLog({
     action: AUDIT_ACTIONS.ELD_IMPORT,
     resource: AUDIT_RESOURCES.TRIP,
@@ -517,5 +520,75 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath('/dashboard/ifta/trips');
+}
+
+const TaxRateSchema = z.object({
+  state: z.string().min(2),
+  quarter: z.string().min(6),
+  rate: z.coerce.number().nonnegative(),
+  effectiveDate: z.coerce.date(),
+});
+
+export async function createTaxRateAction(formData: FormData) {
+  const user = await requirePermission('org:ifta:generate_report');
+  const input = TaxRateSchema.parse(Object.fromEntries(formData));
+  await db.insert(iftaTaxRates).values({
+    state: input.state,
+    quarter: input.quarter,
+    rate: input.rate,
+    effectiveDate: input.effectiveDate,
+    createdAt: new Date(),
+  });
+  revalidatePath('/dashboard/ifta');
+  return { success: true };
+}
+
+export async function processReceiptAction(formData: FormData) {
+  const user = await requirePermission('org:driver:log_fuel_purchase');
+  const file = formData.get('receipt');
+  if (!(file instanceof File)) {
+    throw new Error('No file provided');
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const dir = path.join(process.cwd(), 'main/public/uploads');
+  await fsPromises.mkdir(dir, { recursive: true });
+  const filename = `${Date.now()}-${file.name}`;
+  await fsPromises.writeFile(path.join(dir, filename), buffer);
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DOCUMENT_UPLOAD,
+    resource: AUDIT_RESOURCES.IFTA_REPORT,
+  });
+  return { success: true, url: `/uploads/${filename}` };
+}
+
+const TaxCalcSchema = z.object({
+  year: z.coerce.number(),
+  quarter: z.enum(['Q1', 'Q2', 'Q3', 'Q4']),
+});
+
+export async function calculateTaxAction(formData: FormData) {
+  const user = await requirePermission('org:ifta:generate_report');
+  const parsed = TaxCalcSchema.parse(Object.fromEntries(formData));
+  const q = `${parsed.year}${parsed.quarter}`;
+  const rates = await db
+    .select()
+    .from(iftaTaxRates)
+    .where(eq(iftaTaxRates.quarter, q));
+  const purchases = await db
+    .select()
+    .from(fuelPurchases)
+    .where(eq(fuelPurchases.orgId, user.orgId));
+  const gallonsByState = purchases.reduce<Record<string, number>>((acc, p) => {
+    const st = p.state ?? '';
+    acc[st] = (acc[st] || 0) + (p.quantity || 0);
+    return acc;
+  }, {});
+  let totalTax = 0;
+  for (const rate of rates) {
+    const gallons = gallonsByState[rate.state] || 0;
+    totalTax += gallons * rate.rate;
+  }
+  return { success: true, totalTax };
 }
 

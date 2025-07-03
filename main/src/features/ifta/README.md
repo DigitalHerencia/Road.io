@@ -28,3 +28,13 @@ Use the fetchers in `lib/fetchers/ifta.ts` to retrieve documents and audit respo
 
 - Vehicle assignments are synced from the dispatch module when trips are imported.
 - Use `importEldCsvAction` to keep IFTA mileage in sync with dispatch loads.
+
+## Dashboard Components
+
+- `IFTADashboard` provides an overview of trips, fuel purchases and reports.
+- `TripLogger` and `FuelPurchaseForm` allow manual data entry.
+- `ReportGenerator` creates quarterly reports via `generateIftaReportAction`.
+- `JurisdictionManager` manages tax rates by quarter.
+- `ReceiptProcessor` uploads receipts for OCR processing.
+- `TaxCalculator` estimates tax due without creating a report.
+- `ComplianceTracker` lists auditor questions and responses.
