@@ -25,3 +25,16 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 - `/dashboard/admin/tenant` – Multi-tenant administration and monitoring.
 - `/dashboard/admin` – Admin dashboard and system metrics overview.
 
+## Application & Integration Settings
+
+The admin dashboard exposes forms to manage organization-wide settings and
+integrations.
+
+- **Application Settings** – Configure feature toggles, maintenance mode, API
+  rate limits, session timeout and security policies. Data is stored in the
+  `organizations.settings.applicationSettings` JSON column and updated via the
+  `updateApplicationSettingsAction` server action.
+- **Integration Management** – Manage third-party services. Admins can update
+  API keys, webhook URLs and toggle integrations on or off. Keys can be
+  regenerated using `generateIntegrationApiKey`.
+
