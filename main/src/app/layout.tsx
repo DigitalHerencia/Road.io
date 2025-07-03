@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
+import { cookies } from 'next/headers';
+import CookieBanner from '@/components/CookieBanner';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,6 +25,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hasConsent = cookies().get('cookie_consent');
   return (
     <ClerkProvider>
       <html lang="en">
@@ -30,6 +33,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
+          {!hasConsent && <CookieBanner />}
         </body>
       </html>
     </ClerkProvider>

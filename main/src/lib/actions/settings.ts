@@ -8,6 +8,7 @@ import { requirePermission, requireAuth } from '../rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { invalidateCache } from '../cache';
 import { z } from 'zod';
 import type {
@@ -555,4 +556,16 @@ export async function backupOrganizationSettings() {
   await fs.writeFile(path.join(dir, fileName), JSON.stringify(org?.settings ?? {}));
 
   return fileName;
+}
+
+export async function acceptCookieConsent() {
+  const c = cookies()
+  c.set('cookie_consent', 'true', {
+    path: '/',
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+  })
+  return { success: true }
 }
