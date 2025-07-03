@@ -127,6 +127,7 @@ export const AUDIT_ACTIONS = {
   // Fuel actions
   FUEL_PURCHASE_CREATE: "fuel_purchase.create",
   FUEL_CARD_IMPORT: "fuel_card.import",
+  ELD_IMPORT: "eld.import",
 
 
   // HOS actions
