@@ -8,6 +8,7 @@ import { requirePermission, requireAuth } from '../rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { invalidateCache } from '../cache';
 import { z } from 'zod';
 import type {
   CompanyProfile,
@@ -168,6 +169,9 @@ const UPLOADS_DIR = path.join(process.cwd(), 'main', 'public', 'uploads');
     resourceId: user.orgId.toString(),
     details: { updatedBy: user.id, profile },
   });
+
+  invalidateCache(`companyProfile:${user.orgId}`);
+  revalidatePath('/dashboard/settings/company');
 }
 
 export async function updateUserPreferencesAction(formData: FormData) {
@@ -213,6 +217,9 @@ export async function updateUserPreferencesAction(formData: FormData) {
     details: { preferences },
   });
 
+  invalidateCache(`userPrefs:${user.id}`);
+  revalidatePath('/dashboard/settings/preferences');
+
   // Return nothing for form action compatibility
 }
 
@@ -256,6 +263,7 @@ export async function updateSystemConfigAction(formData: FormData) {
     details: { updatedBy: user.id, systemConfig },
   });
 
+  invalidateCache(`systemConfig:${user.orgId}`);
   revalidatePath('/dashboard/settings/system');
   // Return nothing for form action compatibility
 }
@@ -301,6 +309,7 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
     details: { updatedBy: user.id, integrationSettings },
   });
 
+  invalidateCache(`integrationSettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/integrations');
   // Return nothing for form action compatibility
 }
@@ -348,6 +357,7 @@ export async function updateNotificationSettingsAction(formData: FormData) {
     details: { updatedBy: user.id, notificationSettings },
   });
 
+  invalidateCache(`notificationSettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/notifications');
   // Return nothing for form action compatibility
 }
@@ -390,6 +400,7 @@ export async function updateWorkflowAutomationSettingsAction(
     details: { updatedBy: user.id, workflowAutomation },
   });
 
+  invalidateCache(`workflowSettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/workflow');
 }
 
@@ -433,6 +444,7 @@ export async function updateSecuritySettingsAction(
     details: { updatedBy: user.id, securitySettings },
   });
 
+  invalidateCache(`securitySettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/security');
 }
 
@@ -480,6 +492,7 @@ export async function updateMobileSettingsAction(
     details: { updatedBy: user.id, mobileSettings },
   });
 
+  invalidateCache(`mobileSettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/mobile');
 }
 
@@ -525,5 +538,21 @@ export async function updateAnalyticsSettingsAction(
     details: { updatedBy: user.id, analyticsSettings },
   });
 
+  invalidateCache(`analyticsSettings:${user.orgId}`);
   revalidatePath('/dashboard/settings/analytics');
+}
+
+export async function backupOrganizationSettings() {
+  const user = await requirePermission('org:admin:configure_company_settings');
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const fileName = `org_${user.orgId}_${Date.now()}.json`;
+  const dir = path.join(process.cwd(), 'backups');
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(path.join(dir, fileName), JSON.stringify(org?.settings ?? {}));
+
+  return fileName;
 }
