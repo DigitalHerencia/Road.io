@@ -9,6 +9,7 @@ import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../audit';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { invalidateCache } from '../cache';
+import { encryptString } from '../encryption';
 import { z } from 'zod';
 import type {
   CompanyProfile,
@@ -289,7 +290,21 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
   const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
   const integrationSettings: IntegrationSettings = {
     ...(currentSettings.integrationSettings as IntegrationSettings | undefined ?? {}),
-    ...parsed,
+    eldApiKey: parsed.eldApiKey
+      ? encryptString(parsed.eldApiKey)
+      : (currentSettings.integrationSettings as IntegrationSettings | undefined)?.eldApiKey,
+    fuelCardProvider:
+      parsed.fuelCardProvider ??
+      (currentSettings.integrationSettings as IntegrationSettings | undefined)?.fuelCardProvider,
+    mappingApiKey: parsed.mappingApiKey
+      ? encryptString(parsed.mappingApiKey)
+      : (currentSettings.integrationSettings as IntegrationSettings | undefined)?.mappingApiKey,
+    commsWebhookUrl: parsed.commsWebhookUrl
+      ? encryptString(parsed.commsWebhookUrl)
+      : (currentSettings.integrationSettings as IntegrationSettings | undefined)?.commsWebhookUrl,
+    paymentProcessorKey: parsed.paymentProcessorKey
+      ? encryptString(parsed.paymentProcessorKey)
+      : (currentSettings.integrationSettings as IntegrationSettings | undefined)?.paymentProcessorKey,
   };
 
   const settings = {

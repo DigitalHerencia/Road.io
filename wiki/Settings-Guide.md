@@ -9,6 +9,8 @@ This guide summarizes key configuration areas within the Settings module.
 ## Security Settings
 - Toggle regulatory compliance mode.
 - Enable document management and audit trails.
+- Sensitive integration keys are encrypted at rest using AES-256-GCM.
+- Security API endpoints include basic rate limiting to prevent abuse.
 
 ## Mobile Settings
 - Configure offline mode and push notifications.

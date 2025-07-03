@@ -2,6 +2,7 @@ import { db } from '../db';
 import { organizations, userPreferences } from '../schema';
 import { getCurrentUser } from '../rbac';
 import { getCache, setCache } from '../cache';
+import { decryptString } from '../encryption';
 import { eq } from 'drizzle-orm';
 import type {
   CompanyProfile,
@@ -88,7 +89,23 @@ export async function getIntegrationSettings(): Promise<IntegrationSettings | nu
 
   const settings = org?.settings as Record<string, unknown> | undefined;
   const integrations = settings?.integrationSettings as IntegrationSettings | undefined;
-  const result = integrations ?? null;
+  const result = integrations
+    ? {
+        ...integrations,
+        eldApiKey: integrations.eldApiKey
+          ? decryptString(integrations.eldApiKey)
+          : undefined,
+        mappingApiKey: integrations.mappingApiKey
+          ? decryptString(integrations.mappingApiKey)
+          : undefined,
+        commsWebhookUrl: integrations.commsWebhookUrl
+          ? decryptString(integrations.commsWebhookUrl)
+          : undefined,
+        paymentProcessorKey: integrations.paymentProcessorKey
+          ? decryptString(integrations.paymentProcessorKey)
+          : undefined,
+      }
+    : null;
   setCache(cacheKey, result);
   return result;
 }
