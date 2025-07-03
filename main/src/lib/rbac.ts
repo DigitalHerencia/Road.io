@@ -66,7 +66,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
     const user = result[0];
     let permissions = ROLE_PERMISSIONS[user.role as SystemRoles] || [];
-    if (user.customPermissions) {
+    if (Array.isArray(user.customPermissions)) {
       permissions = Array.from(new Set([...permissions, ...user.customPermissions]))
     }
 

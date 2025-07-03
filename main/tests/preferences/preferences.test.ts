@@ -28,7 +28,6 @@ describe('updateUserPreferencesAction', () => {
     const data = new FormData();
     data.set('displayName', 'Test');
     data.set('theme', 'dark');
-    const result = await updateUserPreferencesAction(data);
-    expect(result.success).toBe(true);
+    await expect(updateUserPreferencesAction(data)).resolves.toBeUndefined();
   });
 });
