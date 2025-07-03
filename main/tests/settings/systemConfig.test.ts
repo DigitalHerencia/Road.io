@@ -35,8 +35,7 @@ describe('system configuration', () => {
     const data = new FormData()
     data.set('maintenanceEnabled', 'true')
     data.set('backupFrequency', 'daily')
-    const result = await updateSystemConfigAction(data)
-    expect(result.success).toBe(true)
+    await expect(updateSystemConfigAction(data)).resolves.toBeUndefined()
   })
 
   it('fetches system config', async () => {

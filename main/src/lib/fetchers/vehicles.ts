@@ -68,7 +68,7 @@ export async function getVehicleList(
     vin: vehicles.vin,
   } as const;
   
-  const orderCol = columnMap[sort] ?? vehicles.id;
+  const orderCol = columnMap[sort as keyof typeof columnMap] ?? vehicles.id;
   
   return db
     .select()

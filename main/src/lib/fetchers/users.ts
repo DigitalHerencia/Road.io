@@ -19,8 +19,9 @@ export async function getOrgUsers(orgId: number): Promise<UserProfile[]> {
     .where(eq(users.orgId, orgId));
   return rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' : 'INACTIVE',
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));
@@ -33,6 +34,7 @@ export async function getUserById(id: number): Promise<UserProfile | undefined> 
       email: users.email,
       name: users.name,
       role: users.role,
+      orgId: users.orgId,
       isActive: users.isActive,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
@@ -41,8 +43,9 @@ export async function getUserById(id: number): Promise<UserProfile | undefined> 
     .where(eq(users.id, id));
   const [row] = rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' : 'INACTIVE',
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));
@@ -54,7 +57,7 @@ export async function getUserList(
   sort: 'name' | 'email' | 'role' | 'createdAt' = 'createdAt',
   status?: 'ACTIVE' | 'INACTIVE',
 ): Promise<UserProfile[]> {
-  let queryBuilder = db
+  const queryBuilder = db
     .select({
       id: users.id,
       email: users.email,
@@ -86,6 +89,7 @@ export async function getUserList(
 
   return rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
     status: r.isActive ? 'ACTIVE' : 'INACTIVE',
     customRoleId: null,

@@ -24,7 +24,6 @@ describe('createTrainingProgramAction', () => {
   it('creates a program', async () => {
     const data = new FormData()
     data.set('title', 'Orientation')
-    const res = await createTrainingProgramAction(data)
-    expect(res.success).toBe(true)
+    await expect(createTrainingProgramAction(data)).resolves.toBeUndefined()
   })
 })

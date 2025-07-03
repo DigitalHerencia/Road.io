@@ -53,7 +53,7 @@ export async function assignLoad(loadId: number, formData: FormData) {
     }
   }
 
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     status: input.driverId && input.vehicleId ? 'assigned' : load.status,
     updatedAt: new Date(),
   }
@@ -73,7 +73,7 @@ export async function assignLoad(loadId: number, formData: FormData) {
     .returning()
 
   if (input.vehicleId) {
-    const vehicleUpdateData: any = { updatedAt: new Date() }
+    const vehicleUpdateData: Record<string, unknown> = { updatedAt: new Date() }
     if (input.driverId) {
       vehicleUpdateData.currentDriverId = input.driverId
     }

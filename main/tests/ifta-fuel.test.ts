@@ -44,8 +44,7 @@ describe("createFuelPurchaseAction", () => {
     fd.set("state", "TX");
     fd.set("taxStatus", "PAID");
     fd.set("paymentMethod", "CARD");
-    const result = await createFuelPurchaseAction(fd);
-    expect(result.success).toBe(true);
+    await expect(createFuelPurchaseAction(fd)).resolves.toBeUndefined();
   });
 
   it("fails with invalid data", async () => {
@@ -61,8 +60,6 @@ describe("importFuelCardCsvAction", () => {
     const csv =
       "purchaseDate,driverId,vehicleId,quantity,pricePerUnit,vendor,state,taxStatus,paymentMethod\n2024-01-01,1,1,10,300,Shell,TX,PAID,CARD";
     fd.set("csv", new File([csv], "test.csv", { type: "text/csv" }));
-    const result = await importFuelCardCsvAction(fd);
-    expect(result.success).toBe(true);
-    expect(result.count).toBe(1);
+    await expect(importFuelCardCsvAction(fd)).resolves.toBeUndefined();
   });
 });

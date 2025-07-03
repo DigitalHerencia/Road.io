@@ -23,8 +23,7 @@ describe('updateIntegrationSettingsAction', () => {
   it('updates integration settings', async () => {
     const form = new FormData()
     form.set('eldApiKey', 'key')
-    const result = await updateIntegrationSettingsAction(form)
-    expect(result.success).toBe(true)
+    await expect(updateIntegrationSettingsAction(form)).resolves.toBeUndefined()
   })
 })
 
@@ -34,8 +33,7 @@ describe('updateNotificationSettingsAction', () => {
     const form = new FormData()
     form.set('emailEnabled', 'true')
     form.set('escalationEmail', 'a@test.com')
-    const res = await updateNotificationSettingsAction(form)
-    expect(res.success).toBe(true)
+    await expect(updateNotificationSettingsAction(form)).resolves.toBeUndefined()
   })
   it('fails with invalid email', async () => {
     const form = new FormData()

@@ -8,8 +8,9 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    include: ['tests/**/*.test.ts'],
+    environment: 'jsdom',
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    // coverage is handled in CI
   },
   resolve: {
     alias: {

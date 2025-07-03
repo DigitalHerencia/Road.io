@@ -2,11 +2,11 @@
 
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { trainingPrograms, driverTrainings, driverBenefits } from '@/lib/schema'
+import { trainingPrograms, driverTrainings } from '@/lib/schema'
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
-import { eq, sum } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 const programSchema = z.object({
   title: z.string().min(1),
