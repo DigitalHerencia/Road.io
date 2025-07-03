@@ -6,9 +6,11 @@ import {
   driverAnnualReviews,
   vehicleInspections,
   accidentReports,
+  complianceWorkflows,
+  complianceTasks,
   type Document,
 } from '@/lib/schema';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
@@ -49,6 +51,22 @@ const accidentSchema = z.object({
   description: z.string().optional(),
   injuries: z.coerce.boolean().optional(),
   fatalities: z.coerce.boolean().optional(),
+});
+
+const workflowSchema = z.object({
+  name: z.string().min(1),
+});
+
+const taskSchema = z.object({
+  workflowId: z.coerce.number(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  assignedToId: z.coerce.number().optional(),
+  dueDate: z.string().optional(),
+});
+
+const taskCompleteSchema = z.object({
+  taskId: z.coerce.number(),
 });
 
 export function generateUniqueFilename(original: string): string {
@@ -330,4 +348,77 @@ export async function exportComplianceAuditLogsAction(orgId: number) {
   return new Response(csv, {
     headers: { 'Content-Type': 'text/csv' }
   })
+}
+
+export async function createComplianceWorkflowAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:manage_workflows')
+  const input = workflowSchema.parse({ name: formData.get('name') })
+  const [workflow] = await db
+    .insert(complianceWorkflows)
+    .values({
+      orgId: user.orgId,
+      name: input.name,
+      createdById: parseInt(user.id),
+    })
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_WORKFLOW_CREATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: workflow.id.toString(),
+  })
+
+  revalidatePath('/dashboard/compliance/workflows')
+  return { success: true, workflow }
+}
+
+export async function createComplianceTaskAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:manage_workflows')
+  const raw = {
+    workflowId: formData.get('workflowId'),
+    title: formData.get('title'),
+    description: formData.get('description') || undefined,
+    assignedToId: formData.get('assignedToId') || undefined,
+    dueDate: formData.get('dueDate') || undefined,
+  }
+  const input = taskSchema.parse(raw)
+
+  const [task] = await db
+    .insert(complianceTasks)
+    .values({
+      workflowId: input.workflowId,
+      title: input.title,
+      description: input.description,
+      assignedToId: input.assignedToId,
+      dueDate: input.dueDate ? new Date(input.dueDate) : null,
+    })
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_TASK_CREATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: task.id.toString(),
+  })
+
+  revalidatePath(`/dashboard/compliance/workflows/${input.workflowId}`)
+  return { success: true, task }
+}
+
+export async function completeComplianceTaskAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:manage_workflows')
+  const { taskId } = taskCompleteSchema.parse({ taskId: formData.get('taskId') })
+  const [task] = await db
+    .update(complianceTasks)
+    .set({ status: 'COMPLETED', completedAt: new Date(), updatedAt: new Date() })
+    .where(eq(complianceTasks.id, taskId))
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_TASK_COMPLETE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: taskId.toString(),
+  })
+
+  revalidatePath(`/dashboard/compliance/workflows/${task.workflowId}`)
+  return { success: true, task }
 }
