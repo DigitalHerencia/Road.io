@@ -47,6 +47,10 @@ export const driverStatusEnum = pgEnum("driver_status", [
   "ON_DUTY",
   "OFF_DUTY",
 ]);
+export const driverMessageSenderEnum = pgEnum('driver_message_sender', [
+  'DRIVER',
+  'DISPATCH',
+])
 export const vehicleTypeEnum = pgEnum("vehicle_type", [
   "TRACTOR",
   "TRAILER",
@@ -468,6 +472,16 @@ export const payStatements = pgTable('pay_statements', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Driver messages
+export const driverMessages = pgTable('driver_messages', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  sender: driverMessageSenderEnum('sender').default('DISPATCH').notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // IFTA audit responses
 export const iftaAuditResponses = pgTable('ifta_audit_responses', {
   id: serial('id').primaryKey(),
@@ -497,6 +511,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   driverTrainings: many(driverTrainings),
   driverBenefits: many(driverBenefits),
   payStatements: many(payStatements),
+  driverMessages: many(driverMessages),
   iftaAuditResponses: many(iftaAuditResponses),
 }));
 
@@ -547,6 +562,7 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   trainings: many(driverTrainings),
   benefits: many(driverBenefits),
   payStatements: many(payStatements),
+  messages: many(driverMessages),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -636,6 +652,17 @@ export const iftaAuditResponsesRelations = relations(iftaAuditResponses, ({ one 
   }),
 }));
 
+export const driverMessagesRelations = relations(driverMessages, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [driverMessages.orgId],
+    references: [organizations.id],
+  }),
+  driver: one(drivers, {
+    fields: [driverMessages.driverId],
+    references: [drivers.id],
+  }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
   organization: one(organizations, {
     fields: [documents.orgId],
@@ -722,3 +749,5 @@ export type PayStatement = typeof payStatements.$inferSelect;
 export type NewPayStatement = typeof payStatements.$inferInsert;
 export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
 export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
+export type DriverMessage = typeof driverMessages.$inferSelect;
+export type NewDriverMessage = typeof driverMessages.$inferInsert;
