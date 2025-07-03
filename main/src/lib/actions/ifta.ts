@@ -425,3 +425,86 @@ export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2'
     },
   });
 }
+
+const EldRowSchema = z.object({
+  driverId: z.coerce.number(),
+  vehicleId: z.coerce.number(),
+  loadId: z.coerce.number().optional(),
+  startLat: z.coerce.number(),
+  startLng: z.coerce.number(),
+  startState: z.string().min(2),
+  endLat: z.coerce.number(),
+  endLng: z.coerce.number(),
+  endState: z.string().min(2),
+  startedAt: z.coerce.date(),
+  endedAt: z.coerce.date(),
+});
+
+export async function importEldCsvAction(formData: FormData): Promise<void> {
+  const user = await requirePermission('org:ifta:import_data');
+  const file = formData.get('csv');
+  if (!(file instanceof File)) {
+    throw new Error('No file provided');
+  }
+  const text = await file.text();
+  const rows = text.trim().split(/\r?\n/);
+  rows.shift();
+  let count = 0;
+  for (const line of rows) {
+    if (!line) continue;
+    const [
+      driverId,
+      vehicleId,
+      loadId,
+      startLat,
+      startLng,
+      startState,
+      endLat,
+      endLng,
+      endState,
+      startedAt,
+      endedAt,
+    ] = line.split(',');
+    const parsed = EldRowSchema.safeParse({
+      driverId,
+      vehicleId,
+      loadId,
+      startLat,
+      startLng,
+      startState,
+      endLat,
+      endLng,
+      endState,
+      startedAt,
+      endedAt,
+    });
+    if (!parsed.success) continue;
+    const data = parsed.data;
+    const distance = haversine(data.startLat, data.startLng, data.endLat, data.endLng);
+    await db
+      .insert(trips)
+      .values({
+        orgId: user.orgId,
+        driverId: data.driverId,
+        vehicleId: data.vehicleId,
+        loadId: data.loadId,
+        startLocation: { lat: data.startLat, lng: data.startLng, state: data.startState },
+        endLocation: { lat: data.endLat, lng: data.endLng, state: data.endState },
+        distance,
+        jurisdictions: [{ state: data.startState, miles: distance }],
+        isInterstate: data.startState !== data.endState,
+        startedAt: data.startedAt,
+        endedAt: data.endedAt,
+        createdById: parseInt(user.id),
+      });
+    count++;
+  }
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ELD_IMPORT,
+    resource: AUDIT_RESOURCES.TRIP,
+    details: { count },
+  });
+
+  revalidatePath('/dashboard/ifta/trips');
+}
