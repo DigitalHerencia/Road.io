@@ -12,16 +12,14 @@ import {
 import { z } from "zod";
 import { getIntegrationSettings } from '@/lib/fetchers/settings'
 import { db } from '@/lib/db'
-import { drivers, dispatchMessages, customerNotifications } from '@/lib/schema'
+import { drivers, dispatchMessages } from '@/lib/schema'
 import {
   AUDIT_ACTIONS,
   AUDIT_RESOURCES,
   createAuditLog,
 } from '@/lib/audit'
 import { requirePermission } from '@/lib/rbac'
-import { sendEmail } from '@/lib/email'
 import { eq } from 'drizzle-orm'
-import { z } from 'zod'
 
 
 const orgIdSchema = z.object({ orgId: z.coerce.number().int().positive() });
@@ -177,10 +175,9 @@ export async function broadcastEmergencyAlertAction(data: z.infer<typeof emergen
 }
 
 export async function sendCustomerNotificationAction(data: z.infer<typeof customerNotificationSchema>) {
-  const user = await requirePermission('org:dispatcher:communicate')
-  const values = customerNotificationSchema.parse(data)
-
- return { success: true, notification: note }
+  customerNotificationSchema.parse(data)
+  await requirePermission('org:dispatcher:communicate')
+  return { success: true }
 }
 
 

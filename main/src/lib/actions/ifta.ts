@@ -507,6 +507,8 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
     count++;
   }
 
+  }
+
   await createAuditLog({
     action: AUDIT_ACTIONS.ELD_IMPORT,
     resource: AUDIT_RESOURCES.TRIP,

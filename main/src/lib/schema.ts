@@ -65,6 +65,7 @@ export const fuelPaymentMethodEnum = pgEnum("fuel_payment_method", [
 ]);
 export const fuelTaxStatusEnum = pgEnum("fuel_tax_status", ["PAID", "FREE"]);
 export const trainingStatusEnum = pgEnum('training_status', ['ASSIGNED', 'COMPLETED']);
+export const safetyProgramStatusEnum = pgEnum('safety_program_status', ['ASSIGNED', 'COMPLETED']);
 
 // Organizations table (multi-tenant)
 export const organizations = pgTable("organizations", {
@@ -470,6 +471,40 @@ export const driverCertifications = pgTable('driver_certifications', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Performance reviews
+export const performanceReviews = pgTable('performance_reviews', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  reviewerId: integer('reviewer_id').references(() => users.id).notNull(),
+  reviewDate: timestamp('review_date').defaultNow().notNull(),
+  score: integer('score').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Safety programs
+export const safetyPrograms = pgTable('safety_programs', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  title: varchar('title', { length: 100 }).notNull(),
+  description: text('description'),
+  createdById: integer('created_by_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Driver safety program assignments
+export const driverSafetyPrograms = pgTable('driver_safety_programs', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => organizations.id).notNull(),
+  driverId: integer('driver_id').references(() => drivers.id).notNull(),
+  programId: integer('program_id').references(() => safetyPrograms.id).notNull(),
+  status: safetyProgramStatusEnum('status').default('ASSIGNED').notNull(),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Driver benefits
 export const driverBenefits = pgTable('driver_benefits', {
   id: serial('id').primaryKey(),
@@ -553,6 +588,9 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   payStatements: many(payStatements),
   driverMessages: many(driverMessages),
   iftaAuditResponses: many(iftaAuditResponses),
+  performanceReviews: many(performanceReviews),
+  safetyPrograms: many(safetyPrograms),
+  driverSafetyPrograms: many(driverSafetyPrograms),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -575,6 +613,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdTrainingPrograms: many(trainingPrograms),
   payStatements: many(payStatements),
   iftaAuditResponses: many(iftaAuditResponses),
+  createdSafetyPrograms: many(safetyPrograms),
+  performanceReviewsWritten: many(performanceReviews, {
+    relationName: 'reviewer'
+  }),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({
@@ -605,6 +647,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   certifications: many(driverCertifications),
   payStatements: many(payStatements),
   messages: many(driverMessages),
+  performanceReviews: many(performanceReviews),
+  safetyPrograms: many(driverSafetyPrograms),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -816,4 +860,10 @@ export type IftaAuditResponse = typeof iftaAuditResponses.$inferSelect;
 export type NewIftaAuditResponse = typeof iftaAuditResponses.$inferInsert;
 export type DriverMessage = typeof driverMessages.$inferSelect;
 export type NewDriverMessage = typeof driverMessages.$inferInsert;
+export type PerformanceReview = typeof performanceReviews.$inferSelect;
+export type NewPerformanceReview = typeof performanceReviews.$inferInsert;
+export type SafetyProgram = typeof safetyPrograms.$inferSelect;
+export type NewSafetyProgram = typeof safetyPrograms.$inferInsert;
+export type DriverSafetyProgram = typeof driverSafetyPrograms.$inferSelect;
+export type NewDriverSafetyProgram = typeof driverSafetyPrograms.$inferInsert;
 

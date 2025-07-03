@@ -2,7 +2,12 @@
 
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { drivers, users } from '@/lib/schema'
+import {
+  drivers,
+  users,
+  performanceReviews,
+  driverSafetyPrograms,
+} from '@/lib/schema'
 import { createDriverMessage } from '@/lib/fetchers/drivers'
 import { fetchDriverMessages } from '@/lib/fetchers/drivers'
 import { revalidatePath } from 'next/cache'
@@ -247,6 +252,7 @@ export async function addDriverCertification(
 
   revalidatePath(`/drivers/${values.driverId}`)
   return { success: true }
+}
 const messageSchema = z.object({
   driverId: z.coerce.number().int().positive(),
   sender: z.enum(['DRIVER', 'DISPATCH']).default('DISPATCH'),
@@ -277,4 +283,64 @@ export async function getDriverMessagesAction(params: { driverId: number }) {
   const { driverId } = messageSchema.pick({ driverId: true }).parse(params)
   return fetchDriverMessages(driverId)
 
+}
+
+const reviewSchema = z.object({
+  driverId: z.coerce.number(),
+  score: z.coerce.number().min(1).max(5),
+  notes: z.string().optional(),
+})
+
+export async function createPerformanceReviewAction(formData: FormData) {
+  const data = reviewSchema.parse({
+    driverId: formData.get('driverId'),
+    score: formData.get('score'),
+    notes: formData.get('notes') || undefined,
+  })
+
+  const user = await requirePermission('org:admin:manage_users_and_roles')
+  await db.insert(performanceReviews).values({
+    orgId: user.orgId,
+    driverId: data.driverId,
+    reviewerId: parseInt(user.id),
+    score: data.score,
+    notes: data.notes,
+  })
+
+  revalidatePath(`/drivers/${data.driverId}`)
+  return { success: true }
+}
+
+const assignProgramSchema = z.object({
+  driverId: z.coerce.number(),
+  programId: z.coerce.number(),
+})
+
+export async function assignSafetyProgramAction(formData: FormData) {
+  const data = assignProgramSchema.parse({
+    driverId: formData.get('driverId'),
+    programId: formData.get('programId'),
+  })
+  const user = await requirePermission('org:admin:manage_users_and_roles')
+  await db.insert(driverSafetyPrograms).values({
+    orgId: user.orgId,
+    driverId: data.driverId,
+    programId: data.programId,
+  })
+  revalidatePath(`/drivers/${data.driverId}`)
+  return { success: true }
+}
+
+const completeProgramSchema = z.object({
+  recordId: z.coerce.number(),
+})
+
+export async function completeSafetyProgramAction(formData: FormData) {
+  const data = completeProgramSchema.parse({ recordId: formData.get('recordId') })
+  await requirePermission('org:admin:manage_users_and_roles')
+  await db
+    .update(driverSafetyPrograms)
+    .set({ status: 'COMPLETED', completedAt: new Date() })
+    .where(eq(driverSafetyPrograms.id, data.recordId))
+  return { success: true }
 }
