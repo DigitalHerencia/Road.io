@@ -1,5 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { getDocumentStatusCounts, getDocumentTrends, type DocumentTrend } from '@/lib/fetchers/compliance'
+import AuditLogList from './AuditLogList'
+import ComplianceReportForm from './ComplianceReportForm'
 
 interface Props {
   orgId: number
@@ -41,6 +43,24 @@ export default async function ComplianceDashboard({ orgId }: Props) {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AuditLogList orgId={orgId} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Generate Report</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ComplianceReportForm />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

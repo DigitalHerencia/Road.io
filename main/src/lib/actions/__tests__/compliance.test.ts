@@ -13,6 +13,8 @@ import {
   recordVehicleInspection,
   recordAccident,
   calculateSmsScore
+  ,generateComplianceReportAction,
+  exportComplianceAuditLogsAction
 } from '@/lib/actions/compliance'
 import { db } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
@@ -34,6 +36,26 @@ vi.mock('@/lib/email', () => ({ sendEmail: vi.fn() }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('fs', () => ({ promises: { mkdir: vi.fn(), writeFile: vi.fn() } }))
 vi.mock('drizzle-orm', () => ({ sql: vi.fn() }))
+vi.mock('pdfkit', () => {
+  return {
+    default: vi.fn(() => ({
+      pipe: vi.fn(),
+      fontSize: vi.fn().mockReturnThis(),
+      text: vi.fn().mockReturnThis(),
+      moveDown: vi.fn(),
+      end: vi.fn()
+    }))
+  }
+})
+vi.mock('@/lib/fetchers/compliance', () => ({
+  getComplianceReportData: vi.fn(async () => ({
+    status: { active: 1, underReview: 0 },
+    annualReviews: 1,
+    vehicleInspections: 1,
+    accidents: 0
+  })),
+  listComplianceAuditLogs: vi.fn(async () => [{ id: 1, action: 'a', resource: 'document', resourceId: '1', details: {}, createdAt: new Date() }])
+}))
 
 describe('generateUniqueFilename', () => {
   it('creates unique names preserving extension', () => {
@@ -146,5 +168,21 @@ describe('markDocumentReviewed', () => {
     vi.mocked(db.update).mockReturnValueOnce({ set: () => ({ where: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }) } as any)
     const result = await markDocumentReviewed(1)
     expect(result.success).toBe(true)
+  })
+})
+
+describe('generateComplianceReportAction', () => {
+  it('creates a report and logs audit', async () => {
+    const form = new FormData()
+    form.set('category', 'driver')
+    const result = await generateComplianceReportAction(form)
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('exportComplianceAuditLogsAction', () => {
+  it('returns csv response', async () => {
+    const res = await exportComplianceAuditLogsAction(1)
+    expect(res.headers.get('content-type')).toBe('text/csv')
   })
 })

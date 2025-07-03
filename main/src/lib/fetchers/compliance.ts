@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import type { Document } from '@/lib/schema';
+import type { Document, AuditLog } from '@/lib/schema';
 import { requirePermission } from '@/lib/rbac';
 import { sql } from 'drizzle-orm';
 
@@ -34,15 +34,16 @@ export interface DocumentStatusCounts {
   underReview: number;
 }
 
-export async function getDocumentStatusCounts(orgId: number): Promise<DocumentStatusCounts> {
+export async function getDocumentStatusCounts(orgId: number, category?: string): Promise<DocumentStatusCounts> {
   await requirePermission('org:compliance:upload_documents');
+  const where = category ? sql`AND document_type = ${category}` : sql``;
   const res = await db.execute<{ reviewed: boolean; compliant: boolean; count: number }>(sql`
     SELECT
       (reviewed_by_id IS NOT NULL) AS reviewed,
       is_compliant AS compliant,
       count(*)::int AS count
     FROM documents
-    WHERE org_id = ${orgId}
+    WHERE org_id = ${orgId} ${where}
     GROUP BY reviewed, compliant
   `);
   let active = 0;
@@ -79,7 +80,7 @@ export async function getDocumentTrends(orgId: number, months = 6): Promise<Docu
 export async function listAnnualReviews(orgId: number, driverId?: number) {
   await requirePermission('org:compliance:upload_review_compliance');
   const where = driverId ? sql`AND driver_id = ${driverId}` : sql``;
-  const res = await db.execute(sql`
+  const res = await db.execute<AuditLog>(sql`
     SELECT * FROM driver_annual_reviews
     WHERE org_id = ${orgId} ${where}
     ORDER BY review_date DESC
@@ -106,4 +107,47 @@ export async function listAccidentReports(orgId: number) {
     ORDER BY occurred_at DESC
   `);
   return res.rows;
+}
+
+export async function listComplianceAuditLogs(orgId: number, limit = 10): Promise<AuditLog[]> {
+  await requirePermission('org:compliance:access_audit_logs')
+  const res = await db.execute(sql`
+    SELECT id, action, resource, resource_id AS "resourceId", details,
+           created_at AS "createdAt"
+    FROM audit_logs
+    WHERE org_id = ${orgId}
+      AND resource IN ('document', 'compliance')
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `)
+  return res.rows
+}
+
+type ComplianceReportData = {
+  status: DocumentStatusCounts
+  annualReviews: number
+  vehicleInspections: number
+  accidents: number
+}
+
+export async function getComplianceReportData(orgId: number, category?: string): Promise<ComplianceReportData> {
+  await requirePermission('org:compliance:generate_compliance_req')
+  const [status, annual, inspections, accidents] = await Promise.all([
+    getDocumentStatusCounts(orgId, category),
+    db.execute<{ count: number }>(sql`
+      SELECT count(*)::int AS count FROM driver_annual_reviews WHERE org_id = ${orgId}
+    `),
+    db.execute<{ count: number }>(sql`
+      SELECT count(*)::int AS count FROM vehicle_inspections WHERE org_id = ${orgId}
+    `),
+    db.execute<{ count: number }>(sql`
+      SELECT count(*)::int AS count FROM accident_reports WHERE org_id = ${orgId}
+    `)
+  ])
+  return {
+    status,
+    annualReviews: annual.rows[0]?.count ?? 0,
+    vehicleInspections: inspections.rows[0]?.count ?? 0,
+    accidents: accidents.rows[0]?.count ?? 0
+  }
 }
