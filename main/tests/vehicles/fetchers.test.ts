@@ -17,3 +17,12 @@ describe('getFleetOverview', () => {
     expect(res.maintenanceDue).toBe(1)
   })
 })
+
+describe('getVehicleList', () => {
+  it('queries with orgId', async () => {
+    const where = vi.fn(() => ({ orderBy: vi.fn() }))
+    vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn(() => ({ where })) } as any)
+    await fetchers.getVehicleList(1, 'make')
+    expect(where).toHaveBeenCalled()
+  })
+})

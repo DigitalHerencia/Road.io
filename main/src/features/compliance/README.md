@@ -38,3 +38,10 @@ Run `sendExpirationAlerts()` periodically to keep users informed of upcoming ren
 - `generateComplianceReportAction` creates a PDF summary of compliance activity.
 - `ComplianceReportForm` submits report requests from the dashboard.
 - Reports and audit activity are displayed in `ComplianceDashboard`.
+
+## Workflow & Task Management
+
+- `createComplianceWorkflowAction` creates approval workflows.
+- `createComplianceTaskAction` adds tasks to a workflow.
+- `completeComplianceTaskAction` marks tasks complete and updates status.
+- `WorkflowList`, `WorkflowForm`, `TaskList`, and `TaskForm` provide basic UI.

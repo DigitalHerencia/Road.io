@@ -503,9 +503,12 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
         isInterstate: data.startState !== data.endState,
         startedAt: data.startedAt,
         endedAt: data.endedAt,
-        createdById: parseInt(user.id),
-      });
+      createdById: parseInt(user.id),
+    });
     count++;
+  }
+  }
+
   }
 
   }
@@ -588,3 +591,4 @@ export async function calculateTaxAction(formData: FormData) {
   }
   return { success: true, totalTax };
 }
+
