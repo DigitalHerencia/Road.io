@@ -18,7 +18,13 @@ import { revalidatePath } from "next/cache";
 import PDFDocument from "pdfkit";
 import { and, between, eq } from "drizzle-orm";
 import { uploadDocumentsAction } from "@/lib/actions/compliance";
-import { getTripsForPeriod, getFuelPurchasesForPeriod } from "@/lib/fetchers/ifta";
+import {
+  getTripsForPeriod,
+  getFuelPurchasesForPeriod,
+  fetchFuelEfficiency,
+  fetchRouteEfficiency,
+  fetchTaxEfficientStates,
+} from "@/lib/fetchers/ifta";
 
 const TripFormSchema = z.object({
   driverId: z.coerce.number().optional(),
@@ -509,9 +515,11 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
   }
   }
 
+
   }
 
   }
+
 
   await createAuditLog({
     action: AUDIT_ACTIONS.ELD_IMPORT,
@@ -522,6 +530,24 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
   revalidatePath('/dashboard/ifta/trips');
 }
 
+
+const OrgSchema = z.object({ orgId: z.coerce.number().int().positive() })
+
+export async function getFuelEfficiencyAction(params: { orgId: number }) {
+  const { orgId } = OrgSchema.parse(params)
+  return fetchFuelEfficiency(orgId)
+}
+
+export async function getRouteEfficiencyAction(params: { orgId: number }) {
+  const { orgId } = OrgSchema.parse(params)
+  return fetchRouteEfficiency(orgId)
+}
+
+export async function getTaxOptimizationAction(params: { orgId: number }) {
+  const { orgId } = OrgSchema.parse(params)
+  return fetchTaxEfficientStates(orgId)
+}
+=======
 const TaxRateSchema = z.object({
   state: z.string().min(2),
   quarter: z.string().min(6),
@@ -591,4 +617,5 @@ export async function calculateTaxAction(formData: FormData) {
   }
   return { success: true, totalTax };
 }
+
 

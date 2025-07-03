@@ -29,6 +29,12 @@ Use the fetchers in `lib/fetchers/ifta.ts` to retrieve documents and audit respo
 - Vehicle assignments are synced from the dispatch module when trips are imported.
 - Use `importEldCsvAction` to keep IFTA mileage in sync with dispatch loads.
 
+## Analytics & Tax Optimization
+
+- `getFuelEfficiencyAction` and `getRouteEfficiencyAction` return fuel usage and route metrics for the organization.
+- `getTaxOptimizationAction` lists jurisdictions with the lowest fuel tax rates to assist in planning fuel stops.
+- Use `FuelRouteAnalytics` and `TaxOptimizationTools` components on `/dashboard/ifta/analytics` for visualizations.
+
 ## Dashboard Components
 
 - `IFTADashboard` provides an overview of trips, fuel purchases and reports.
