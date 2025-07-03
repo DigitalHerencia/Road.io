@@ -21,7 +21,11 @@ export function encryptString(value: string, key?: string): string {
 export function decryptString(payload: string, key?: string): string {
   if (!payload.startsWith('enc:')) return payload
   const secret = getKey(key)
-  const [, ivHex, tagHex, dataHex] = payload.split(':')
+  const segments = payload.split(':')
+  if (segments.length !== 4) {
+    throw new Error('Malformed payload: incorrect number of segments')
+  }
+  const [, ivHex, tagHex, dataHex] = segments
   const iv = Buffer.from(ivHex, 'hex')
   const tag = Buffer.from(tagHex, 'hex')
   const decipher = crypto.createDecipheriv(algorithm, secret, iv)
