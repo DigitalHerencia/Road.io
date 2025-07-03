@@ -27,3 +27,14 @@ Run `sendExpirationAlerts()` periodically to keep users informed of upcoming ren
 - `recordAccident` logs accident reports for safety tracking.
 - `calculateSmsScore` summarizes accidents and HOS violations to provide a simple Safety Management System (SMS) score.
 
+
+## Audit Trail Management
+
+- `listComplianceAuditLogs` fetches recent compliance-related audit entries.
+- `exportComplianceAuditLogsAction` downloads audit logs as CSV.
+
+## Compliance Reporting
+
+- `generateComplianceReportAction` creates a PDF summary of compliance activity.
+- `ComplianceReportForm` submits report requests from the dashboard.
+- Reports and audit activity are displayed in `ComplianceDashboard`.

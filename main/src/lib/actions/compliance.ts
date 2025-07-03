@@ -18,6 +18,9 @@ import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
+import PDFDocument from 'pdfkit';
+import { createWriteStream } from 'fs';
+import { getComplianceReportData, listComplianceAuditLogs } from '@/lib/fetchers/compliance';
 
 export const uploadFormSchema = z.object({
   category: z.enum(DOCUMENT_CATEGORIES),
@@ -280,4 +283,51 @@ export async function calculateSmsScore(orgId: number) {
   const score = accidents * 2 + violations;
 
   return { accidents, violations, score };
+}
+
+
+export async function generateComplianceReportAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:generate_compliance_req')
+  const type = (formData.get('type') || 'standard') as string
+  const category = formData.get('category')?.toString()
+  const data = await getComplianceReportData(user.orgId, category || undefined)
+
+  const doc = new PDFDocument()
+  const dir = path.join(process.cwd(), 'main/public/uploads')
+  await fs.mkdir(dir, { recursive: true })
+  const fileName = `compliance-${Date.now()}.pdf`
+  const filePath = path.join(dir, fileName)
+  const stream = createWriteStream(filePath)
+  doc.pipe(stream)
+  doc.fontSize(18).text('Compliance Report', { align: 'center' })
+  doc.moveDown()
+  doc.text(`Active Documents: ${data.status.active}`)
+  doc.text(`Under Review: ${data.status.underReview}`)
+  doc.text(`Annual Reviews: ${data.annualReviews}`)
+  doc.text(`Vehicle Inspections: ${data.vehicleInspections}`)
+  doc.text(`Accidents: ${data.accidents}`)
+  doc.end()
+  await new Promise<void>(resolve => stream.on('finish', resolve))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REPORT_GENERATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    details: { type, category }
+  })
+
+  revalidatePath('/dashboard/compliance')
+  return { success: true, url: `/uploads/${fileName}` }
+}
+
+export async function exportComplianceAuditLogsAction(orgId: number) {
+  await requirePermission('org:compliance:access_audit_logs')
+  const logs = await listComplianceAuditLogs(orgId)
+  const lines = ['id,action,resource,resourceId,createdAt']
+  for (const l of logs) {
+    lines.push(`${l.id},${l.action},${l.resource},${l.resourceId || ''},${(l.createdAt as Date).toISOString()}`)
+  }
+  const csv = lines.join('\n')
+  return new Response(csv, {
+    headers: { 'Content-Type': 'text/csv' }
+  })
 }
