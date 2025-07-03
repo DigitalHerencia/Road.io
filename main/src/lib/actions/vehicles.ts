@@ -86,6 +86,20 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
     .where(eq(vehicles.id, id))
     .returning();
 
+  await createAuditLog({
+    action: AUDIT_ACTIONS.VEHICLE_UPDATE,
+    resource: AUDIT_RESOURCES.VEHICLE,
+    resourceId: id.toString(),
+    details: { updatedBy: user.id },
+  });
+
+  revalidatePath('/dashboard/vehicles');
+  revalidatePath(`/dashboard/vehicles/${id}`);
+  revalidateTag(VEHICLE_CACHE_TAG);
+  revalidateTag(`vehicles:${user.orgId}`);
+  return { success: true, vehicle };
+}
+
 export async function bulkUpdateVehicleStatus(
   ids: number[],
   status: "ACTIVE" | "MAINTENANCE" | "RETIRED",
