@@ -80,7 +80,7 @@ export async function getDocumentTrends(orgId: number, months = 6): Promise<Docu
 export async function listAnnualReviews(orgId: number, driverId?: number) {
   await requirePermission('org:compliance:upload_review_compliance');
   const where = driverId ? sql`AND driver_id = ${driverId}` : sql``;
-  const res = await db.execute<AuditLog>(sql`
+  const res = await db.execute<DriverAnnualReview>(sql`
     SELECT * FROM driver_annual_reviews
     WHERE org_id = ${orgId} ${where}
     ORDER BY review_date DESC
