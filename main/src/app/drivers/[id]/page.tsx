@@ -4,6 +4,10 @@ import { getDriverById } from '@/lib/fetchers/drivers'
 import DriverSummary from '@/features/drivers/components/DriverSummary'
 import DriverStatusForm from '@/features/drivers/components/DriverStatusForm'
 import DriverAssignments from '@/features/drivers/components/DriverAssignments'
+import DriverViolationList from '@/features/drivers/components/DriverViolationList'
+import DriverCertificationList from '@/features/drivers/components/DriverCertificationList'
+import ViolationForm from '@/features/drivers/components/ViolationForm'
+import CertificationForm from '@/features/drivers/components/CertificationForm'
 import { Button } from '@/components/ui/button'
 
 interface Params { params: { id: string } }
@@ -30,6 +34,16 @@ export default async function DriverDetailPage({ params }: Params) {
       <div className="space-y-4">
         <DriverStatusForm driverId={driver.id} status={driver.status} />
         <DriverAssignments driverId={driver.id} />
+        <div>
+          <h2 className="font-semibold">Violations</h2>
+          <DriverViolationList driverId={driver.id} />
+          <ViolationForm driverId={driver.id} />
+        </div>
+        <div>
+          <h2 className="font-semibold">Certifications</h2>
+          <DriverCertificationList driverId={driver.id} />
+          <CertificationForm driverId={driver.id} />
+        </div>
       </div>
     </div>
   )

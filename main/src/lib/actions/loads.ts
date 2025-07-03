@@ -161,7 +161,7 @@ export async function bulkExportLoads(ids: number[]) {
   await requirePermission('org:dispatcher:create_edit_loads');
   try {
     exportSchema.parse({ ids })
-  } catch (err) {
+  } catch {
     return new Response('Invalid request', { status: 400 })
   }
   const rows = await db.select().from(loads).where(inArray(loads.id, ids));
