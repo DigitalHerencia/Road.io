@@ -1,5 +1,10 @@
 import { db } from '@/lib/db';
-import { drivers, users, driverMessages } from '@/lib/schema';
+import {
+  drivers,
+  users,
+  driverViolations,
+  driverCertifications,
+} from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 import { DriverProfile } from '@/features/drivers/types';
 
@@ -11,6 +16,8 @@ export async function getAllDrivers(): Promise<DriverProfile[]> {
       name: users.name,
       email: users.email,
       licenseNumber: drivers.licenseNumber,
+      licenseClass: drivers.licenseClass,
+      endorsements: drivers.endorsements,
       licenseExpiry: drivers.licenseExpiry,
       dotNumber: drivers.dotNumber,
       status: drivers.status,
@@ -32,6 +39,8 @@ export async function getDriverById(id: number): Promise<DriverProfile | undefin
       name: users.name,
       email: users.email,
       licenseNumber: drivers.licenseNumber,
+      licenseClass: drivers.licenseClass,
+      endorsements: drivers.endorsements,
       licenseExpiry: drivers.licenseExpiry,
       dotNumber: drivers.dotNumber,
       status: drivers.status,
@@ -54,6 +63,8 @@ export async function getAvailableDrivers(): Promise<DriverProfile[]> {
       name: users.name,
       email: users.email,
       licenseNumber: drivers.licenseNumber,
+      licenseClass: drivers.licenseClass,
+      endorsements: drivers.endorsements,
       licenseExpiry: drivers.licenseExpiry,
       dotNumber: drivers.dotNumber,
       status: drivers.status,
