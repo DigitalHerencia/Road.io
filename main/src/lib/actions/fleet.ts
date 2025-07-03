@@ -1,12 +1,61 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { users, drivers, vehicles, loads } from '@/lib/schema';
+import { users, drivers, vehicles, loads, loadStatusEnum } from '@/lib/schema';
 import { requirePermission } from '@/lib/rbac';
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit';
 import { SystemRoles } from '@/types/rbac';
 import { eq, and } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod'
+
+const userSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: z.nativeEnum(SystemRoles),
+})
+
+const roleUpdateSchema = z.object({
+  userId: z.number().int(),
+  newRole: z.nativeEnum(SystemRoles),
+})
+
+const loadCreateSchema = z.object({
+  loadNumber: z.string().min(1),
+  pickupLocation: z.object({
+    address: z.string().min(1),
+    lat: z.number(),
+    lng: z.number(),
+    datetime: z.string(),
+  }),
+  deliveryLocation: z.object({
+    address: z.string().min(1),
+    lat: z.number(),
+    lng: z.number(),
+    datetime: z.string(),
+  }),
+  weight: z.number().optional(),
+  rate: z.number().optional(),
+  notes: z.string().optional(),
+})
+
+const assignSchema = z.object({
+  loadId: z.number().int(),
+  driverId: z.number().int(),
+  vehicleId: z.number().int(),
+})
+
+const statusSchema = z.object({
+  loadId: z.number().int(),
+  status: z.enum(loadStatusEnum.enumValues as [string, ...string[]]),
+})
+
+const driverSchema = z.object({
+  userId: z.number().int(),
+  licenseNumber: z.string().min(1),
+  licenseExpiry: z.string(),
+  dotNumber: z.string().optional(),
+})
 
 // User Management Actions
 export async function createUserAction(userData: {
@@ -15,14 +64,16 @@ export async function createUserAction(userData: {
   role: SystemRoles;
 }) {
   const currentUser = await requirePermission('org:admin:manage_users_and_roles');
-  
+
   try {
+    const values = userSchema.parse(userData)
+
     const [newUser] = await db.insert(users).values({
       clerkUserId: '', // Will be updated when user signs in
-      email: userData.email,
-      name: userData.name,
+      email: values.email,
+      name: values.name,
       orgId: currentUser.orgId,
-      role: userData.role,
+      role: values.role,
     }).returning();
 
     await createAuditLog({
@@ -42,8 +93,9 @@ export async function createUserAction(userData: {
 
 export async function updateUserRoleAction(userId: number, newRole: SystemRoles) {
   const currentUser = await requirePermission('org:admin:manage_users_and_roles');
-  
+
   try {
+    roleUpdateSchema.parse({ userId, newRole })
     // Ensure user belongs to same organization
     const [targetUser] = await db
       .select()
@@ -99,16 +151,17 @@ export async function createLoadAction(loadData: {
   notes?: string;
 }) {
   const currentUser = await requirePermission('org:dispatcher:create_edit_loads');
-  
+
   try {
+    const data = loadCreateSchema.parse(loadData)
     const [newLoad] = await db.insert(loads).values({
       orgId: currentUser.orgId,
-      loadNumber: loadData.loadNumber,
-      pickupLocation: loadData.pickupLocation,
-      deliveryLocation: loadData.deliveryLocation,
-      weight: loadData.weight,
-      rate: loadData.rate,
-      notes: loadData.notes,
+      loadNumber: data.loadNumber,
+      pickupLocation: data.pickupLocation,
+      deliveryLocation: data.deliveryLocation,
+      weight: data.weight,
+      rate: data.rate,
+      notes: data.notes,
       createdById: parseInt(currentUser.id),
     }).returning();
 
@@ -129,8 +182,9 @@ export async function createLoadAction(loadData: {
 
 export async function assignLoadAction(loadId: number, driverId: number, vehicleId: number) {
   const currentUser = await requirePermission('org:dispatcher:assign_drivers');
-  
+
   try {
+    assignSchema.parse({ loadId, driverId, vehicleId })
     // Verify load belongs to same organization
     const [load] = await db
       .select()
@@ -174,8 +228,9 @@ export async function assignLoadAction(loadId: number, driverId: number, vehicle
 
 export async function updateLoadStatusAction(loadId: number, status: string) {
   const currentUser = await requirePermission('org:driver:update_load_status');
-  
+
   try {
+    statusSchema.parse({ loadId, status })
     // Verify user can access this load
     const [load] = await db
       .select()
@@ -234,13 +289,15 @@ export async function createDriverAction(driverData: {
   dotNumber?: string;
 }) {
   const currentUser = await requirePermission('org:admin:manage_users_and_roles');
-  
+
   try {
+    const data = driverSchema.parse(driverData)
+
     const [newDriver] = await db.insert(drivers).values({
-      userId: driverData.userId,
-      licenseNumber: driverData.licenseNumber,
-      licenseExpiry: new Date(driverData.licenseExpiry),
-      dotNumber: driverData.dotNumber,
+      userId: data.userId,
+      licenseNumber: data.licenseNumber,
+      licenseExpiry: new Date(data.licenseExpiry),
+      dotNumber: data.dotNumber,
     }).returning();
 
     await createAuditLog({

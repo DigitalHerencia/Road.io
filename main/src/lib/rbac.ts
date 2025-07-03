@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { db } from './db';
-import { users, organizations, roles } from './schema';
+import { db } from '@/lib/db';
+import { users, organizations, roles } from '@/lib/schema';
 import type { UserStatus } from '@/types/users';
 import { eq, and } from 'drizzle-orm';
 import { SystemRoles, ROLE_PERMISSIONS, hasPermission, hasAnyPermission, hasAllPermissions } from '@/types/rbac';
@@ -66,7 +66,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
     const user = result[0];
     let permissions = ROLE_PERMISSIONS[user.role as SystemRoles] || [];
-    if (user.customPermissions && Array.isArray(user.customPermissions)) {
+    if (Array.isArray(user.customPermissions)) {
       permissions = Array.from(new Set([...permissions, ...user.customPermissions]))
     }
 

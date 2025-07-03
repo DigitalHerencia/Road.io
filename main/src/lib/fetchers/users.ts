@@ -19,8 +19,9 @@ export async function getOrgUsers(orgId: number): Promise<UserProfile[]> {
     .where(eq(users.orgId, orgId));
   return rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' as const : 'INACTIVE' as const,
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));
@@ -34,6 +35,7 @@ export async function getUserById(id: number): Promise<UserProfile | undefined> 
       name: users.name,
       orgId: users.orgId,
       role: users.role,
+      orgId: users.orgId,
       isActive: users.isActive,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
@@ -42,8 +44,9 @@ export async function getUserById(id: number): Promise<UserProfile | undefined> 
     .where(eq(users.id, id));
   const [row] = rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' as const : 'INACTIVE' as const,
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));
@@ -86,8 +89,9 @@ export async function getUserList(
   
   return rows.map((r) => ({
     ...r,
+    orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' as const : 'INACTIVE' as const,
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));

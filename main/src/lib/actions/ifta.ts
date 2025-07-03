@@ -418,7 +418,7 @@ export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2'
     resource: AUDIT_RESOURCES.IFTA_REPORT,
   });
 
-  return new Response(Buffer.from(gz), {
+  return new Response(gz, {
     headers: {
       'Content-Type': 'application/gzip',
       'Content-Disposition': 'attachment; filename=ifta-audit.gz',
