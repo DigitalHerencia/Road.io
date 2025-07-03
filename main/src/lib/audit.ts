@@ -114,6 +114,9 @@ export const AUDIT_ACTIONS = {
   TRAINING_CREATE: 'training.create',
   TRAINING_ASSIGN: 'training.assign',
   PAY_STATEMENT_CREATE: 'pay_statement.create',
+  MESSAGE_SEND: 'dispatch.message_send',
+  EMERGENCY_ALERT: 'dispatch.emergency_alert',
+  CUSTOMER_NOTIFICATION: 'dispatch.customer_notification',
 
   // Vehicle actions
   VEHICLE_CREATE: "vehicle.create",
@@ -173,4 +176,7 @@ export const AUDIT_RESOURCES = {
   IFTA_REPORT: 'ifta_report',
   TRAINING_PROGRAM: 'training_program',
   PAY_STATEMENT: 'pay_statement',
+  MESSAGE: 'message',
+  NOTIFICATION: 'notification',
 } as const;
+
