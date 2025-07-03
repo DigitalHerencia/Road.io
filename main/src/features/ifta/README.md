@@ -44,3 +44,19 @@ Use the fetchers in `lib/fetchers/ifta.ts` to retrieve documents and audit respo
 - `ReceiptProcessor` uploads receipts for OCR processing.
 - `TaxCalculator` estimates tax due without creating a report.
 - `ComplianceTracker` lists auditor questions and responses.
+
+## API Endpoints
+
+The IFTA module exposes a small public API for integration purposes. Each route requires Clerk authentication and the appropriate permission.
+
+- `GET /api/ifta/trips` – List recorded trips for the authenticated organization.
+- `POST /api/ifta/trips` – Record a new trip.
+- `GET /api/ifta/fuel` – Retrieve fuel purchases.
+- `POST /api/ifta/fuel` – Log a fuel purchase.
+- `GET /api/ifta/reports` – List generated IFTA reports.
+- `POST /api/ifta/reports` – Generate a new IFTA report.
+- `GET /api/ifta/taxes` – Fetch tax rates for a quarter (`?quarter=2024Q1`).
+- `POST /api/ifta/taxes` – Calculate estimated tax due.
+- `POST /api/ifta/import?type=eld|fuelCard` – Import ELD or fuel card CSV data.
+- `GET /api/ifta/compliance` – List audit responses.
+- `POST /api/ifta/compliance` – Record an audit response.
