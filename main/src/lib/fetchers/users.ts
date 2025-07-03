@@ -91,7 +91,7 @@ export async function getUserList(
     ...r,
     orgId: r.orgId,
     role: r.role as import('@/types/rbac').SystemRoles,
-    status: r.isActive ? 'ACTIVE' : 'INACTIVE',
+    status: (r.isActive ? 'ACTIVE' : 'INACTIVE') as import('@/types/users').UserStatus,
     customRoleId: null,
     customRoleName: null,
   }));
