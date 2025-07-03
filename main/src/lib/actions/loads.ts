@@ -163,6 +163,7 @@ export async function bulkExportLoads(ids: number[]) {
     exportSchema.parse({ ids })
   } catch (err) {
     console.error('Error during bulk export schema validation:', err);
+
     return new Response('Invalid request', { status: 400 })
   }
   const rows = await db.select().from(loads).where(inArray(loads.id, ids));
