@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { trips, fuelPurchases, iftaTaxRates, documents, iftaAuditResponses } from "@/lib/schema";
-import { eq, between, and } from "drizzle-orm";
+import { eq, between, and, sql } from "drizzle-orm";
 
 export async function getTripsByOrg(orgId: number) {
   return await db.select().from(trips).where(eq(trips.orgId, orgId));
@@ -61,4 +61,58 @@ export async function listIftaAuditResponses(orgId: number) {
     .select()
     .from(iftaAuditResponses)
     .where(eq(iftaAuditResponses.orgId, orgId));
+}
+export interface FuelEfficiency {
+  totalMiles: number
+  totalGallons: number
+  mpg: number
+}
+
+export interface RouteEfficiency {
+  tripCount: number
+  averageDistance: number
+}
+
+export interface TaxRateSuggestion {
+  state: string
+  rate: number
+}
+
+export async function fetchFuelEfficiency(orgId: number): Promise<FuelEfficiency> {
+  const milesRes = await db.execute<{ sum: number }>(sql`
+    SELECT coalesce(sum(distance),0)::int AS sum
+    FROM trips
+    WHERE org_id = ${orgId}
+  `)
+  const gallonsRes = await db.execute<{ sum: number }>(sql`
+    SELECT coalesce(sum(quantity),0)::int AS sum
+    FROM fuel_purchases
+    WHERE org_id = ${orgId}
+  `)
+  const totalMiles = milesRes.rows[0]?.sum ?? 0
+  const totalGallons = gallonsRes.rows[0]?.sum ?? 0
+  const mpg = totalGallons === 0 ? 0 : Number((totalMiles / totalGallons).toFixed(2))
+  return { totalMiles, totalGallons, mpg }
+}
+
+export async function fetchRouteEfficiency(orgId: number): Promise<RouteEfficiency> {
+  const res = await db.execute<{ count: number; avg: number }>(sql`
+    SELECT count(*)::int AS count, coalesce(avg(distance),0)::int AS avg
+    FROM trips
+    WHERE org_id = ${orgId}
+  `)
+  return {
+    tripCount: res.rows[0]?.count ?? 0,
+    averageDistance: res.rows[0]?.avg ?? 0,
+  }
+}
+
+export async function fetchTaxEfficientStates(orgId: number): Promise<TaxRateSuggestion[]> {
+  const rates = await db.execute<{ state: string; rate: number }>(sql`
+    SELECT state, rate
+    FROM ifta_tax_rates
+    ORDER BY rate ASC
+    LIMIT 3
+  `)
+  return rates.rows.map(r => ({ state: r.state, rate: r.rate }))
 }
