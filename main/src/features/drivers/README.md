@@ -24,3 +24,10 @@ The message form stores unsent messages in `localStorage` and automatically send
   - `PerformanceMetrics` displays key metrics.
   - `PerformanceReviewList` and `PerformanceReviewForm` manage reviews.
   - `SafetyProgramList` shows safety program assignments.
+
+## Driver Dashboard
+
+- `DriverDashboard` aggregates driver metrics across dispatch, compliance and payroll.
+- `getDriverDashboardStats` fetcher compiles active driver counts, scheduled loads,
+  upcoming training sessions, pending compliance tasks and recent pay statements.
+- `getDriverDashboardAction` validates input and returns the dashboard data.
