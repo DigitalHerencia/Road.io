@@ -21,7 +21,7 @@ This page summarizes the main features and user flows in Road.io.
 
 ## Module Guides
 
-- [Settings Guide](Settings-Guide.md) *(add if available)*
+- [Settings Guide](Settings-Guide.md)
 
 ## FAQ
 

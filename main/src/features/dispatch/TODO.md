@@ -80,13 +80,13 @@ The Dispatch module handles load management, driver/vehicle assignment, and real
   - Geofencing notifications
 
 ### Communication Tools
-- [ ] **Driver Communication**
+- [x] **Driver Communication**
   - In-app messaging system
   - Push notifications
   - Load update notifications
   - Emergency communication
 
-- [ ] **Customer Updates**
+- [x] **Customer Updates**
   - Automated status notifications
   - Delivery confirmation emails
   - Customer portal integration
@@ -284,3 +284,4 @@ The Dispatch module handles load management, driver/vehicle assignment, and real
    - Performance optimization
 
 This comprehensive TODO list provides a roadmap for implementing a full-featured dispatch management system that meets all the requirements outlined in the Features.md documentation.
+

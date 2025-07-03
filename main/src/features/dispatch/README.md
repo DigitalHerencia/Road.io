@@ -24,3 +24,11 @@ Additional server actions provide advanced dispatch features:
 - `checkGeofenceAction` determines if a location is inside a geofence.
 
 Core logic resides in `lib/fetchers/dispatch.ts`.
+
+## Communication Tools
+
+- `DriverMessageForm` allows dispatchers to send in-app messages to drivers.
+- `EmergencyAlertForm` broadcasts urgent alerts to all drivers.
+- `CustomerNotificationForm` emails customers when load status changes or exceptions occur.
+- Messages and notifications are stored in `dispatch_messages` and `customer_notifications` tables and sent via the `sendDriverMessageAction`, `broadcastEmergencyAlertAction`, and `sendCustomerNotificationAction` server actions.
+

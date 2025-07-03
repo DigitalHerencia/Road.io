@@ -10,6 +10,10 @@ export default function DriverSummary({ driver }: { driver: DriverProfile }) {
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <p><strong>License:</strong> {driver.licenseNumber || 'N/A'}</p>
+        <p><strong>Class:</strong> {driver.licenseClass || 'N/A'}</p>
+        {driver.endorsements && (
+          <p><strong>Endorsements:</strong> {driver.endorsements}</p>
+        )}
         <p><strong>License Expiry:</strong> {driver.licenseExpiry ? driver.licenseExpiry.toLocaleDateString() : 'N/A'}</p>
         {driver.dotNumber && <p><strong>DOT:</strong> {driver.dotNumber}</p>}
         <p><strong>Status:</strong> {driver.status.replace('_', ' ')}</p>

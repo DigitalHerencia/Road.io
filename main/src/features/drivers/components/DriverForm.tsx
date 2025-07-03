@@ -43,6 +43,23 @@ export default function DriverForm({ driver }: DriverFormProps) {
         />
       </div>
       <div className="space-y-2">
+        <Label htmlFor="licenseClass">License Class</Label>
+        <Input
+          id="licenseClass"
+          name="licenseClass"
+          defaultValue={driver?.licenseClass ?? ''}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="endorsements">Endorsements</Label>
+        <Input
+          id="endorsements"
+          name="endorsements"
+          defaultValue={driver?.endorsements ?? ''}
+        />
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="licenseExpiry">License Expiry</Label>
         <Input
           id="licenseExpiry"
