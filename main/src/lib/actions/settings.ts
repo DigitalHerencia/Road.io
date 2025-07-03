@@ -15,6 +15,10 @@ import type {
   SystemConfig,
   IntegrationSettings,
   NotificationSettings,
+  WorkflowAutomationSettings,
+  SecuritySettings,
+  MobileSettings,
+  AnalyticsSettings,
 } from '@/features/settings/types';
 
 const companyProfileSchema = z.object({
@@ -62,6 +66,32 @@ const notificationSettingsSchema = z.object({
   smsEnabled: z.coerce.boolean().optional(),
   pushEnabled: z.coerce.boolean().optional(),
   escalationEmail: z.string().email().optional(),
+});
+
+const workflowAutomationSchema = z.object({
+  enabled: z.coerce.boolean().optional(),
+  approvalsRequired: z.coerce.boolean().optional(),
+});
+
+const securitySettingsSchema = z.object({
+  regulatoryMode: z.coerce.boolean().optional(),
+  documentManagement: z.coerce.boolean().optional(),
+  auditTrails: z.coerce.boolean().optional(),
+});
+
+const mobileSettingsSchema = z.object({
+  offlineMode: z.coerce.boolean().optional(),
+  pushNotifications: z.coerce.boolean().optional(),
+  gpsTracking: z.coerce.boolean().optional(),
+  batterySaver: z.coerce.boolean().optional(),
+  dataSaver: z.coerce.boolean().optional(),
+});
+
+const analyticsSettingsSchema = z.object({
+  usageTracking: z.coerce.boolean().optional(),
+  optimizationInsights: z.coerce.boolean().optional(),
+  performanceMonitoring: z.coerce.boolean().optional(),
+  errorTracking: z.coerce.boolean().optional(),
 });
 
 export async function updateCompanyProfileAction(formData: FormData) {
@@ -320,4 +350,180 @@ export async function updateNotificationSettingsAction(formData: FormData) {
 
   revalidatePath('/dashboard/settings/notifications');
   // Return nothing for form action compatibility
+}
+
+export async function updateWorkflowAutomationSettingsAction(
+  formData: FormData | { [key: string]: unknown },
+) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = formData instanceof FormData ? {
+    enabled: formData.get('enabled'),
+    approvalsRequired: formData.get('approvalsRequired'),
+  } : formData;
+
+  const parsed = workflowAutomationSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const workflowAutomation: WorkflowAutomationSettings = {
+    ...(currentSettings.workflowAutomation as WorkflowAutomationSettings | undefined ?? {}),
+    enabled: parsed.enabled ?? false,
+    approvalsRequired: parsed.approvalsRequired ?? false,
+  };
+
+  const settings = { ...currentSettings, workflowAutomation } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, workflowAutomation },
+  });
+
+  revalidatePath('/dashboard/settings/workflow');
+}
+
+export async function updateSecuritySettingsAction(
+  formData: FormData | { [key: string]: unknown },
+) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = formData instanceof FormData ? {
+    regulatoryMode: formData.get('regulatoryMode'),
+    documentManagement: formData.get('documentManagement'),
+    auditTrails: formData.get('auditTrails'),
+  } : formData;
+
+  const parsed = securitySettingsSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const securitySettings: SecuritySettings = {
+    ...(currentSettings.securitySettings as SecuritySettings | undefined ?? {}),
+    regulatoryMode: parsed.regulatoryMode ?? false,
+    documentManagement: parsed.documentManagement ?? false,
+    auditTrails: parsed.auditTrails ?? false,
+  };
+
+  const settings = { ...currentSettings, securitySettings } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, securitySettings },
+  });
+
+  revalidatePath('/dashboard/settings/security');
+}
+
+export async function updateMobileSettingsAction(
+  formData: FormData | { [key: string]: unknown },
+) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = formData instanceof FormData ? {
+    offlineMode: formData.get('offlineMode'),
+    pushNotifications: formData.get('pushNotifications'),
+    gpsTracking: formData.get('gpsTracking'),
+    batterySaver: formData.get('batterySaver'),
+    dataSaver: formData.get('dataSaver'),
+  } : formData;
+
+  const parsed = mobileSettingsSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const mobileSettings: MobileSettings = {
+    ...(currentSettings.mobileSettings as MobileSettings | undefined ?? {}),
+    offlineMode: parsed.offlineMode ?? false,
+    pushNotifications: parsed.pushNotifications ?? false,
+    gpsTracking: parsed.gpsTracking ?? false,
+    batterySaver: parsed.batterySaver ?? false,
+    dataSaver: parsed.dataSaver ?? false,
+  };
+
+  const settings = { ...currentSettings, mobileSettings } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, mobileSettings },
+  });
+
+  revalidatePath('/dashboard/settings/mobile');
+}
+
+export async function updateAnalyticsSettingsAction(
+  formData: FormData | { [key: string]: unknown },
+) {
+  const user = await requirePermission('org:admin:configure_company_settings');
+
+  const raw = formData instanceof FormData ? {
+    usageTracking: formData.get('usageTracking'),
+    optimizationInsights: formData.get('optimizationInsights'),
+    performanceMonitoring: formData.get('performanceMonitoring'),
+    errorTracking: formData.get('errorTracking'),
+  } : formData;
+
+  const parsed = analyticsSettingsSchema.parse(raw);
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId));
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const analyticsSettings: AnalyticsSettings = {
+    ...(currentSettings.analyticsSettings as AnalyticsSettings | undefined ?? {}),
+    usageTracking: parsed.usageTracking ?? false,
+    optimizationInsights: parsed.optimizationInsights ?? false,
+    performanceMonitoring: parsed.performanceMonitoring ?? false,
+    errorTracking: parsed.errorTracking ?? false,
+  };
+
+  const settings = { ...currentSettings, analyticsSettings } as Record<string, unknown>;
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId));
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, analyticsSettings },
+  });
+
+  revalidatePath('/dashboard/settings/analytics');
 }
