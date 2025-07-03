@@ -429,7 +429,7 @@ export async function exportIftaRecordsAction(year: number, quarter: 'Q1' | 'Q2'
 const EldRowSchema = z.object({
   driverId: z.coerce.number(),
   vehicleId: z.coerce.number(),
-  loadId: z.coerce.number().optional(),
+  loadId: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
   startLat: z.coerce.number(),
   startLng: z.coerce.number(),
   startState: z.string().min(2),
