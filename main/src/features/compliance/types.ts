@@ -8,6 +8,13 @@ export const DOCUMENT_CATEGORIES = [
 ] as const;
 export type DocumentCategory = typeof DOCUMENT_CATEGORIES[number];
 
+export const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+] as const;
+export type DocumentMimeType = typeof ALLOWED_FILE_TYPES[number];
+
 export const DOCUMENT_STATUSES = ['ACTIVE', 'UNDER_REVIEW'] as const;
 export type DocumentStatus = typeof DOCUMENT_STATUSES[number];
 
