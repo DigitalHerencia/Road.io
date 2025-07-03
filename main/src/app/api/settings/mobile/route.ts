@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateMobileSettingsAction } from '@/lib/actions/settings';
 import { getMobileSettings } from '@/lib/fetchers/settings';
 import { requirePermission } from '@/lib/rbac';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -14,6 +15,9 @@ const bodySchema = z.object({
 
 export async function GET() {
   try {
+    if (!checkRateLimit('settings-mobile-get')) {
+      return NextResponse.json({ success: false, message: 'Rate limit exceeded' }, { status: 429 });
+    }
     await requirePermission('org:admin:configure_company_settings');
     const settings = await getMobileSettings();
     return NextResponse.json({ success: true, settings });
@@ -27,6 +31,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!checkRateLimit('settings-mobile-post')) {
+      return NextResponse.json({ success: false, message: 'Rate limit exceeded' }, { status: 429 });
+    }
     await requirePermission('org:admin:configure_company_settings');
     const data = bodySchema.parse(await request.json());
     await updateMobileSettingsAction(data);

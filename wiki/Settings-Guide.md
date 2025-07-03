@@ -19,3 +19,11 @@ This guide summarizes key configuration areas within the Settings module.
 ## Analytics & Monitoring
 - Control usage tracking and optimization insights.
 - Enable performance monitoring and error tracking.
+
+## API Endpoints
+- `/api/settings/workflow` – manage workflow automation settings (rate limited)
+- `/api/settings/security` – update security preferences (rate limited)
+- `/api/settings/mobile` – configure mobile options (rate limited)
+- `/api/settings/backup` – download organization settings backup (rate limited)
+
+All endpoints validate input with Zod and require `org:admin:configure_company_settings` permission.
