@@ -92,18 +92,12 @@ export async function getIntegrationSettings(): Promise<IntegrationSettings | nu
   const result = integrations
     ? {
         ...integrations,
-        eldApiKey: integrations.eldApiKey
-          ? decryptString(integrations.eldApiKey)
-          : undefined,
-        mappingApiKey: integrations.mappingApiKey
-          ? decryptString(integrations.mappingApiKey)
-          : undefined,
-        commsWebhookUrl: integrations.commsWebhookUrl
-          ? decryptString(integrations.commsWebhookUrl)
-          : undefined,
-        paymentProcessorKey: integrations.paymentProcessorKey
-          ? decryptString(integrations.paymentProcessorKey)
-          : undefined,
+        ...decryptFields(integrations, [
+          'eldApiKey',
+          'mappingApiKey',
+          'commsWebhookUrl',
+          'paymentProcessorKey',
+        ]),
       }
     : null;
   setCache(cacheKey, result);
