@@ -93,10 +93,12 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
     details: { updatedBy: user.id },
   });
 
-  revalidatePath('/dashboard/vehicles');
-  revalidatePath(`/dashboard/vehicles/${id}`);
-  revalidateTag(VEHICLE_CACHE_TAG);
-  revalidateTag(`vehicles:${user.orgId}`);
+  await Promise.all([
+    revalidatePath('/dashboard/vehicles'),
+    revalidatePath(`/dashboard/vehicles/${id}`),
+    revalidateTag(VEHICLE_CACHE_TAG),
+    revalidateTag(`vehicles:${user.orgId}`),
+  ]);
   return { success: true, vehicle };
 }
 
