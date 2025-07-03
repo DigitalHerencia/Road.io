@@ -248,9 +248,9 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
-  const currentSettings = (org?.settings as Record<string, any>) ?? {};
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
   const integrationSettings: IntegrationSettings = {
-    ...(currentSettings.integrationSettings ?? {}),
+    ...(currentSettings.integrationSettings as IntegrationSettings | undefined ?? {}),
     ...parsed,
   };
 
@@ -292,13 +292,13 @@ export async function updateNotificationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
-  const currentSettings = (org?.settings as Record<string, any>) ?? {};
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
   const notificationSettings: NotificationSettings = {
-    ...(currentSettings.notificationSettings ?? {}),
+    ...(currentSettings.notificationSettings as NotificationSettings | undefined ?? {}),
     emailEnabled: parsed.emailEnabled ?? false,
     smsEnabled: parsed.smsEnabled ?? false,
     pushEnabled: parsed.pushEnabled ?? false,
-    escalationEmail: parsed.escalationEmail ?? currentSettings.notificationSettings?.escalationEmail,
+    escalationEmail: parsed.escalationEmail ?? (currentSettings.notificationSettings as NotificationSettings | undefined)?.escalationEmail,
   };
 
   const settings = {
