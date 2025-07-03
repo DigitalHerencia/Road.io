@@ -4,7 +4,8 @@ import { db } from '@/lib/db'
 import { vehicles, vehicleMaintenance } from '@/lib/schema'
 import { requirePermission } from '@/lib/rbac'
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { VEHICLE_CACHE_TAG } from '@/lib/fetchers/vehicles'
 import { eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -65,6 +66,8 @@ export async function createVehicle(data: VehicleInput) {
   })
 
   revalidatePath('/dashboard/vehicles')
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
   return { success: true, vehicle }
 }
 
@@ -86,6 +89,8 @@ export async function updateVehicle(id: number, data: Partial<VehicleInput>) {
   })
 
   revalidatePath('/dashboard/vehicles')
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
   return { success: true, vehicle }
 }
 
@@ -104,6 +109,8 @@ export async function bulkUpdateVehicleStatus(ids: number[], status: 'ACTIVE' | 
   })
 
   revalidatePath('/dashboard/vehicles')
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
   return { success: true }
 }
 
@@ -142,5 +149,7 @@ export async function recordVehicleMaintenance(vehicleId: number, data: Maintena
   })
 
   revalidatePath(`/dashboard/vehicles/${vehicleId}`)
+  revalidateTag(VEHICLE_CACHE_TAG)
+  revalidateTag(`vehicles:${user.orgId}`)
   return { success: true, record }
 }

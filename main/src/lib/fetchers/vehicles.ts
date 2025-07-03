@@ -1,10 +1,12 @@
 import { db } from '@/lib/db'
 import { vehicles } from '@/lib/schema'
 import { eq, sql, and } from 'drizzle-orm'
+import { cache } from 'react'
 
-export async function getAllVehicles(orgId: number) {
+async function _getAllVehicles(orgId: number) {
   return db.select().from(vehicles).where(eq(vehicles.orgId, orgId))
 }
+export const getAllVehicles = cache(_getAllVehicles)
 
 export interface FleetOverview {
   total: number
@@ -15,7 +17,7 @@ export interface FleetOverview {
   inspectionDue: number
 }
 
-export async function getFleetOverview(orgId: number): Promise<FleetOverview> {
+async function _getFleetOverview(orgId: number): Promise<FleetOverview> {
   const totalRes = await db.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count FROM vehicles WHERE org_id = ${orgId}
   `)
@@ -47,8 +49,9 @@ export async function getFleetOverview(orgId: number): Promise<FleetOverview> {
     inspectionDue: inspDueRes.rows[0]?.count ?? 0,
   }
 }
+export const getFleetOverview = cache(_getFleetOverview)
 
-export async function getVehicleList(
+async function _getVehicleList(
   orgId: number,
   sort: 'id' | 'make' | 'model' | 'year' | 'status' | 'vin' = 'id',
   status?: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED'
@@ -76,11 +79,13 @@ export async function getVehicleList(
     .where(conditions.length > 1 ? and(...conditions) : conditions[0])
     .orderBy(orderCol);
 }
+export const getVehicleList = cache(_getVehicleList)
 
-export async function getVehicleById(id: number) {
+async function _getVehicleById(id: number) {
   const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id))
   return vehicle
 }
+export const getVehicleById = cache(_getVehicleById)
 
 export interface VehicleAvailability {
   id: number
@@ -91,7 +96,7 @@ export interface VehicleAvailability {
   nextMaintenanceDate: Date | null
 }
 
-export async function getVehicleAvailability(orgId: number): Promise<VehicleAvailability[]> {
+async function _getVehicleAvailability(orgId: number): Promise<VehicleAvailability[]> {
   const res = await db.execute<{
     id: number
     make: string | null
@@ -124,11 +129,12 @@ export async function getVehicleAvailability(orgId: number): Promise<VehicleAvai
     nextMaintenanceDate: row.next_maintenance_date,
   }))
 }
+export const getVehicleAvailability = cache(_getVehicleAvailability)
 
 import type { AuditLog } from '@/lib/schema'
 import { AUDIT_ACTIONS, AUDIT_RESOURCES } from '@/lib/audit'
 
-export async function getVehicleAssignmentHistory(vehicleId: number): Promise<AuditLog[]> {
+async function _getVehicleAssignmentHistory(vehicleId: number): Promise<AuditLog[]> {
   const res = await db.execute<AuditLog>(sql`
     SELECT
       id AS id,
@@ -146,6 +152,7 @@ export async function getVehicleAssignmentHistory(vehicleId: number): Promise<Au
   `)
   return res.rows
 }
+export const getVehicleAssignmentHistory = cache(_getVehicleAssignmentHistory)
 
 export interface VehicleMaintenance extends Record<string, unknown> {
   id: number
@@ -157,7 +164,7 @@ export interface VehicleMaintenance extends Record<string, unknown> {
   cost: number | null
 }
 
-export async function listVehicleMaintenance(orgId: number, vehicleId?: number): Promise<VehicleMaintenance[]> {
+async function _listVehicleMaintenance(orgId: number, vehicleId?: number): Promise<VehicleMaintenance[]> {
   const where = vehicleId ? sql`AND vehicle_id = ${vehicleId}` : sql``
   const res = await db.execute<VehicleMaintenance>(sql`
     SELECT id, vehicle_id AS "vehicleId", maintenance_date AS "maintenanceDate",
@@ -168,6 +175,7 @@ export async function listVehicleMaintenance(orgId: number, vehicleId?: number):
   `)
   return res.rows
 }
+export const listVehicleMaintenance = cache(_listVehicleMaintenance)
 
 export interface MaintenanceAlert {
   id: number
@@ -176,7 +184,7 @@ export interface MaintenanceAlert {
   overdue: boolean
 }
 
-export async function getMaintenanceAlerts(orgId: number, withinDays = 30): Promise<MaintenanceAlert[]> {
+async function _getMaintenanceAlerts(orgId: number, withinDays = 30): Promise<MaintenanceAlert[]> {
   const res = await db.execute<{
     id: number
     next_maintenance_date: Date
@@ -195,3 +203,4 @@ export async function getMaintenanceAlerts(orgId: number, withinDays = 30): Prom
     overdue: row.next_maintenance_date <= new Date()
   }))
 }
+export const getMaintenanceAlerts = cache(_getMaintenanceAlerts)
