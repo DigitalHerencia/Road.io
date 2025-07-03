@@ -1,8 +1,11 @@
 
 import { db } from '@/lib/db'
-import { sql } from 'drizzle-orm'
+import { sql, eq } from 'drizzle-orm'
 import { requirePermission, requireAnyPermission } from '@/lib/rbac'
+import { drivers, users } from '@/lib/schema'
 import type { DispatchMessage, CustomerNotification } from '@/lib/schema'
+
+export const EARTH_RADIUS_MILES = 3958.8
 
 
 export interface LoadCompletionMetrics {
@@ -198,6 +201,40 @@ export async function updateDriverLocation(
     .update(drivers)
     .set({ currentLocation: location, updatedAt: new Date() })
     .where(eq(drivers.id, driverId));
+}
+
+export interface DriverLocation {
+  driverId: number
+  lat: number
+  lng: number
+  address: string | null
+}
+
+export async function fetchDriverLocations(orgId: number): Promise<DriverLocation[]> {
+  await requirePermission('org:dispatcher:view')
+  const res = await db.execute<{
+    driver_id: number
+    current_location: {
+      lat: number
+      lng: number
+      address?: string | null
+    }
+  }>(sql`
+    SELECT d.id AS driver_id, d.current_location
+    FROM drivers d
+    INNER JOIN users u ON d.user_id = u.id
+    WHERE u.org_id = ${orgId} AND d.current_location IS NOT NULL
+  `)
+  return res.rows.map(r => ({
+    driverId: r.driver_id,
+    lat: r.current_location.lat,
+    lng: r.current_location.lng,
+    address: r.current_location.address ?? null,
+  }))
+}
+
+export function isWithinGeofence(location: Coordinate, fence: Geofence): boolean {
+  return haversineDistance(location, fence.center) <= fence.radius
 }
 
 export async function fetchDriverMessages(orgId: number, driverId: number) {

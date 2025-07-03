@@ -32,3 +32,9 @@ Core logic resides in `lib/fetchers/dispatch.ts`.
 - `CustomerNotificationForm` emails customers when load status changes or exceptions occur.
 - Messages and notifications are stored in `dispatch_messages` and `customer_notifications` tables and sent via the `sendDriverMessageAction`, `broadcastEmergencyAlertAction`, and `sendCustomerNotificationAction` server actions.
 
+## Mobile Dispatch Features
+
+- `MobileDispatchPanel` provides a real-time operational view optimized for mobile screens.
+- `MobileDriverMessageForm` mirrors driver messaging with offline queuing using `localStorage`.
+- `fetchDriverLocations` and `getDriverLocationsAction` expose live driver location data for tracking.
+
