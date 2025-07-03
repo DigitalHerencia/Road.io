@@ -13,3 +13,14 @@ This module manages driver information and operations. It now includes an advanc
 ## Mobile Offline Support
 
 The message form stores unsent messages in `localStorage` and automatically sends them when the device reconnects. This ensures drivers can compose messages without connectivity.
+
+## Performance & Safety Management
+
+- `getDriverPerformanceMetrics` summarizes mileage, fuel efficiency, accident count and violations.
+- `createPerformanceReviewAction` saves review scores for a driver.
+- `getDriverSafetyPrograms` lists assigned safety programs and completion status.
+- `getTrainingRecommendations` suggests training based on metrics.
+- Components:
+  - `PerformanceMetrics` displays key metrics.
+  - `PerformanceReviewList` and `PerformanceReviewForm` manage reviews.
+  - `SafetyProgramList` shows safety program assignments.

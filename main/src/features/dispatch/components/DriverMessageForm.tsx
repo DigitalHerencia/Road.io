@@ -11,7 +11,7 @@ interface Props {
 export default function DriverMessageForm({ driverId }: Props) {
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
 
   async function sendMessage() {
     setLoading(true)
@@ -24,7 +24,7 @@ export default function DriverMessageForm({ driverId }: Props) {
       } else {
         setStatus('Failed to send message')
       }
-    } catch (error) {
+    } catch {
       setStatus('An error occurred')
     } finally {
       setLoading(false)
