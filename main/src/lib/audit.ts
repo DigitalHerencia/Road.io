@@ -96,9 +96,9 @@ export const AUDIT_ACTIONS = {
   USER_ROLE_CHANGE: "user.role_change",
   USER_INVITE: "user.invite",
   USER_WELCOME_EMAIL: "user.welcome_email",
-  ROLE_CREATE: 'role.create',
-  ROLE_UPDATE: 'role.update',
-  ROLE_DELETE: 'role.delete',
+  ROLE_CREATE: "role.create",
+  ROLE_UPDATE: "role.update",
+  ROLE_DELETE: "role.delete",
 
   // Load actions
   LOAD_CREATE: "load.create",
@@ -111,18 +111,19 @@ export const AUDIT_ACTIONS = {
   DRIVER_CREATE: "driver.create",
   DRIVER_UPDATE: "driver.update",
   DRIVER_ASSIGN: "driver.assign",
-  TRAINING_CREATE: 'training.create',
-  TRAINING_ASSIGN: 'training.assign',
-  PAY_STATEMENT_CREATE: 'pay_statement.create',
-  MESSAGE_SEND: 'dispatch.message_send',
-  EMERGENCY_ALERT: 'dispatch.emergency_alert',
-  CUSTOMER_NOTIFICATION: 'dispatch.customer_notification',
+  TRAINING_CREATE: "training.create",
+  TRAINING_ASSIGN: "training.assign",
+  PAY_STATEMENT_CREATE: "pay_statement.create",
+  MESSAGE_SEND: "dispatch.message_send",
+  EMERGENCY_ALERT: "dispatch.emergency_alert",
+  CUSTOMER_NOTIFICATION: "dispatch.customer_notification",
 
   // Vehicle actions
   VEHICLE_CREATE: "vehicle.create",
   VEHICLE_UPDATE: "vehicle.update",
   VEHICLE_ASSIGN: "vehicle.assign",
-  VEHICLE_MAINTENANCE: 'vehicle.maintenance',
+  VEHICLE_MAINTENANCE: "vehicle.maintenance",
+  VEHICLE_TELEMATICS: "vehicle.telematics",
 
   // Trip actions
   TRIP_CREATE: "trip.create",
@@ -132,15 +133,13 @@ export const AUDIT_ACTIONS = {
   FUEL_CARD_IMPORT: "fuel_card.import",
   ELD_IMPORT: "eld.import",
 
-
   // HOS actions
-  HOS_LOG_CREATE: 'hos.log.create',
-  HOS_VIOLATION: 'hos.violation',
-  HOS_REPORT_GENERATE: 'hos.report.generate',
+  HOS_LOG_CREATE: "hos.log.create",
+  HOS_VIOLATION: "hos.violation",
+  HOS_REPORT_GENERATE: "hos.report.generate",
 
   // IFTA actions
-  IFTA_REPORT_GENERATE: 'ifta.report.generate',
-  
+  IFTA_REPORT_GENERATE: "ifta.report.generate",
 
   // Document actions
   DOCUMENT_UPLOAD: "document.upload",
@@ -162,21 +161,20 @@ export const AUDIT_ACTIONS = {
  */
 export const AUDIT_RESOURCES = {
   FUEL_PURCHASE: "fuel_purchase",
-  USER: 'user',
-  LOAD: 'load',
-  DRIVER: 'driver',
-  VEHICLE: 'vehicle',
-  DOCUMENT: 'document',
-  ORGANIZATION: 'organization',
-  COMPLIANCE: 'compliance',
-  TRIP: 'trip',
-  HOS_LOG: 'hos_log',
-  HOS_REPORT: 'hos_report',
-  ROLE: 'role',
-  IFTA_REPORT: 'ifta_report',
-  TRAINING_PROGRAM: 'training_program',
-  PAY_STATEMENT: 'pay_statement',
-  MESSAGE: 'message',
-  NOTIFICATION: 'notification',
+  USER: "user",
+  LOAD: "load",
+  DRIVER: "driver",
+  VEHICLE: "vehicle",
+  DOCUMENT: "document",
+  ORGANIZATION: "organization",
+  COMPLIANCE: "compliance",
+  TRIP: "trip",
+  HOS_LOG: "hos_log",
+  HOS_REPORT: "hos_report",
+  ROLE: "role",
+  IFTA_REPORT: "ifta_report",
+  TRAINING_PROGRAM: "training_program",
+  PAY_STATEMENT: "pay_statement",
+  MESSAGE: "message",
+  NOTIFICATION: "notification",
 } as const;
-
