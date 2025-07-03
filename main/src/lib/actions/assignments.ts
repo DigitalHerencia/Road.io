@@ -53,7 +53,7 @@ export async function assignLoad(loadId: number, formData: FormData) {
     }
   }
 
-  const updateData: Record<string, unknown> = {
+  const updateData: Partial<typeof loads> = {
     status: input.driverId && input.vehicleId ? 'assigned' : load.status,
     updatedAt: new Date(),
   }
