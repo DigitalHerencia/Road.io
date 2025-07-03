@@ -446,11 +446,18 @@ export async function importEldCsvAction(formData: FormData): Promise<void> {
   if (!(file instanceof File)) {
     throw new Error('No file provided');
   }
-  const text = await file.text();
-  const rows = text.trim().split(/\r?\n/);
-  rows.shift();
+  const stream = file.stream();
+  const reader = stream.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
   let count = 0;
-  for (const line of rows) {
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let lines = buffer.split(/\r?\n/);
+    buffer = lines.pop()!; // Save the last partial line for the next chunk
+    for (const line of lines) {
     if (!line) continue;
     const [
       driverId,
