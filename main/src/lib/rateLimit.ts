@@ -4,6 +4,7 @@ const store = new Map<string, { count: number; reset: number }>()
 function cleanupExpiredEntries() {
   const now = Date.now();
   for (const [key, entry] of store.entries()) {
+
     if (entry.reset <= now) {
       store.delete(key);
     }
