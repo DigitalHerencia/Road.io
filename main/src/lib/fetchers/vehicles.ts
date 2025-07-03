@@ -50,7 +50,7 @@ export async function getFleetOverview(orgId: number): Promise<FleetOverview> {
 
 export async function getVehicleList(
   orgId: number,
-  sort: keyof typeof vehicles | 'id' = 'id',
+  sort: 'id' | 'make' | 'model' | 'year' | 'status' | 'vin' = 'id',
   status?: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED'
 ) {
   const conditions = [eq(vehicles.orgId, orgId)];
@@ -68,7 +68,7 @@ export async function getVehicleList(
     vin: vehicles.vin,
   } as const;
   
-  const orderCol = columnMap[sort] ?? vehicles.id;
+  const orderCol = columnMap[sort as keyof typeof columnMap] ?? vehicles.id;
   
   return db
     .select()

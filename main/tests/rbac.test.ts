@@ -1,40 +1,61 @@
-import { describe, it, expect } from 'vitest';
-import { hasPermission, hasAnyPermission, hasAllPermissions, canAccessResource } from '@/types/rbac';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+vi.mock('../src/lib/db', () => ({ db: { select: vi.fn() } }))
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }))
 
-const userPermissions = [
-  'org:sys_profile:manage',
-  'org:dispatcher:create_edit_loads',
-  'org:driver:view_assigned_loads',
-];
+import { db } from '../src/lib/db'
+import { auth } from '@clerk/nextjs/server'
+import { getCurrentUser } from '../src/lib/rbac'
+import { SystemRoles } from '../src/types/rbac'
 
-describe('RBAC utilities', () => {
-  it('hasPermission returns true when permission exists', () => {
-    expect(hasPermission(userPermissions, 'org:sys_profile:manage')).toBe(true);
-  });
+const mockRow = {
+  id: 1,
+  clerkUserId: 'clerk1',
+  email: 'test@example.com',
+  name: 'Tester',
+  orgId: 1,
+  organizationName: 'Acme',
+  organizationSlug: 'acme',
+  role: SystemRoles.DISPATCHER,
+  customRoleId: 2,
+  customRoleName: 'Custom',
+  customPermissions: ['org:test:perm'],
+  status: 'ACTIVE',
+  isActive: true
+}
 
-  it('hasPermission returns false when permission missing', () => {
-    expect(hasPermission(userPermissions, 'org:admin:manage_users')).toBe(false);
-  });
+describe('getCurrentUser', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-  it('hasAnyPermission returns true when at least one permission matches', () => {
-    const perms = ['org:admin:manage_users', 'org:driver:view_assigned_loads'];
-    expect(hasAnyPermission(userPermissions, perms)).toBe(true);
-  });
+  it('returns user with custom role permissions', async () => {
+    const where = vi.fn().mockResolvedValueOnce([mockRow])
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn(() => ({
+        innerJoin: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({ where }))
+        }))
+      }))
+    } as any)
+    vi.mocked(auth).mockResolvedValue({ userId: 'clerk1' } as any)
 
-  it('hasAllPermissions returns true only when all permissions match', () => {
-    const perms = ['org:sys_profile:manage', 'org:driver:view_assigned_loads'];
-    expect(hasAllPermissions(userPermissions, perms)).toBe(true);
-    expect(
-      hasAllPermissions(userPermissions, [...perms, 'org:unknown:action'])
-    ).toBe(false);
-  });
+    const user = await getCurrentUser()
+    expect(user?.customRoleName).toBe('Custom')
+    expect(user?.permissions).toContain('org:test:perm')
+  })
 
-  it('canAccessResource builds permission string correctly', () => {
-    expect(
-      canAccessResource(userPermissions, 'driver', 'view_assigned_loads')
-    ).toBe(true);
-    expect(
-      canAccessResource(userPermissions, 'driver', 'update_load_status')
-    ).toBe(false);
-  });
-});
+  it('returns null when no user found', async () => {
+    const where = vi.fn().mockResolvedValueOnce([])
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn(() => ({
+        innerJoin: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({ where }))
+        }))
+      }))
+    } as any)
+    vi.mocked(auth).mockResolvedValue({ userId: 'clerk1' } as any)
+
+    const user = await getCurrentUser()
+    expect(user).toBeNull()
+  })
+})
