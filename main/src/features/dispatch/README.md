@@ -37,4 +37,10 @@ Core logic resides in `lib/fetchers/dispatch.ts`.
 - `MobileDispatchPanel` provides a real-time operational view optimized for mobile screens.
 - `MobileDriverMessageForm` mirrors driver messaging with offline queuing using `localStorage`.
 - `fetchDriverLocations` and `getDriverLocationsAction` expose live driver location data for tracking.
+- `MobileReportViewer` displays key dispatch metrics with offline caching and built-in share and print options.
+
+### Performance Optimization
+
+- Reporting fetchers now leverage an in-memory cache for faster load times.
+- `getMobileDispatchReportAction` batches metric queries to reduce network overhead.
 

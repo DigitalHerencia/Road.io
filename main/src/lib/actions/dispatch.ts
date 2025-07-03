@@ -52,6 +52,31 @@ export async function getDriverLocationsAction(params: { orgId: number }) {
   return fetchDriverLocations(orgId)
 }
 
+export interface MobileDispatchReport {
+  kpis: Awaited<ReturnType<typeof fetchDispatchKPIs>>
+  loadCompletion: Awaited<ReturnType<typeof fetchLoadCompletionMetrics>>
+  productivity: Awaited<ReturnType<typeof fetchDriverProductivity>>
+  exceptions: Awaited<ReturnType<typeof fetchExceptionRate>>
+  fetchedAt: string
+}
+
+export async function getMobileDispatchReportAction(params: { orgId: number }): Promise<MobileDispatchReport> {
+  const { orgId } = orgIdSchema.parse(params)
+  const [kpis, loadCompletion, productivity, exceptions] = await Promise.all([
+    fetchDispatchKPIs(orgId),
+    fetchLoadCompletionMetrics(orgId),
+    fetchDriverProductivity(orgId),
+    fetchExceptionRate(orgId),
+  ])
+  return {
+    kpis,
+    loadCompletion,
+    productivity,
+    exceptions,
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
 const coordSchema = z.object({
   lat: z.number(),
   lng: z.number(),

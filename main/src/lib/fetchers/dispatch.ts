@@ -4,6 +4,7 @@ import { sql, eq } from 'drizzle-orm'
 import { requirePermission, requireAnyPermission } from '@/lib/rbac'
 import { drivers, users } from '@/lib/schema'
 import type { DispatchMessage, CustomerNotification } from '@/lib/schema'
+import { getCache, setCache } from '../cache'
 
 export const EARTH_RADIUS_MILES = 3958.8
 
@@ -19,6 +20,9 @@ export async function fetchLoadCompletionMetrics(
   orgId: number,
 ): Promise<LoadCompletionMetrics> {
   await requirePermission("org:admin:access_all_reports");
+  const cacheKey = `dispatch:loadCompletion:${orgId}`
+  const cached = getCache<LoadCompletionMetrics>(cacheKey)
+  if (cached) return cached
   const res = await db.execute<{
     total: number;
     completed: number;
@@ -35,13 +39,15 @@ export async function fetchLoadCompletionMetrics(
     WHERE org_id = ${orgId}
   `);
   const row = res.rows[0] ?? { total: 0, completed: 0, on_time: 0 };
-  return {
+  const result = {
     totalLoads: row.total,
     completedLoads: row.completed,
     onTimeDeliveries: row.on_time,
     onTimeRate:
       row.total === 0 ? 0 : Number((row.on_time / row.total).toFixed(2)),
-  };
+  }
+  setCache(cacheKey, result)
+  return result
 }
 
 export interface DriverProductivity {
@@ -54,6 +60,9 @@ export async function fetchDriverProductivity(
   orgId: number,
 ): Promise<DriverProductivity[]> {
   await requirePermission("org:admin:access_all_reports");
+  const cacheKey = `dispatch:driverProductivity:${orgId}`
+  const cached = getCache<DriverProductivity[]>(cacheKey)
+  if (cached) return cached
   const res = await db.execute<{
     driver_id: number;
     driver_name: string | null;
@@ -70,11 +79,13 @@ export async function fetchDriverProductivity(
     GROUP BY d.id, u.name
     ORDER BY completed DESC
   `);
-  return res.rows.map((r) => ({
+  const result = res.rows.map((r) => ({
     driverId: r.driver_id,
     driverName: r.driver_name,
     completedLoads: r.completed,
-  }));
+  }))
+  setCache(cacheKey, result)
+  return result
 }
 
 export interface ExceptionRate {
@@ -87,6 +98,9 @@ export async function fetchExceptionRate(
   orgId: number,
 ): Promise<ExceptionRate> {
   await requirePermission("org:admin:access_all_reports");
+  const cacheKey = `dispatch:exceptionRate:${orgId}`
+  const cached = getCache<ExceptionRate>(cacheKey)
+  if (cached) return cached
   const res = await db.execute<{ total: number; exceptions: number }>(sql`
     SELECT
       count(*)::int AS total,
@@ -98,12 +112,14 @@ export async function fetchExceptionRate(
     WHERE org_id = ${orgId}
   `);
   const row = res.rows[0] ?? { total: 0, exceptions: 0 };
-  return {
+  const result = {
     totalLoads: row.total,
     exceptionLoads: row.exceptions,
     exceptionRate:
       row.total === 0 ? 0 : Number((row.exceptions / row.total).toFixed(2)),
-  };
+  }
+  setCache(cacheKey, result)
+  return result
 }
 
 export interface DispatchKPIs {
@@ -115,6 +131,9 @@ export interface DispatchKPIs {
 
 export async function fetchDispatchKPIs(orgId: number): Promise<DispatchKPIs> {
   await requirePermission("org:admin:access_all_reports");
+  const cacheKey = `dispatch:kpis:${orgId}`
+  const cached = getCache<DispatchKPIs>(cacheKey)
+  if (cached) return cached
   const [activeRes, completion, exceptions] = await Promise.all([
     db.execute<{ count: number }>(sql`
       SELECT count(*)::int AS count
@@ -125,12 +144,14 @@ export async function fetchDispatchKPIs(orgId: number): Promise<DispatchKPIs> {
     fetchExceptionRate(orgId),
   ]);
   const active = activeRes.rows[0]?.count ?? 0;
-  return {
+  const result = {
     activeLoads: active,
     completedLoads: completion.completedLoads,
     onTimeRate: completion.onTimeRate,
     exceptionRate: exceptions.exceptionRate,
   };
+  setCache(cacheKey, result)
+  return result
 }
 
 export interface Coordinate {
