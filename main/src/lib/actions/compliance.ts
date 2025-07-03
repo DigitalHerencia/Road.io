@@ -17,7 +17,7 @@ import { getExpiringDocuments } from '@/lib/fetchers/compliance';
 import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
 import { requirePermission } from '@/lib/rbac';
 import { sendEmail } from '@/lib/email';
-import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@/features/compliance/types';
+import { DOCUMENT_CATEGORIES, type DocumentCategory, ALLOWED_FILE_TYPES } from '@/features/compliance/types';
 import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -30,6 +30,10 @@ export const uploadFormSchema = z.object({
   category: z.enum(DOCUMENT_CATEGORIES),
   driverId: z.string().optional(),
   expiresAt: z.string().optional(),
+});
+
+const fileSchema = z.instanceof(File).refine(f => ALLOWED_FILE_TYPES.includes(f.type), {
+  message: 'Unsupported file type',
 });
 
 const reviewSchema = z.object({
@@ -100,11 +104,11 @@ export async function uploadDocumentsAction(formData: FormData) {
   const category: DocumentCategory = parsed.category;
   const { driverId, expiresAt } = parsed;
 
-  const files = formData.getAll('documents');
+  const files = formData.getAll('documents').filter((f): f is File => f instanceof File);
+  fileSchema.array().min(1).parse(files);
   const saved: unknown[] = [];
 
   for (const file of files) {
-    if (!(file instanceof File)) continue;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const unique = generateUniqueFilename(file.name);
