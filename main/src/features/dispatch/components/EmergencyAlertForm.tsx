@@ -18,7 +18,11 @@ export default function EmergencyAlertForm() {
 
   return (
     <div className="space-y-2">
+      <label htmlFor="emergency-message" className="block text-sm font-medium text-gray-700">
+        Emergency Message
+      </label>
       <textarea
+        id="emergency-message"
         value={message}
         onChange={e => setMessage(e.target.value)}
         className="border rounded w-full p-2"
