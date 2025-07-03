@@ -93,6 +93,9 @@ main/
 │   │   ├── AuthSection.tsx   # Authentication status display
 │   │   ├── AuthTest.tsx      # API authentication testing
 │   │   └── DatabaseTest.tsx   # Database testing component
+│   ├── features/              # Feature modules grouped by domain
+│   │   ├── drivers/          # Driver management UI and logic
+│   │   └── ...               # Other domain folders
 │   ├── lib/                   # Utilities and configurations
 │   │   ├── db.ts             # Database connection
 │   │   ├── db-utils.ts       # Database utility functions

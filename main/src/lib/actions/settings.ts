@@ -15,7 +15,7 @@ import type {
   SystemConfig,
   IntegrationSettings,
   NotificationSettings,
-} from '@/types/settings';
+} from '@/features/settings/types';
 
 const companyProfileSchema = z.object({
   companyName: z.string().min(1),
@@ -248,7 +248,7 @@ export async function updateIntegrationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
-  const currentSettings = (org?.settings as Record<string, any>) ?? {};
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
   const integrationSettings: IntegrationSettings = {
     ...(currentSettings.integrationSettings ?? {}),
     ...parsed,
@@ -292,7 +292,7 @@ export async function updateNotificationSettingsAction(formData: FormData) {
     .from(organizations)
     .where(eq(organizations.id, user.orgId));
 
-  const currentSettings = (org?.settings as Record<string, any>) ?? {};
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
   const notificationSettings: NotificationSettings = {
     ...(currentSettings.notificationSettings ?? {}),
     emailEnabled: parsed.emailEnabled ?? false,

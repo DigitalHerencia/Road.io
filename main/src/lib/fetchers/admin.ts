@@ -5,7 +5,7 @@ import type {
   TenantConfig,
   ResourceAllocation,
   TenantMetrics,
-} from "@/types/admin";
+} from "@/features/admin/types";
 
 export async function checkTenantIsolation(orgId: number) {
   const result = await db.execute<{ count: number }>(sql`

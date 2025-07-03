@@ -1,5 +1,5 @@
 import { uploadDocumentsAction } from '@/lib/actions/compliance';
-import { DOCUMENT_CATEGORIES } from '@/types/compliance';
+import { DOCUMENT_CATEGORIES } from '@/features/compliance/types';
 
 export default function UploadDocuments() {
   return (
