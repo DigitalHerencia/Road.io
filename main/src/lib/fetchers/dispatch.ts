@@ -149,7 +149,7 @@ function toRad(v: number) {
 }
 
 export function haversineDistance(a: Coordinate, b: Coordinate): number {
-  const R = 3958.8; // miles
+  const R = EARTH_RADIUS_MILES;
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lng - a.lng);
   const lat1 = toRad(a.lat);
