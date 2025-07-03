@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { trips, fuelPurchases, iftaTaxRates, documents, iftaAuditResponses } from "@/lib/schema";
+import { trips, fuelPurchases, iftaTaxRates, iftaReports, documents, iftaAuditResponses } from "@/lib/schema";
 import { eq, between, and, sql } from "drizzle-orm";
 
 export async function getTripsByOrg(orgId: number) {
@@ -61,6 +61,13 @@ export async function listIftaAuditResponses(orgId: number) {
     .select()
     .from(iftaAuditResponses)
     .where(eq(iftaAuditResponses.orgId, orgId));
+}
+
+export async function listIftaReports(orgId: number) {
+  return await db
+    .select()
+    .from(iftaReports)
+    .where(eq(iftaReports.orgId, orgId));
 }
 export interface FuelEfficiency {
   totalMiles: number
