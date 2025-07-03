@@ -9,7 +9,7 @@ import { sendEmail } from "../email";
 import { requirePermission, requireRole } from "../rbac";
 import { SystemRoles } from "@/types/rbac";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_RESOURCES } from "../audit";
-import { eq, and, desc, count, inArray } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import {
   checkTenantIsolation,
   fetchSystemMetrics,
