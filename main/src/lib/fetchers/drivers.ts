@@ -105,37 +105,46 @@ export async function getDriverAssignmentStats(
   };
 }
 
-export async function getDriverViolations(driverId: number) {
-  return db
-    .select()
-    .from(driverViolations)
-    .where(eq(driverViolations.driverId, driverId));
+export interface DriverMessage {
+  id: number
+  driverId: number
+  sender: 'DRIVER' | 'DISPATCH'
+  message: string
+  createdAt: Date
 }
 
-export async function getDriverCertifications(driverId: number) {
-  return db
-    .select()
-    .from(driverCertifications)
-    .where(eq(driverCertifications.driverId, driverId));
-}
-
-export async function getExpiringCredentials(days = 30) {
-  const now = new Date();
-  const threshold = new Date(now.getTime() + days * 86400000);
+export async function fetchDriverMessages(
+  driverId: number,
+  limit = 50,
+): Promise<DriverMessage[]> {
   return db
     .select({
-      id: drivers.id,
-      name: users.name,
-      email: users.email,
-      licenseExpiry: drivers.licenseExpiry,
-      certExpires: driverCertifications.expiresAt,
-      certType: driverCertifications.type,
+      id: driverMessages.id,
+      driverId: driverMessages.driverId,
+      sender: driverMessages.sender,
+      message: driverMessages.message,
+      createdAt: driverMessages.createdAt,
     })
-    .from(drivers)
-    .innerJoin(users, eq(drivers.userId, users.id))
-    .leftJoin(
-      driverCertifications,
-      eq(driverCertifications.driverId, drivers.id),
-    )
-    .where(sql`${drivers.licenseExpiry} <= ${threshold} OR ${driverCertifications.expiresAt} <= ${threshold}`);
+    .from(driverMessages)
+    .where(eq(driverMessages.driverId, driverId))
+    .orderBy(sql`${driverMessages.createdAt} desc`)
+    .limit(limit)
+}
+
+export async function createDriverMessage(params: {
+  orgId: number
+  driverId: number
+  sender: 'DRIVER' | 'DISPATCH'
+  message: string
+}): Promise<DriverMessage> {
+  const [msg] = await db
+    .insert(driverMessages)
+    .values({
+      orgId: params.orgId,
+      driverId: params.driverId,
+      sender: params.sender,
+      message: params.message,
+    })
+    .returning()
+  return msg
 }

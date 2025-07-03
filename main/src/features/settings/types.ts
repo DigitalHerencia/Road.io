@@ -65,3 +65,28 @@ export interface NotificationSettings {
   pushEnabled?: boolean;
   escalationEmail?: string;
 }
+export interface WorkflowAutomationSettings {
+  enabled: boolean;
+  approvalsRequired: boolean;
+}
+
+export interface SecuritySettings {
+  regulatoryMode: boolean;
+  documentManagement: boolean;
+  auditTrails: boolean;
+}
+
+export interface MobileSettings {
+  offlineMode: boolean;
+  pushNotifications: boolean;
+  gpsTracking: boolean;
+  batterySaver: boolean;
+  dataSaver: boolean;
+}
+
+export interface AnalyticsSettings {
+  usageTracking: boolean;
+  optimizationInsights: boolean;
+  performanceMonitoring: boolean;
+  errorTracking: boolean;
+}

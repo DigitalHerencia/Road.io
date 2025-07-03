@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
-import { requirePermission } from '@/lib/rbac'
+import { requirePermission, requireAnyPermission } from '@/lib/rbac'
+import type { DispatchMessage, CustomerNotification } from '@/lib/schema'
 
 export interface LoadCompletionMetrics {
   totalLoads: number
@@ -113,5 +114,28 @@ export async function fetchDispatchKPIs(orgId: number): Promise<DispatchKPIs> {
     onTimeRate: completion.onTimeRate,
     exceptionRate: exceptions.exceptionRate,
   }
+}
+
+export async function fetchDriverMessages(orgId: number, driverId: number) {
+  await requireAnyPermission([
+    'org:dispatcher:communicate',
+    'org:driver:view_assigned_loads',
+  ])
+  const res = await db.execute(sql`
+    SELECT * FROM dispatch_messages
+    WHERE org_id = ${orgId} AND driver_id = ${driverId}
+    ORDER BY created_at DESC
+  `)
+  return res.rows as unknown as DispatchMessage[]
+}
+
+export async function fetchCustomerNotifications(orgId: number, loadId: number) {
+  await requirePermission('org:dispatcher:communicate')
+  const res = await db.execute(sql`
+    SELECT * FROM customer_notifications
+    WHERE org_id = ${orgId} AND load_id = ${loadId}
+    ORDER BY created_at DESC
+  `)
+  return res.rows as unknown as CustomerNotification[]
 }
 

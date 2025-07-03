@@ -81,6 +81,8 @@ CREATE TABLE "users" (
 
 Business logic lives in **server actions** under `lib/actions/`. API routes are reserved for authentication, webhooks and public integrations.
 
+For a deeper look at the repository layout and style conventions, see [CODE_STRUCTURE.md](./CODE_STRUCTURE.md).
+
 ## Testing
 
 Run these commands from the `main` directory:

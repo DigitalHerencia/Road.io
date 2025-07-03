@@ -12,3 +12,11 @@ export interface DriverProfile {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface DriverMessage {
+  id: number;
+  driverId: number;
+  sender: 'DRIVER' | 'DISPATCH';
+  message: string;
+  createdAt: Date;
+}
