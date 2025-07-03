@@ -1,16 +1,12 @@
 # Road.io Wiki
 
-Welcome to the Road.io GitHub Wiki!
-This wiki is designed for contributors, LLM agents, and maintainers working on the Road.io multi-tenant SaaS fleet management platform.
+This wiki supplements the repository documentation. See the project [README](../README.md) for setup instructions.
 
-**Table of Contents**
-
+## Contents
 - [Feature Architecture](Feature-Architecture.md)
 - [Features Overview](Features.md)
 - [Development Standards](Development-Standards.md)
 - [Official Documentation Links](Official-Docs.md)
 - [Troubleshooting](Troubleshooting.md)
 
----
-
-For role-specific and module guides, see the Features Overview page.
+Module guides and role specific documentation are linked from the **Features Overview** page.
