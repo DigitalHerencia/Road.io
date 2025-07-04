@@ -1,0 +1,513 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use server';
+
+import { db } from '@/lib/db'
+import {
+  documents,
+  driverAnnualReviews,
+  vehicleInspections,
+  accidentReports,
+  complianceWorkflows,
+  complianceTasks,
+  driverCertifications,
+  organizations,
+  type Document,
+} from '@/lib/schema'
+import { sql, eq } from 'drizzle-orm';
+import { getExpiringDocuments } from '@/lib/fetchers/compliance';
+import { AUDIT_ACTIONS, AUDIT_RESOURCES, createAuditLog } from '@/lib/audit';
+import { requirePermission } from '@/lib/rbac';
+import { sendEmail } from '@/lib/email';
+import { DOCUMENT_CATEGORIES, type DocumentCategory, ALLOWED_FILE_TYPES } from '@/features/compliance/types';
+import { z } from 'zod';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { revalidatePath } from 'next/cache';
+import PDFDocument from 'pdfkit';
+import { createWriteStream } from 'fs';
+import { getComplianceReportData, listComplianceAuditLogs } from '@/lib/fetchers/compliance';
+
+export const uploadFormSchema = z.object({
+  category: z.enum(DOCUMENT_CATEGORIES),
+  driverId: z.string().optional(),
+  expiresAt: z.string().optional(),
+});
+
+const fileSchema = z.instanceof(File).refine(
+  f => ALLOWED_FILE_TYPES.includes(f.type as (typeof ALLOWED_FILE_TYPES)[number]),
+  {
+    message: 'Unsupported file type',
+  }
+);
+
+const reviewSchema = z.object({
+  driverId: z.coerce.number(),
+  reviewDate: z.coerce.date(),
+  isQualified: z.coerce.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+const inspectionSchema = z.object({
+  vehicleId: z.coerce.number(),
+  inspectionDate: z.coerce.date(),
+  passed: z.coerce.boolean().optional(),
+  notes: z.string().optional(),
+});
+
+const accidentSchema = z.object({
+  driverId: z.coerce.number().optional(),
+  vehicleId: z.coerce.number().optional(),
+  occurredAt: z.coerce.date(),
+  description: z.string().optional(),
+  injuries: z.coerce.boolean().optional(),
+  fatalities: z.coerce.boolean().optional(),
+});
+
+const workflowSchema = z.object({
+  name: z.string().min(1),
+});
+
+const taskSchema = z.object({
+  workflowId: z.coerce.number(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  assignedToId: z.coerce.number().optional(),
+  dueDate: z.string().optional(),
+});
+
+const taskCompleteSchema = z.object({
+  taskId: z.coerce.number(),
+});
+
+const complianceConfigSchema = z.object({
+  dotRules: z.coerce.boolean().optional(),
+  environmental: z.coerce.boolean().optional(),
+  emergencyContact: z.string().optional(),
+})
+
+const hazmatSchema = z.object({
+  driverId: z.coerce.number(),
+  expiresAt: z.string().optional(),
+})
+
+export function generateUniqueFilename(original: string): string {
+  const ext = path.extname(original);
+  const base = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${base}-${rand}${ext}`;
+}
+
+export async function uploadDocumentsAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_documents');
+
+  const parsed = uploadFormSchema.parse({
+    category: formData.get('category'),
+    driverId: formData.get('driverId')?.toString(),
+    expiresAt: formData.get('expiresAt')?.toString(),
+  });
+  const category: DocumentCategory = parsed.category;
+  const { driverId, expiresAt } = parsed;
+
+  const files = formData.getAll('documents').filter((f): f is File => f instanceof File);
+  fileSchema.array().min(1).parse(files);
+  const saved: unknown[] = [];
+
+  for (const file of files) {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const unique = generateUniqueFilename(file.name);
+    const uploadDir = path.join(process.cwd(), 'main/public/uploads');
+    await fs.mkdir(uploadDir, { recursive: true });
+    const filePath = path.join(uploadDir, unique);
+    await fs.writeFile(filePath, buffer);
+
+    const [doc] = await db.insert(documents).values({
+      orgId: user.orgId,
+      uploadedById: parseInt(user.id),
+      driverId: driverId ? parseInt(driverId) : undefined,
+      fileName: file.name,
+      fileUrl: `/uploads/${unique}`,
+      fileType: file.type,
+      fileSize: file.size,
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      documentType: category,
+    }).returning();
+
+    await createAuditLog({
+      action: AUDIT_ACTIONS.DOCUMENT_UPLOAD,
+      resource: AUDIT_RESOURCES.DOCUMENT,
+      resourceId: doc.id.toString(),
+      details: { fileName: file.name, category },
+    });
+
+    saved.push(doc);
+  }
+
+  revalidatePath('/dashboard/compliance/documents');
+  return { success: true, documents: saved };
+}
+
+const searchSchema = z.object({
+  query: z.string().min(1),
+});
+
+export async function searchDocumentsAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const { query } = searchSchema.parse({ query: formData.get('query') });
+  const term = `%${query}%`;
+  const res = await fetchDocumentsBySearchTerm(user.orgId, term);
+  return { success: true, documents: res.rows };
+}
+
+async function fetchDocumentsBySearchTerm(orgId: number, term: string) {
+  return await db.execute(sql`
+    SELECT * FROM documents
+    WHERE org_id = ${orgId} AND file_name ILIKE ${term}
+    ORDER BY created_at DESC
+  `);
+}
+
+export async function sendExpirationAlerts(withinDays = 30) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const docs = await getExpiringDocuments(user.orgId, withinDays);
+
+  for (const doc of docs) {
+    await sendEmail({
+      to: doc.email,
+      subject: `Document ${doc.fileName} expiring soon`,
+      html: `<p>${doc.fileName} expires on ${doc.expiresAt?.toISOString().slice(0,10)}</p>`
+    });
+    await createAuditLog({
+      action: 'document.expiration.alert',
+      resource: AUDIT_RESOURCES.DOCUMENT,
+      resourceId: doc.id.toString(),
+      details: { expiresAt: doc.expiresAt }
+    });
+  }
+
+  return { success: true, count: docs.length };
+}
+
+export async function sendRenewalReminders(withinDays = 30) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const docs = await getExpiringDocuments(user.orgId, withinDays);
+
+  for (const doc of docs) {
+    await sendEmail({
+      to: doc.email,
+      subject: `Renewal reminder for ${doc.fileName}`,
+      html: `<p>The document ${doc.fileName} will expire on ${doc.expiresAt?.toISOString().slice(0,10)}. Please renew it.</p>`
+    });
+    await createAuditLog({
+      action: 'document.renewal.reminder',
+      resource: AUDIT_RESOURCES.DOCUMENT,
+      resourceId: doc.id.toString(),
+      details: { expiresAt: doc.expiresAt }
+    });
+  }
+
+  return { success: true, count: docs.length };
+}
+
+export async function markDocumentReviewed(id: number) {
+  const user = await requirePermission('org:compliance:upload_documents');
+  const [doc] = await db
+    .update(documents)
+    .set({ reviewedById: parseInt(user.id), reviewedAt: new Date(), isCompliant: true })
+    .where(sql`id = ${id}`)
+    .returning();
+
+  await createAuditLog({
+    action: 'document.reviewed',
+    resource: AUDIT_RESOURCES.DOCUMENT,
+    resourceId: id.toString(),
+    details: { reviewedBy: user.id }
+  });
+
+  revalidatePath('/dashboard/compliance');
+  return { success: true, document: doc as Document };
+}
+
+export async function recordAnnualReview(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = reviewSchema.parse(Object.fromEntries(formData));
+
+  const [review] = await db
+    .insert(driverAnnualReviews)
+    .values({
+      orgId: user.orgId,
+      driverId: input.driverId,
+      reviewDate: input.reviewDate,
+      isQualified: input.isQualified ?? true,
+      notes: input.notes,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: review.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/dqf');
+  return { success: true, review };
+}
+
+export async function recordVehicleInspection(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = inspectionSchema.parse(Object.fromEntries(formData));
+
+  const [inspection] = await db
+    .insert(vehicleInspections)
+    .values({
+      orgId: user.orgId,
+      vehicleId: input.vehicleId,
+      inspectorId: parseInt(user.id),
+      inspectionDate: input.inspectionDate,
+      passed: input.passed ?? true,
+      notes: input.notes,
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: inspection.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/inspections');
+  return { success: true, inspection };
+}
+
+export async function recordAccident(formData: FormData) {
+  const user = await requirePermission('org:compliance:upload_review_compliance');
+  const input = accidentSchema.parse(Object.fromEntries(formData));
+
+  const [accident] = await db
+    .insert(accidentReports)
+    .values({
+      orgId: user.orgId,
+      driverId: input.driverId ?? null,
+      vehicleId: input.vehicleId ?? null,
+      occurredAt: input.occurredAt,
+      description: input.description,
+      injuries: input.injuries ?? false,
+      fatalities: input.fatalities ?? false,
+      createdById: parseInt(user.id),
+    })
+    .returning();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REVIEW,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: accident.id.toString(),
+  });
+
+  revalidatePath('/dashboard/compliance/accidents');
+  return { success: true, accident };
+}
+
+export async function calculateSmsScore(orgId: number) {
+  await requirePermission('org:compliance:generate_compliance_req');
+  const accidentRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count FROM accident_reports WHERE org_id = ${orgId}
+  `);
+  const violationRes = await db.execute<{ count: number }>(sql`
+    SELECT count(*)::int AS count FROM hos_violations WHERE org_id = ${orgId}
+  `);
+
+  const accidents = accidentRes.rows[0]?.count ?? 0;
+  const violations = violationRes.rows[0]?.count ?? 0;
+  const score = accidents * 2 + violations;
+
+  return { accidents, violations, score };
+}
+
+
+export async function generateComplianceReportAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:generate_compliance_req')
+  const type = (formData.get('type') || 'standard') as string
+  const category = formData.get('category')?.toString()
+  const data = await getComplianceReportData(user.orgId, category || undefined)
+
+  const doc = new PDFDocument()
+  const dir = path.join(process.cwd(), 'main/public/uploads')
+  await fs.mkdir(dir, { recursive: true })
+  const fileName = `compliance-${Date.now()}.pdf`
+  const filePath = path.join(dir, fileName)
+  const stream = createWriteStream(filePath)
+  doc.pipe(stream)
+  doc.fontSize(18).text('Compliance Report', { align: 'center' })
+  doc.moveDown()
+  doc.text(`Active Documents: ${data.status.active}`)
+  doc.text(`Under Review: ${data.status.underReview}`)
+  doc.text(`Annual Reviews: ${data.annualReviews}`)
+  doc.text(`Vehicle Inspections: ${data.vehicleInspections}`)
+  doc.text(`Accidents: ${data.accidents}`)
+  doc.end()
+  await new Promise<void>(resolve => stream.on('finish', resolve))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_REPORT_GENERATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    details: { type, category }
+  })
+
+  revalidatePath('/dashboard/compliance')
+  return { success: true, url: `/uploads/${fileName}` }
+}
+
+export async function exportComplianceAuditLogsAction(orgId: number) {
+  await requirePermission('org:compliance:access_audit_logs')
+  const logs = await listComplianceAuditLogs(orgId)
+  const lines = ['id,action,resource,resourceId,createdAt']
+  for (const l of logs) {
+    lines.push(`${l.id},${l.action},${l.resource},${l.resourceId || ''},${(l.createdAt as Date).toISOString()}`)
+  }
+  const csv = lines.join('\n')
+  return new Response(csv, {
+    headers: { 'Content-Type': 'text/csv' }
+  })
+}
+
+export async function createComplianceWorkflowAction(formData: FormData) {
+  const user = await requirePermission('org:compliance:manage_workflows')
+  const input = workflowSchema.parse({ name: formData.get('name') })
+  const [workflow] = await db
+    .insert(complianceWorkflows)
+    .values({
+      orgId: user.orgId,
+      name: input.name,
+      createdById: parseInt(user.id),
+    })
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_WORKFLOW_CREATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: workflow.id.toString(),
+  })
+
+  revalidatePath('/dashboard/compliance/workflows')
+  return { success: true, workflow }
+}
+
+export async function createComplianceTaskAction(formData: FormData) {
+  const raw = {
+    workflowId: formData.get('workflowId'),
+    title: formData.get('title'),
+    description: formData.get('description') || undefined,
+    assignedToId: formData.get('assignedToId') || undefined,
+    dueDate: formData.get('dueDate') || undefined,
+  }
+  const input = taskSchema.parse(raw)
+
+  const [task] = await db
+    .insert(complianceTasks)
+    .values({
+      workflowId: input.workflowId,
+      title: input.title,
+      description: input.description,
+      assignedToId: input.assignedToId,
+      dueDate: input.dueDate ? new Date(input.dueDate) : null,
+    })
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_TASK_CREATE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: task.id.toString(),
+  })
+
+  revalidatePath(`/dashboard/compliance/workflows/${input.workflowId}`)
+  return { success: true, task }
+}
+
+export async function completeComplianceTaskAction(formData: FormData) {
+  const { taskId } = taskCompleteSchema.parse({ taskId: formData.get('taskId') })
+  const [task] = await db
+    .update(complianceTasks)
+    .set({ status: 'COMPLETED', completedAt: new Date(), updatedAt: new Date() })
+    .where(eq(complianceTasks.id, taskId))
+    .returning()
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.COMPLIANCE_TASK_COMPLETE,
+    resource: AUDIT_RESOURCES.COMPLIANCE,
+    resourceId: taskId.toString(),
+  })
+
+  revalidatePath(`/dashboard/compliance/workflows/${task.workflowId}`)
+  return { success: true, task }
+}
+
+export async function updateComplianceConfigAction(formData: FormData | { [key: string]: unknown }) {
+  const user = await requirePermission('org:compliance:configure_settings')
+  const raw = formData instanceof FormData ? {
+    dotRules: formData.get('dotRules'),
+    environmental: formData.get('environmental'),
+    emergencyContact: formData.get('emergencyContact') || undefined,
+  } : formData
+  const input = complianceConfigSchema.parse(raw)
+
+  const [org] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId))
+
+  const current = (org?.settings as Record<string, any>) ?? {}
+  const complianceConfig = {
+    regulatory: {
+      dotRules: input.dotRules ?? false,
+      environmental: input.environmental ?? false,
+    },
+    hazmat: {
+      emergencyContact: input.emergencyContact ?? (current.complianceConfig as any)?.hazmat?.emergencyContact,
+    },
+  }
+
+  const settings = { ...current, complianceConfig } as Record<string, unknown>
+
+  await db
+    .update(organizations)
+    .set({ settings, updatedAt: new Date() })
+    .where(eq(organizations.id, user.orgId))
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.ORG_SETTINGS_UPDATE,
+    resource: AUDIT_RESOURCES.ORGANIZATION,
+    resourceId: user.orgId.toString(),
+    details: { updatedBy: user.id, complianceConfig },
+  })
+
+  revalidatePath('/dashboard/compliance/settings')
+}
+
+export async function recordHazmatEndorsementAction(formData: FormData | { [key: string]: unknown }) {
+  const user = await requirePermission('org:compliance:configure_settings')
+  const raw = formData instanceof FormData ? {
+    driverId: formData.get('driverId'),
+    expiresAt: formData.get('expiresAt') || undefined,
+  } : formData
+
+  const input = hazmatSchema.parse(raw)
+
+  await db.insert(driverCertifications).values({
+    orgId: user.orgId,
+    driverId: input.driverId,
+    type: 'HAZMAT',
+    issuedAt: new Date(),
+    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+  })
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.DRIVER_UPDATE,
+    resource: AUDIT_RESOURCES.DRIVER,
+    resourceId: input.driverId.toString(),
+    details: { certification: 'HAZMAT' },
+  })
+
+  revalidatePath(`/drivers/${input.driverId}`)
+  return { success: true }
+}

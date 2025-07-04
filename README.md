@@ -18,13 +18,7 @@ Road.io is a feature-driven fleet management platform built with Next.js 15 and 
    cd main
    npm install
    ```
-  Or run the PowerShell script from the repository root to install
-  dependencies and run the standard checks:
-   ```powershell
-   ./agents-setup.ps1
-   ```
-2. **Configure environment variables** – copy `.env.example` to `.env.local` and add your database and Clerk keys.
-
+2. **Configure environment variables** – copy `main/.env.example` to `main/.env.local` and set your database URL, Clerk keys, encryption key, and SMTP credentials.
 3. **Run database migrations**
    ```bash
    npm run db:push
@@ -82,12 +76,10 @@ CREATE TABLE "users" (
   "name" varchar(255),
   "created_at" timestamp DEFAULT now() NOT NULL,
   "updated_at" timestamp DEFAULT now() NOT NULL
+);
 
-```
 
 Business logic lives in **server actions** under `lib/actions/`. API routes are reserved for authentication, webhooks and public integrations.
-
-For a deeper look at the repository layout and style conventions, see [CODE_STRUCTURE.md](./CODE_STRUCTURE.md).
 
 ## Testing
 
